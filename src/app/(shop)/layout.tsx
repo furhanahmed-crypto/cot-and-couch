@@ -14,6 +14,8 @@ export default async function ShopLayout({
     getFavouriteIdsForCurrentUser(),
   ]);
 
+  
+
   return (
     <ShortlistProvider initialIds={favouriteIds}>
       <ShopHeader categories={categories} />
