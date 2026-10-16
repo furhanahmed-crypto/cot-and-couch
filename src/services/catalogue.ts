@@ -2,7 +2,7 @@
  * Catalogue reads from Neon. Pure helpers stay sync for client cards.
  */
 import { cache } from "react";
-import { asc, eq, inArray } from "drizzle-orm";
+import { and, asc, eq, inArray, sql } from "drizzle-orm";
 import { db } from "@/db";
 import {
   categories as categoriesTable,
@@ -14,6 +14,7 @@ import {
   productVariants,
   products as productsTable,
   sizeDimensions,
+  type ProductVariant,
 } from "@/db/schema";
 import { discountPercent } from "@/lib/format";
 import {
@@ -57,13 +58,62 @@ async function loadCategorySlugById(): Promise<Map<string, string>> {
   return new Map(rows.map((r) => [r.id, r.slug]));
 }
 
-async function loadVariantsByProductIds(productIds: string[]) {
-  if (!productIds.length) return new Map<string, typeof productVariants.$inferSelect[]>();
-  const rows = await db
-    .select()
-    .from(productVariants)
-    .where(inArray(productVariants.productId, productIds));
-  const map = new Map<string, typeof productVariants.$inferSelect[]>();
+type VariantMode = "list" | "full";
+
+/**
+ * list — cheapest SKU per colour (PLP / home / cards). Avoids shipping ~14k mattress SKUs.
+ * full — every SKU (PDP pickers, admin pricing/stock).
+ */
+async function loadVariantsByProductIds(
+  productIds: string[],
+  mode: VariantMode,
+) {
+  const empty = new Map<string, ProductVariant[]>();
+  if (!productIds.length) return empty;
+
+  let rows: ProductVariant[];
+
+  if (mode === "list") {
+    const result = await db.execute(sql`
+      SELECT DISTINCT ON (product_id, colour_option_id)
+        id,
+        product_id AS "productId",
+        sku,
+        size_group_option_id AS "sizeGroupOptionId",
+        size_dimension_id AS "sizeDimensionId",
+        is_custom_size AS "isCustomSize",
+        thickness_option_id AS "thicknessOptionId",
+        colour_option_id AS "colourOptionId",
+        mrp,
+        price,
+        stock_qty AS "stockQty",
+        is_active AS "isActive",
+        created_at AS "createdAt"
+      FROM product_variants
+      WHERE is_active = true
+        AND product_id IN (${sql.join(
+          productIds.map((id) => sql`${id}::uuid`),
+          sql`, `,
+        )})
+      ORDER BY product_id, colour_option_id, price ASC
+    `);
+    const raw = result as unknown;
+    rows = (
+      Array.isArray(raw) ? raw : (raw as { rows: ProductVariant[] }).rows
+    ) as ProductVariant[];
+  } else {
+    rows = await db
+      .select()
+      .from(productVariants)
+      .where(
+        and(
+          inArray(productVariants.productId, productIds),
+          eq(productVariants.isActive, true),
+        ),
+      );
+  }
+
+  const map = new Map<string, ProductVariant[]>();
   for (const row of rows) {
     const list = map.get(row.productId) ?? [];
     list.push(row);
@@ -113,6 +163,7 @@ async function loadDimLabels(): Promise<Map<string, string>> {
 
 async function hydrateProducts(
   rows: (typeof productsTable.$inferSelect)[],
+  mode: VariantMode,
 ): Promise<Product[]> {
   if (!rows.length) return [];
   const ids = rows.map((r) => r.id);
@@ -120,7 +171,7 @@ async function hydrateProducts(
     await Promise.all([
       loadOptionsById(),
       loadCategorySlugById(),
-      loadVariantsByProductIds(ids),
+      loadVariantsByProductIds(ids, mode),
       loadCollectionIdByProduct(ids),
       loadDimLabels(),
     ]);
@@ -139,21 +190,40 @@ async function hydrateProducts(
   });
 }
 
+/** Shop lists — slim variants (one per colour). */
 export const getPublishedProducts = cache(async () => {
   const rows = await db
     .select()
     .from(productsTable)
     .where(eq(productsTable.status, "published"))
     .orderBy(asc(productsTable.sortOrder));
-  return hydrateProducts(rows);
+  return hydrateProducts(rows, "list");
 });
 
+/** Category PLP — only that category, slim variants. */
+export const getPublishedProductsByCategoryId = cache(
+  async (categoryId: string) => {
+    const rows = await db
+      .select()
+      .from(productsTable)
+      .where(
+        and(
+          eq(productsTable.status, "published"),
+          eq(productsTable.categoryId, categoryId),
+        ),
+      )
+      .orderBy(asc(productsTable.sortOrder));
+    return hydrateProducts(rows, "list");
+  },
+);
+
+/** Admin — full variant matrix. */
 export const getAllProducts = cache(async () => {
   const rows = await db
     .select()
     .from(productsTable)
     .orderBy(asc(productsTable.sortOrder));
-  return hydrateProducts(rows);
+  return hydrateProducts(rows, "full");
 });
 
 export async function getProductBySlug(slug: string) {
@@ -163,7 +233,7 @@ export async function getProductBySlug(slug: string) {
     .where(eq(productsTable.slug, slug))
     .limit(1);
   if (!rows[0] || rows[0].status !== "published") return undefined;
-  const [product] = await hydrateProducts(rows);
+  const [product] = await hydrateProducts(rows, "full");
   return product;
 }
 
@@ -174,7 +244,7 @@ export async function getProductById(id: string) {
     .where(eq(productsTable.id, id))
     .limit(1);
   if (!rows[0]) return undefined;
-  const [product] = await hydrateProducts(rows);
+  const [product] = await hydrateProducts(rows, "full");
   return product;
 }
 
@@ -185,7 +255,7 @@ export async function getProductsByIds(ids: string[]) {
     .select()
     .from(productsTable)
     .where(inArray(productsTable.id, unique));
-  const hydrated = await hydrateProducts(rows);
+  const hydrated = await hydrateProducts(rows, "list");
   const byId = new Map(hydrated.map((p) => [p.id, p]));
   return unique.map((id) => byId.get(id)).filter(Boolean) as Product[];
 }

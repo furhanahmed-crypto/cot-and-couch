@@ -5,7 +5,7 @@ import { attributeTemplates } from "@/data/mock/categories";
 import {
   getCategoryBySlug,
   getMasters,
-  getPublishedProducts,
+  getPublishedProductsByCategoryId,
 } from "@/services/catalogue";
 
 export default async function CategoryPage({
@@ -18,7 +18,7 @@ export default async function CategoryPage({
   if (!category) notFound();
 
   const [products, masters] = await Promise.all([
-    getPublishedProducts(),
+    getPublishedProductsByCategoryId(category.id),
     getMasters(),
   ]);
   const template = attributeTemplates.find((t) => t.id === category.templateId);

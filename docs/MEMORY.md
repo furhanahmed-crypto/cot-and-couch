@@ -162,6 +162,14 @@ Chronological-ish record of **why** the prototype is shaped this way. Update whe
 
 ---
 
+## 2026-10-16 — Catalogue RSC too slow (~5s+)
+
+**Cause:** PLP loaded every product with the full variant matrix (~14k SKUs) into the client RSC payload.
+
+**Fix:** `list` mode = `DISTINCT ON (product_id, colour_option_id)` cheapest SKU per colour; category pages load that category only. `full` mode only for PDP + admin.
+
+---
+
 ## 2026-10-16 — Catalogue DTOs (mattress-first)
 
 **Decision:** Shared filter tables + lean products/variants (not one table per filter).
