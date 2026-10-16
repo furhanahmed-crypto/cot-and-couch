@@ -1,0 +1,49 @@
+"use client";
+
+import { useMemo, useState } from "react";
+import { Search } from "lucide-react";
+import { ProductCard } from "@/components/shop/product-card";
+import { Input } from "@/components/ui/input";
+import { searchProducts } from "@/services/catalogue";
+
+export default function SearchPage() {
+  const [q, setQ] = useState("");
+  const results = useMemo(() => (q.trim() ? searchProducts(q.trim()) : []), [q]);
+
+  return (
+    <div className="mx-auto max-w-7xl px-4 py-6 md:px-6 md:py-8">
+      <h1 className="font-heading mb-2 text-3xl">Search</h1>
+      <p className="mb-6 text-sm text-muted-foreground">
+        Find beds, sofas, mattresses, and more across the catalogue.
+      </p>
+
+      <div className="relative mb-8 max-w-xl">
+        <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+        <Input
+          value={q}
+          onChange={(e) => setQ(e.target.value)}
+          placeholder="Try teak, hydraulic, sage sofa…"
+          className="pl-9"
+          autoFocus
+        />
+      </div>
+
+      {!q.trim() ? (
+        <p className="text-sm text-muted-foreground">Start typing to see results.</p>
+      ) : results.length === 0 ? (
+        <div className="rounded-xl border border-dashed p-10 text-center text-muted-foreground">
+          No products match &ldquo;{q}&rdquo;.
+        </div>
+      ) : (
+        <>
+          <p className="mb-4 text-sm text-muted-foreground">{results.length} results</p>
+          <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+            {results.map((p) => (
+              <ProductCard key={p.id} product={p} />
+            ))}
+          </div>
+        </>
+      )}
+    </div>
+  );
+}

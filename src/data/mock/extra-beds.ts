@@ -1,0 +1,91 @@
+import { img, makeProduct } from "./product-factory";
+
+const BED = [
+  "photo-1505693416388-ac5ce068fe85",
+  "photo-1522771739844-6a9f6d5f14af",
+  "photo-1616594039964-ae9021a400a0",
+  "photo-1540575467063-178a50c2df87",
+  "photo-1615874959474-d609969a20ed",
+  "photo-1586023492125-27b2c045efd7",
+  "photo-1560448204-e02f11c3d0e2",
+  "photo-1595526114035-0d45ed16cfbf",
+  "photo-1617325247661-675ab4b64ae2",
+  "photo-1556020685-ae41abfc9365",
+  "photo-1578683010236-d716f9a3f461",
+  "photo-1598928506311-c55ded91a20c",
+  "photo-1631679706909-1844bbd07221",
+  "photo-1600210492486-724fe5c67fb0",
+  "photo-1600585154340-be6161a56a0c",
+  "photo-1616486338812-3dadae4b4ace",
+  "photo-1618221195710-dd6b41faaea6",
+  "photo-1600566753190-17f0baa2a6c3",
+  "photo-1600607687939-ce8a6c25118c",
+  "photo-1617806118233-18e1de247200",
+  "photo-1616627561839-074385245ff6",
+  "photo-1615873968403-89e068629265",
+  "photo-1615874694520-474822394e73",
+  "photo-1600566753086-00f18fb6b3ea",
+] as const;
+
+const beds = [
+  ["amber-king-teak-bed", "Amber King Teak Bed", "sc-king", "col-royal", "King", "none", "wooden", "c-teak", "s-king-78-72", 82999, 68999, 5],
+  ["nara-queen-platform", "Nara Queen Platform Bed", "sc-queen", "col-everyday", "Queen", "none", "wooden", "c-walnut", "s-queen-78-60", 54999, 44999, 6],
+  ["loft-single-storage", "Loft Single Storage Bed", "sc-single", "col-everyday", "Single", "drawer", "wooden", "c-honey", "s-single-72-36", 28999, 23999, 4],
+  ["cedar-box-king", "Cedar Box Storage King", "sc-storage", "col-victoria", "King", "box", "upholstered", "c-espresso", "s-king-78-72", 76999, 62999, 3],
+  ["pulse-hydraulic-queen", "Pulse Hydraulic Queen", "sc-hydraulic", "col-everyday", "Queen", "hydraulic", "wooden", "c-teak", "s-queen-78-60", 64999, 52999, 2],
+  ["ivory-upholstered-king", "Ivory Upholstered King", "sc-king", "col-royal", "King", "none", "upholstered", "c-ivory", "s-king-78-72", 89999, 74999, 3],
+  ["grove-queen-drawer", "Grove Queen Drawer Bed", "sc-storage", "col-victoria", "Queen", "drawer", "wooden", "c-honey", "s-queen-78-60", 59999, 48999, 5],
+  ["petal-single-poster", "Petal Single Poster Bed", "sc-single", "col-everyday", "Single", "none", "carved", "c-teak", "s-single-72-36", 31999, 25999, 4],
+  ["summit-king-hydraulic", "Summit King Hydraulic", "sc-hydraulic", "col-royal", "King", "hydraulic", "carved", "c-walnut", "s-king-78-72", 94999, 79999, 2],
+  ["breeze-queen-teak", "Breeze Queen Teak Bed", "sc-queen", "col-victoria", "Queen", "none", "wooden", "c-teak", "s-queen-78-60", 57999, 46999, 7],
+  ["harbor-king-box", "Harbor King Box Bed", "sc-storage", "col-everyday", "King", "box", "wooden", "c-espresso", "s-king-78-72", 69999, 56999, 3],
+  ["linen-queen-upholstered", "Linen Queen Upholstered", "sc-queen", "col-royal", "Queen", "none", "upholstered", "c-cream", "s-queen-78-60", 71999, 58999, 2],
+  ["scout-single-box", "Scout Single Box Bed", "sc-storage", "col-everyday", "Single", "box", "wooden", "c-walnut", "s-single-72-36", 26999, 21999, 6],
+  ["regal-king-carved", "Regal King Carved Bed", "sc-king", "col-victoria", "King", "none", "carved", "c-honey", "s-king-78-72", 99999, 84999, 1],
+  ["orbit-queen-hydraulic", "Orbit Queen Hydraulic", "sc-hydraulic", "col-everyday", "Queen", "hydraulic", "upholstered", "c-charcoal", "s-queen-78-60", 67999, 55999, 3],
+  ["meadow-king-platform", "Meadow King Platform", "sc-king", "col-everyday", "King", "none", "wooden", "c-teak", "s-king-75-72", 61999, 49999, 5],
+  ["atlas-queen-box", "Atlas Queen Box Storage", "sc-storage", "col-royal", "Queen", "box", "carved", "c-walnut", "s-queen-78-60", 73999, 60999, 2],
+  ["willow-single-teak", "Willow Single Teak Bed", "sc-single", "col-victoria", "Single", "none", "wooden", "c-teak", "s-single-72-36", 29999, 24999, 4],
+  ["forge-king-drawer", "Forge King Drawer Bed", "sc-storage", "col-everyday", "King", "drawer", "wooden", "c-espresso", "s-king-78-72", 77999, 63999, 3],
+  ["halo-queen-softback", "Halo Queen Softback Bed", "sc-queen", "col-royal", "Queen", "none", "upholstered", "c-sage", "s-queen-78-60", 68999, 56999, 4],
+] as const;
+
+export const extraBeds = beds.map((row, i) => {
+  const [slug, name, sub, col, size, storage, headboard, colour, sizeId, mrp, price, qty] = row;
+  const a = BED[i % BED.length];
+  const b = BED[(i + 3) % BED.length];
+  return makeProduct({
+    id: `p-xbed-${i + 1}`,
+    slug,
+    name,
+    categoryId: "cat-beds",
+    subCategoryId: sub,
+    collectionId: col,
+    highlights: [`${size} size`, `${storage === "none" ? "No storage" : storage} storage`, "Showroom finish options"],
+    description: `${name} — browse finishes and storage options in our Lingampally showroom before you decide.`,
+    dimensions: { lIn: size === "King" ? 84 : size === "Queen" ? 82 : 78, wIn: size === "King" ? 78 : size === "Queen" ? 66 : 40, hIn: 40, weightKg: 60 },
+    material: "Teak / hardwood",
+    finish: "Polished wood / fabric",
+    warrantyYears: 5,
+    specs: { size, storage, headboard, woodGrade: "Teak blend", mattressSize: size === "King" ? '78 × 72"' : size === "Queen" ? '78 × 60"' : '72 × 36"' },
+    tags: ["beds", size.toLowerCase()],
+    featured: i % 5 === 0,
+    popularity: 85 - i,
+    relatedIds: ["p-victoria-king", "p-royal-queen"],
+    createdAt: `2026-0${(i % 9) + 1}-12`,
+    variants: [
+      {
+        id: `v-xbed-${i + 1}`,
+        sku: `CC-BED-X${i + 1}`,
+        colourId: colour,
+        sizeId,
+        configuration: storage,
+        mrp,
+        price,
+        stockQty: qty,
+        stockStatus: qty <= 2 ? "low_stock" : "in_stock",
+        images: [img(a), img(b)],
+      },
+    ],
+  });
+});
