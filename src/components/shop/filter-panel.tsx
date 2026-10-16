@@ -4,9 +4,13 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
-import { colours, collections } from "@/data/mock";
 import type { FilterState } from "@/services/catalogue";
-import type { AttributeField, StockStatus } from "@/types";
+import type {
+  AttributeField,
+  Collection,
+  Colour,
+  StockStatus,
+} from "@/types";
 
 const AVAIL: { id: StockStatus; label: string }[] = [
   { id: "in_stock", label: "In stock" },
@@ -14,18 +18,42 @@ const AVAIL: { id: StockStatus; label: string }[] = [
   { id: "low_stock", label: "Low stock" },
 ];
 
+/** Keys already rendered as common filters — never repeat from attribute templates. */
+const COMMON_FILTER_KEYS = new Set([
+  "colour",
+  "color",
+  "colour_finish",
+  "finish",
+  "collection",
+  "collections",
+  "availability",
+  "price",
+  "discount",
+]);
+
 export function FilterPanel({
   filters,
   onChange,
+  colours,
+  collections,
   extraFields = [],
   onClear,
 }: {
   filters: FilterState;
   onChange: (next: FilterState) => void;
+  colours: Colour[];
+  collections: Collection[];
   extraFields?: AttributeField[];
   onClear: () => void;
 }) {
   const price = [filters.priceMin ?? 0, filters.priceMax ?? 100000];
+  const categoryFields = extraFields.filter(
+    (f) =>
+      f.filterable &&
+      f.options &&
+      !COMMON_FILTER_KEYS.has(f.key.toLowerCase()) &&
+      !/colour|color|finish/i.test(f.label),
+  );
 
   function toggleArr(key: keyof FilterState, value: string) {
     const current = (filters[key] as string[] | undefined) ?? [];
@@ -82,18 +110,19 @@ export function FilterPanel({
 
       <div className="space-y-2">
         <Label>Colour / finish</Label>
-        <div className="max-h-40 space-y-2 overflow-y-auto">
-          {colours.map((c) => (
-            <label key={c.id} className="flex items-center gap-2">
-              <Checkbox
-                checked={filters.colours?.includes(c.id)}
-                onCheckedChange={() => toggleArr("colours", c.id)}
-              />
-              <span className="size-3 rounded-full ring-1 ring-border" style={{ background: c.hex }} />
-              {c.name}
-            </label>
-          ))}
-        </div>
+        {colours.map((c) => (
+          <label key={c.id} className="flex items-center gap-2">
+            <Checkbox
+              checked={filters.colours?.includes(c.id)}
+              onCheckedChange={() => toggleArr("colours", c.id)}
+            />
+            <span
+              className="size-3 rounded-full ring-1 ring-border"
+              style={{ background: c.hex }}
+            />
+            {c.name}
+          </label>
+        ))}
       </div>
 
       <div className="space-y-2">
@@ -122,31 +151,29 @@ export function FilterPanel({
         ))}
       </div>
 
-      {extraFields
-        .filter((f) => f.filterable && f.options)
-        .map((f) => (
-          <div key={f.key} className="space-y-2">
-            <Label>{f.label}</Label>
-            {f.options!.map((opt) => (
-              <label key={opt} className="flex items-center gap-2">
-                <Checkbox
-                  checked={filters.extra?.[f.key]?.includes(opt)}
-                  onCheckedChange={() => {
-                    const cur = filters.extra?.[f.key] ?? [];
-                    const next = cur.includes(opt)
-                      ? cur.filter((x) => x !== opt)
-                      : [...cur, opt];
-                    onChange({
-                      ...filters,
-                      extra: { ...filters.extra, [f.key]: next },
-                    });
-                  }}
-                />
-                {opt}
-              </label>
-            ))}
-          </div>
-        ))}
+      {categoryFields.map((f) => (
+        <div key={f.key} className="space-y-2">
+          <Label>{f.label}</Label>
+          {f.options!.map((opt) => (
+            <label key={opt} className="flex items-center gap-2">
+              <Checkbox
+                checked={filters.extra?.[f.key]?.includes(opt)}
+                onCheckedChange={() => {
+                  const cur = filters.extra?.[f.key] ?? [];
+                  const next = cur.includes(opt)
+                    ? cur.filter((x) => x !== opt)
+                    : [...cur, opt];
+                  onChange({
+                    ...filters,
+                    extra: { ...filters.extra, [f.key]: next },
+                  });
+                }}
+              />
+              {opt}
+            </label>
+          ))}
+        </div>
+      ))}
     </div>
   );
 }

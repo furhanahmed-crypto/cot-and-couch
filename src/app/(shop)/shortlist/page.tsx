@@ -1,32 +1,18 @@
-"use client";
-
 import Link from "next/link";
-import { MessageCircle, Share2 } from "lucide-react";
+import { MessageCircle } from "lucide-react";
 import { ProductCard } from "@/components/shop/product-card";
-import { Button, buttonVariants } from "@/components/ui/button";
+import { ShortlistShare } from "@/components/shop/shortlist-share";
+import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { ROUTES } from "@/constants/routes";
-import { storeInfo } from "@/data/mock";
-import { useShortlist } from "@/hooks/use-shortlist";
-import { getProductsByIds } from "@/services/catalogue";
+import { listFavouriteProducts } from "@/services/favourites";
+import { getStoreInfo } from "@/services/ops";
 
-export default function ShortlistPage() {
-  const { ids } = useShortlist();
-  const products = getProductsByIds(ids);
-
-  const share = () => {
-    if (!products.length) return;
-    const origin = typeof window !== "undefined" ? window.location.origin : "";
-    const lines = products.map(
-      (p) => `• ${p.name} — ${origin}${ROUTES.product(p.slug)}`,
-    );
-    const text = `My Cot & Couch shortlist:\n\n${lines.join("\n")}`;
-    window.open(
-      `https://wa.me/?text=${encodeURIComponent(text)}`,
-      "_blank",
-      "noopener,noreferrer",
-    );
-  };
+export default async function ShortlistPage() {
+  const [products, storeInfo] = await Promise.all([
+    listFavouriteProducts(),
+    getStoreInfo(),
+  ]);
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-6 md:px-6 md:py-8">
@@ -34,18 +20,11 @@ export default function ShortlistPage() {
         <div>
           <p className="text-xs uppercase tracking-[0.2em] text-brass">Saved</p>
           <h1 className="font-heading text-3xl">Shortlist</h1>
-          <p className="text-sm text-muted-foreground">{products.length} items</p>
+          <p className="text-sm text-muted-foreground">
+            {products.length} items
+          </p>
         </div>
-        {products.length > 0 && (
-          <Button
-            type="button"
-            onClick={share}
-            className="bg-[#25D366] text-white hover:bg-[#25D366]/90"
-          >
-            <Share2 className="size-4" />
-            Share on WhatsApp
-          </Button>
-        )}
+        {products.length > 0 && <ShortlistShare products={products} />}
       </div>
 
       {products.length === 0 ? (

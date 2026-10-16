@@ -55,7 +55,7 @@ export const extraMattresses = rows.map((row, i) => {
     categoryId: "cat-mattresses",
     subCategoryId: sub,
     collectionId: "col-everyday",
-    brandId: brand,
+    mattressBrandId: brand,
     highlights: [`${thickness}" profile`, `${firmness} feel`, `${type}`],
     description: `${name} — compare firmness layers on the showroom floor before you buy.`,
     dimensions: {
@@ -82,7 +82,7 @@ export const extraMattresses = rows.map((row, i) => {
         sku: `CC-MAT-X${i + 1}`,
         colourId: "c-white",
         sizeId,
-        configuration: `${thickness}in`,
+        thicknessLabel: `${thickness} inch`,
         mrp,
         price,
         maxDiscountPercent: 35,

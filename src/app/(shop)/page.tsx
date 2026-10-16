@@ -1,57 +1,36 @@
-"use client";
-
 import Image from "next/image";
 import Link from "next/link";
-import { useSyncExternalStore } from "react";
 import { HomeHero } from "@/components/shop/home-hero";
 import { ProductCard } from "@/components/shop/product-card";
 import { ReelsStrip } from "@/components/shop/reels-strip";
 import { StoreBlock } from "@/components/shop/store-block";
-import { ROUTES, STORAGE_KEYS } from "@/constants/routes";
-import { useIsClient } from "@/hooks/use-is-client";
-import { useRecentlyViewed } from "@/hooks/use-recently-viewed";
+import { HomeContinueBrowse } from "@/components/shop/home-continue-browse";
+import { HomeRecentSections } from "@/components/shop/home-recent-sections";
+import { ROUTES } from "@/constants/routes";
 import {
   getCategories,
   getFeaturedProducts,
-  getProductsByIds,
+  getPublishedProducts,
   getRoyalRangeProducts,
 } from "@/services/catalogue";
-import { getCachedJson, subscribeKey } from "@/services/storage";
+import { getGallery } from "@/services/ops";
 
-type LastBrowse = { path?: string } | null;
-
-export default function HomePage() {
-  const cats = getCategories();
-  const featured = getFeaturedProducts().slice(0, 8);
-  const royal = getRoyalRangeProducts().slice(0, 6);
-  const { ids: recentIds } = useRecentlyViewed();
-  const recent = getProductsByIds(recentIds).slice(0, 8);
-  const inspired = getProductsByIds(
-    recentIds.length
-      ? featured.filter((p) => !recentIds.includes(p.id)).map((p) => p.id)
-      : featured.map((p) => p.id),
-  ).slice(0, 4);
-
-  const ready = useIsClient();
-  const lastBrowse = useSyncExternalStore(
-    (onChange) => subscribeKey(STORAGE_KEYS.lastBrowse, onChange),
-    () => getCachedJson<LastBrowse>(STORAGE_KEYS.lastBrowse, null),
-    () => null,
-  );
-  const continuePath = ready ? lastBrowse?.path ?? null : null;
+export default async function HomePage() {
+  const [cats, featured, royal, published, gallery] = await Promise.all([
+    getCategories(),
+    getFeaturedProducts(),
+    getRoyalRangeProducts(),
+    getPublishedProducts(),
+    getGallery(),
+  ]);
+  const featuredSlice = featured.slice(0, 8);
+  const royalSlice = royal.slice(0, 6);
 
   return (
     <div>
-      <HomeHero />
+      <HomeHero products={published} gallery={gallery} />
       <div className="mx-auto max-w-7xl space-y-10 px-3 py-8 sm:px-4 sm:py-10 md:space-y-12 md:px-6 md:py-14">
-        {continuePath && (
-          <div className="rounded-xl border border-brass/40 bg-brass/10 px-4 py-3 text-sm">
-            Continue where you left off —{" "}
-            <Link href={continuePath} className="font-medium text-primary underline-offset-2 hover:underline">
-              resume browsing
-            </Link>
-          </div>
-        )}
+        <HomeContinueBrowse />
 
         <section>
           <h2 className="font-heading mb-4 text-2xl">Shop by category</h2>
@@ -78,26 +57,20 @@ export default function HomePage() {
           </div>
         </section>
 
-        {recent.length > 0 && (
-          <section>
-            <h2 className="font-heading mb-4 text-2xl">Recently viewed</h2>
-            <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
-              {recent.map((p) => (
-                <ProductCard key={p.id} product={p} />
-              ))}
-            </div>
-          </section>
-        )}
+        <HomeRecentSections featured={featuredSlice} />
 
         <section>
           <div className="mb-4 flex items-end justify-between">
             <h2 className="font-heading text-2xl">Featured & new</h2>
-            <Link href={ROUTES.catalogue} className="text-sm text-muted-foreground hover:text-foreground">
+            <Link
+              href={ROUTES.catalogue}
+              className="text-sm text-muted-foreground hover:text-foreground"
+            >
               View all
             </Link>
           </div>
           <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
-            {featured.map((p) => (
+            {featuredSlice.map((p) => (
               <ProductCard key={p.id} product={p} />
             ))}
           </div>
@@ -106,7 +79,9 @@ export default function HomePage() {
         <section>
           <div className="mb-4 flex items-end justify-between">
             <div>
-              <p className="text-xs uppercase tracking-[0.18em] text-brass">Signature</p>
+              <p className="text-xs uppercase tracking-[0.18em] text-brass">
+                Signature
+              </p>
               <h2 className="font-heading text-2xl">Royal Range</h2>
             </div>
             <Link
@@ -117,22 +92,11 @@ export default function HomePage() {
             </Link>
           </div>
           <div className="grid grid-cols-2 gap-3 md:grid-cols-3">
-            {royal.map((p) => (
+            {royalSlice.map((p) => (
               <ProductCard key={p.id} product={p} />
             ))}
           </div>
         </section>
-
-        {inspired.length > 0 && (
-          <section>
-            <h2 className="font-heading mb-4 text-2xl">Inspired by your browsing</h2>
-            <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
-              {inspired.map((p) => (
-                <ProductCard key={p.id} product={p} />
-              ))}
-            </div>
-          </section>
-        )}
 
         <ReelsStrip tag="home" />
         <StoreBlock />

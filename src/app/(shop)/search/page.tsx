@@ -1,14 +1,31 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { Search } from "lucide-react";
 import { ProductCard } from "@/components/shop/product-card";
 import { Input } from "@/components/ui/input";
-import { searchProducts } from "@/services/catalogue";
+import { searchProductsAction } from "@/app/(shop)/catalogue/actions";
+import type { Product } from "@/types";
 
 export default function SearchPage() {
   const [q, setQ] = useState("");
-  const results = useMemo(() => (q.trim() ? searchProducts(q.trim()) : []), [q]);
+  const [results, setResults] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    const trimmed = q.trim();
+    if (!trimmed) {
+      setResults([]);
+      return;
+    }
+    const handle = setTimeout(() => {
+      setLoading(true);
+      searchProductsAction(trimmed)
+        .then(setResults)
+        .finally(() => setLoading(false));
+    }, 250);
+    return () => clearTimeout(handle);
+  }, [q]);
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-6 md:px-6 md:py-8">
@@ -29,14 +46,20 @@ export default function SearchPage() {
       </div>
 
       {!q.trim() ? (
-        <p className="text-sm text-muted-foreground">Start typing to see results.</p>
+        <p className="text-sm text-muted-foreground">
+          Start typing to see results.
+        </p>
+      ) : loading ? (
+        <p className="text-sm text-muted-foreground">Searching…</p>
       ) : results.length === 0 ? (
         <div className="rounded-xl border border-dashed p-10 text-center text-muted-foreground">
           No products match &ldquo;{q}&rdquo;.
         </div>
       ) : (
         <>
-          <p className="mb-4 text-sm text-muted-foreground">{results.length} results</p>
+          <p className="mb-4 text-sm text-muted-foreground">
+            {results.length} results
+          </p>
           <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
             {results.map((p) => (
               <ProductCard key={p.id} product={p} />

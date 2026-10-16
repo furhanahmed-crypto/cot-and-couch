@@ -74,9 +74,21 @@ export interface Category {
 export interface Variant {
   id: string;
   sku: string;
+  /** Size group option id (Single / Diwan / Queen / King / Custom). */
+  sizeGroupOptionId: string;
+  sizeGroupLabel: string;
+  sizeGroupSlug: string;
+  /** Inch preset; null when custom size. */
+  sizeDimensionId: string | null;
+  sizeDimensionLabel: string | null;
+  isCustomSize: boolean;
+  thicknessOptionId: string | null;
+  thicknessLabel: string | null;
   colourId: string;
+  colourName?: string;
+  colourHex?: string;
+  /** @deprecated alias of sizeDimensionId for older call sites */
   sizeId?: string;
-  configuration?: string;
   mrp: number;
   price: number;
   maxDiscountPercent: number;
@@ -93,8 +105,8 @@ export interface Product {
   name: string;
   categoryId: string;
   subCategoryId: string;
-  collectionId: string;
-  brandId: string;
+  collectionId: string | null;
+  mattressBrandId: string | null;
   highlights: string[];
   description: string;
   dimensions: { lIn: number; wIn: number; hIn: number; weightKg?: number };

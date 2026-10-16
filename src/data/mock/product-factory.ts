@@ -10,7 +10,7 @@ type Seed = {
   categoryId: string;
   subCategoryId: string;
   collectionId: string;
-  brandId?: string;
+  mattressBrandId?: string | null;
   highlights: string[];
   description: string;
   dimensions: Product["dimensions"];
@@ -31,8 +31,15 @@ type Seed = {
     id: string;
     sku: string;
     colourId: string;
+    sizeGroupOptionId?: string;
+    sizeGroupLabel?: string;
+    sizeGroupSlug?: string;
+    sizeDimensionId?: string | null;
+    sizeDimensionLabel?: string | null;
+    isCustomSize?: boolean;
+    thicknessOptionId?: string | null;
+    thicknessLabel?: string | null;
     sizeId?: string;
-    configuration?: string;
     mrp: number;
     price: number;
     maxDiscountPercent?: number;
@@ -45,7 +52,7 @@ type Seed = {
 
 export function makeProduct(seed: Seed): Product {
   return {
-    brandId: seed.brandId ?? "b-cc",
+    mattressBrandId: seed.mattressBrandId ?? null,
     warrantyYears: seed.warrantyYears ?? 2,
     warrantyExclusions: "Misuse, stains, water damage",
     assembly: seed.assembly ?? "carpenter",
@@ -59,6 +66,14 @@ export function makeProduct(seed: Seed): Product {
     ...seed,
     variants: seed.variants.map(
       (v): Variant => ({
+        sizeGroupOptionId: v.sizeGroupOptionId ?? "sg-default",
+        sizeGroupLabel: v.sizeGroupLabel ?? "Size",
+        sizeGroupSlug: v.sizeGroupSlug ?? "custom",
+        sizeDimensionId: v.sizeDimensionId ?? v.sizeId ?? null,
+        sizeDimensionLabel: v.sizeDimensionLabel ?? null,
+        isCustomSize: v.isCustomSize ?? !v.sizeId,
+        thicknessOptionId: v.thicknessOptionId ?? null,
+        thicknessLabel: v.thicknessLabel ?? null,
         maxDiscountPercent: v.maxDiscountPercent ?? 25,
         ...v,
       }),

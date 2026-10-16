@@ -1,16 +1,19 @@
 import { Clock, MapPin, MessageCircle, Phone } from "lucide-react";
 import { buttonVariants } from "@/components/ui/button";
-import { storeInfo } from "@/data/mock";
+import { getStoreInfo } from "@/services/ops";
 import { cn } from "@/lib/utils";
 
-export function StoreBlock() {
+export async function StoreBlock() {
+  const storeInfo = await getStoreInfo();
   const wa = `https://wa.me/${storeInfo.whatsapp}?text=${encodeURIComponent("Hi Cot & Couch, I'd like to visit the Lingampally showroom.")}`;
 
   return (
     <section className="overflow-hidden rounded-2xl bg-primary text-primary-foreground">
       <div className="grid gap-6 p-6 md:grid-cols-[1.2fr_1fr] md:p-8">
         <div className="space-y-3">
-          <p className="text-xs uppercase tracking-[0.2em] text-brass">Showroom</p>
+          <p className="text-xs uppercase tracking-[0.2em] text-brass">
+            Showroom
+          </p>
           <h2 className="font-heading text-2xl md:text-3xl">{storeInfo.name}</h2>
           <p className="flex gap-2 text-sm text-primary-foreground/85">
             <MapPin className="mt-0.5 size-4 shrink-0 text-brass" />
@@ -26,18 +29,12 @@ export function StoreBlock() {
             href={storeInfo.mapUrl}
             target="_blank"
             rel="noreferrer"
-            className={cn(buttonVariants(), "bg-brass text-ink hover:bg-brass/90")}
-          >
-            <MapPin className="size-4" /> Directions
-          </a>
-          <a
-            href={`tel:${storeInfo.phone.replace(/\s/g, "")}`}
             className={cn(
-              buttonVariants({ variant: "secondary" }),
-              "bg-white/10 text-white hover:bg-white/20",
+              buttonVariants(),
+              "bg-brass text-ink hover:bg-brass/90",
             )}
           >
-            <Phone className="size-4" /> Call
+            Open in Maps
           </a>
           <a
             href={wa}
@@ -49,6 +46,15 @@ export function StoreBlock() {
             )}
           >
             <MessageCircle className="size-4" /> WhatsApp
+          </a>
+          <a
+            href={`tel:${storeInfo.phone.replace(/\s/g, "")}`}
+            className={cn(
+              buttonVariants({ variant: "secondary" }),
+              "bg-white/10 text-white hover:bg-white/20",
+            )}
+          >
+            <Phone className="size-4" /> Call
           </a>
         </div>
       </div>

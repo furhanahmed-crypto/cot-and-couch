@@ -16,19 +16,20 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { ROUTES } from "@/constants/routes";
-import { useCustomerSession } from "@/hooks/use-customer-session";
 import { useRecentlyViewed } from "@/hooks/use-recently-viewed";
 import { useShortlist } from "@/hooks/use-shortlist";
+import { authClient } from "@/lib/auth/client";
 import { cn } from "@/lib/utils";
-import { getCategories } from "@/services/catalogue";
+import type { Category } from "@/types";
 
-export function ShopHeader() {
-  const cats = getCategories();
-  const { session, logout } = useCustomerSession();
+export function ShopHeader({ categories }: { categories: Category[] }) {
+  const cats = categories;
+  const { data: session } = authClient.useSession();
   const { count } = useShortlist();
   const { clear } = useRecentlyViewed();
   const router = useRouter();
   const [open, setOpen] = useState(false);
+  const user = session?.user;
 
   return (
     <header className="sticky top-0 z-40 border-b border-border/70 bg-background/90 backdrop-blur-md">
@@ -102,11 +103,11 @@ export function ShopHeader() {
               <User className="size-4" />
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-52">
-              {session ? (
+              {user ? (
                 <>
                   <div className="px-2 py-1.5 text-xs text-muted-foreground">
-                    {session.name}
-                    <div>+91 {session.mobile}</div>
+                    {user.name}
+                    <div className="truncate">{user.email}</div>
                   </div>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={() => router.push(ROUTES.orders)}>
@@ -118,8 +119,8 @@ export function ShopHeader() {
                   <DropdownMenuItem onClick={clear}>Clear browse history</DropdownMenuItem>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem
-                    onClick={() => {
-                      logout();
+                    onClick={async () => {
+                      await authClient.signOut();
                       router.push(ROUTES.login);
                     }}
                   >

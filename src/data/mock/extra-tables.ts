@@ -80,7 +80,6 @@ export const extraTables = rows.map((row, i) => {
         id: `v-xtab-${i + 1}`,
         sku: `CC-DESK-X${i + 1}`,
         colourId: colour,
-        configuration: tray ? "with tray" : "no tray",
         mrp,
         price,
         stockQty: qty,

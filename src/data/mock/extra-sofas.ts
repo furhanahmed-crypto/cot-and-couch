@@ -73,7 +73,6 @@ export const extraSofas = rows.map((row, i) => {
         id: `v-xsof-${i + 1}`,
         sku: `CC-SOF-X${i + 1}`,
         colourId: colour,
-        configuration: String(seating),
         mrp,
         price,
         stockQty: qty,

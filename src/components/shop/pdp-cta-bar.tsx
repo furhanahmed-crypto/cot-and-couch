@@ -15,14 +15,16 @@ import {
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { storeInfo } from "@/data/mock";
+import type { StoreInfo } from "@/types";
 
 export function PdpCtaBar({
   productName,
   productUrl,
+  storeInfo,
 }: {
   productName: string;
   productUrl: string;
+  storeInfo: StoreInfo;
 }) {
   const [visitOpen, setVisitOpen] = useState(false);
   const [contactOpen, setContactOpen] = useState(false);

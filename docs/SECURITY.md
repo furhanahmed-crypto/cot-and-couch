@@ -1,21 +1,21 @@
-# Security — Phase 1 prototype
+# Security
 
-Phase 1 is a **demonstration frontend**. Treat all auth and data persistence as **non-production**. This document states limitations and future requirements so engineers and stakeholders do not over-trust the mock.
+Auth is moving to **Neon Auth (email sessions + cookies)** and app **`profiles.role`**. Catalogue data is still mock. Treat production hardening (RLS, OTP rate limits, DPDP) as incomplete until those land.
 
 ---
 
-## Current security posture (mock)
+## Current posture
 
-| Area | Phase 1 behaviour | Risk |
-|------|-------------------|------|
-| Customer auth | Any 10-digit mobile + any 6-digit OTP succeeds | Trivial impersonation; no proof of possession |
-| Admin auth | Shared demo password (`cotandcouch2026` in README) | Anyone with URL and password can access admin UI |
-| Session storage | Flags/tokens in `localStorage` | XSS on the origin could read or tamper with session |
-| Authorization | Team vs Admin is UI-only | No enforcement; URLs may still be reachable |
-| Data | Catalogue/enquiries in memory + mock JSON | No encryption at rest; no audit trail |
-| Transport | Dev on `http://localhost` | Production must use HTTPS |
+| Area | Now | Notes |
+|------|-----|--------|
+| Customer auth | Neon Auth email/password | Real sessions; not localStorage |
+| Staff auth | Same Neon Auth; `profiles.role` must be `admin` or `team` | Enforced in server actions / admin shell |
+| Authorization | By `profile.id` + `role` | Never by email string equality |
+| Secrets | Root `.env` (gitignored) | Never commit `DATABASE_URL` / cookie secret |
+| Catalogue | Still mock JSON | No DB RLS yet |
+| Phone OTP | Columns on `profiles` only | No SMS provider yet |
 
-**Bottom line:** Do not deploy this prototype to the public internet with real customer data or as an access-controlled operations tool without a full security pass.
+**Bottom line:** Safe for local/dev with your Neon project. Before public launch: RLS, HTTPS, domain allowlist in Neon Auth, OTP rate limits, DPDP consents.
 
 ---
 

@@ -1,6 +1,20 @@
-# Architecture — Phase 1 frontend prototype
+# Architecture — Cot & Couch Digital Window
 
-Cot & Couch Digital Window Phase 1 is a **Next.js App Router** application with **no database and no API routes** for business data. All catalogue and admin mutations go through **client-side mock services** backed by JSON seed data and in-memory stores.
+Next.js App Router app. **Auth + `profiles` use Neon** (Managed Better Auth + Postgres). **Catalogue / admin CRUD remain mock** until the next DB phase.
+
+### Auth (live)
+
+| Piece | Location |
+|-------|----------|
+| Env | Root `.env` — `DATABASE_URL`, `NEON_AUTH_BASE_URL`, `NEON_AUTH_COOKIE_SECRET` |
+| Server auth | `src/lib/auth/server.ts` (`createNeonAuth`) |
+| Browser auth | `src/lib/auth/client.ts` |
+| API proxy | `src/app/api/auth/[...path]/route.ts` |
+| Route guard | `src/proxy.ts` → redirects guests to `/login` |
+| App identity | `profiles` table (`src/db/schema.ts`) keyed by `auth_user_id` |
+| Ensure/load profile | `src/lib/auth/profile.ts` |
+
+Authorize by **`profile.id` + `role`**, never by email string checks. Phone OTP columns exist on `profiles` for a later provider.
 
 ---
 

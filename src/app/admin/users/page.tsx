@@ -1,7 +1,3 @@
-"use client";
-
-import { AdminGate } from "@/components/admin/admin-gate";
-import { MockBanner } from "@/components/admin/mock-banner";
 import { PageHeader } from "@/components/admin/page-header";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -12,39 +8,54 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { staffUsers } from "@/data/mock";
+import { db } from "@/db";
+import { profiles } from "@/db/schema";
+import { inArray } from "drizzle-orm";
 
-export default function UsersPage() {
+export default async function UsersPage() {
+  const staff = await db
+    .select()
+    .from(profiles)
+    .where(inArray(profiles.role, ["admin", "team"]));
+
   return (
-    <AdminGate title="Staff users">
-      <div className="space-y-6">
-        <PageHeader title="Staff users" description="Mock directory — not editable in prototype." />
-        <MockBanner compact />
-        <div className="overflow-x-auto rounded-xl border border-border bg-card">
-          <Table>
-            <TableHeader>
+    <div className="space-y-6">
+      <PageHeader
+        title="Staff users"
+        description="Staff profiles from Neon (role admin / team)."
+      />
+      <div className="overflow-x-auto rounded-xl border border-border bg-card">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Name</TableHead>
+              <TableHead>Email</TableHead>
+              <TableHead>Role</TableHead>
+              <TableHead>Phone</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {staff.length === 0 ? (
               <TableRow>
-                <TableHead>Name</TableHead>
-                <TableHead>Mobile</TableHead>
-                <TableHead>Role</TableHead>
-                <TableHead>Active</TableHead>
+                <TableCell colSpan={4} className="text-muted-foreground">
+                  No staff profiles yet. Register and set role=admin/team in DB.
+                </TableCell>
               </TableRow>
-            </TableHeader>
-            <TableBody>
-              {staffUsers.map((u) => (
+            ) : (
+              staff.map((u) => (
                 <TableRow key={u.id}>
-                  <TableCell className="font-medium">{u.name}</TableCell>
-                  <TableCell>{u.mobile}</TableCell>
+                  <TableCell>{u.name ?? "—"}</TableCell>
+                  <TableCell>{u.email}</TableCell>
                   <TableCell>
-                    <Badge className="capitalize">{u.role}</Badge>
+                    <Badge variant="outline">{u.role}</Badge>
                   </TableCell>
-                  <TableCell>{u.active ? "Yes" : "No"}</TableCell>
+                  <TableCell>{u.phone ?? "—"}</TableCell>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </div>
+              ))
+            )}
+          </TableBody>
+        </Table>
       </div>
-    </AdminGate>
+    </div>
   );
 }

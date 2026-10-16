@@ -1,38 +1,48 @@
-# Cot & Couch — Digital Window (Phase 1)
+# Cot & Couch — Digital Window
 
-Frontend-only prototype of the **Cot & Couch Digital Window**: a premium furniture showroom catalogue with enquiry-led CTAs, mock customer login, and an admin console demo. There is **no backend, database, cart, checkout, or payments** in this phase.
+Premium furniture showroom catalogue with enquiry-led CTAs. **Auth uses Neon Auth (email)** + a `profiles` table. Catalogue data is still mock for now (no cart/checkout/payments).
 
-Detailed product and engineering docs live in [`docs/`](./docs/).
-
-| Document | Purpose |
-|----------|---------|
-| [PRD.md](./docs/PRD.md) | Requirements, users, CF/AD/PB/SD features, out of scope |
-| [ARCHITECTURE.md](./docs/ARCHITECTURE.md) | App Router structure, mock services, storage |
-| [DESIGN.md](./docs/DESIGN.md) | Brand colours, typography, UX principles |
-| [TASKS.md](./docs/TASKS.md) | Feature checklist and status |
-| [RULES.md](./docs/RULES.md) | Coding standards |
-| [MEMORY.md](./docs/MEMORY.md) | Decision log |
-| [SECURITY.md](./docs/SECURITY.md) | Mock auth limitations and future needs |
+Detailed docs: [`docs/`](./docs/).
 
 ---
 
 ## Prerequisites
 
-- **Node.js** 20+ (LTS recommended)
-- **npm** 10+ (or compatible package manager)
+- **Node.js** 20+
+- A free [Neon](https://console.neon.tech) project with **Auth** enabled
 
 ---
 
-## Setup
+## Setup (auth)
+
+### 1. Get Neon values (fill root `.env`)
+
+1. Open [console.neon.tech](https://console.neon.tech) → create/open a project  
+2. **Auth** (sidebar) → **Enable Auth** / Better Auth  
+3. Copy **Auth URL** → `NEON_AUTH_BASE_URL` in `.env`  
+4. Dashboard → **Connect** → enable **Connection pooling** → copy → `DATABASE_URL`  
+5. Auth → Configuration → **Domains** → add `http://localhost:3000`  
+6. `NEON_AUTH_COOKIE_SECRET` is already generated in `.env` (keep it private)
+
+### 2. Install, push profiles table, run
 
 ```bash
-git clone <repository-url>
-cd cot-and-couch
 npm install
+npm run db:push
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000).
+Open [http://localhost:3000](http://localhost:3000) → **Register** with email → you land in the shop.
+
+### 3. Make yourself staff (admin)
+
+In Neon **SQL Editor**:
+
+```sql
+update profiles set role = 'admin' where email = 'your@email.com';
+```
+
+Then sign in at `/admin/login` with the same email/password.
 
 ---
 
@@ -40,26 +50,13 @@ Open [http://localhost:3000](http://localhost:3000).
 
 | Command | Description |
 |---------|-------------|
-| `npm run dev` | Start Next.js dev server (Turbopack) |
-| `npm run build` | Production build |
-| `npm run start` | Serve production build |
-| `npm run lint` | Run ESLint (Next.js config) |
+| `npm run dev` | Dev server |
+| `npm run build` / `start` | Production |
+| `npm run lint` | ESLint |
+| `npm run db:push` | Apply Drizzle schema (`profiles`) to Neon |
+| `npm run db:studio` | Browse tables |
 
----
-
-## Demo credentials (mock only)
-
-**Not real authentication.** No SMS or backend is called.
-
-| Surface | Credentials |
-|---------|-------------|
-| **Customer** | Any valid **10-digit** Indian mobile (e.g. `9876501234`) |
-| **Returning customer** | `9848012345` or `9123456780` (skips name form; has mock orders) |
-| **Customer OTP** | Any **6 digits**; demos use **`123456`** |
-| **Admin** | Mobile **`9391360138`** · password **`cotandcouch2026`** · any 6-digit OTP → `/admin/login` |
-| **Team** (optional UI demo) | Mobile `9876543211` · password **`team123`** · any 6-digit OTP |
-
-Customer and staff sessions are stored in **`localStorage`**. Clearing site data resets login, shortlist, and recently viewed items. Admin edits toast as mock and are not persisted across reloads. See [SECURITY.md](./docs/SECURITY.md).
+Sessions are **Neon Auth cookies** (not localStorage). Shortlist / recently viewed still use localStorage until we migrate those.
 
 ---
 

@@ -1,72 +1,38 @@
+/**
+ * Catalogue reads from Neon. Pure helpers stay sync for client cards.
+ */
+import { cache } from "react";
+import { asc, eq, inArray } from "drizzle-orm";
+import { db } from "@/db";
 import {
-  brands,
-  categories,
-  collections,
-  colours,
-  products,
-  sizes,
-  storeInfo,
-} from "@/data/mock";
-import type { Product, StockStatus } from "@/types";
+  categories as categoriesTable,
+  collections as collectionsTable,
+  mattressBrands as brandsTable,
+  optionGroups,
+  options,
+  productCollections,
+  productVariants,
+  products as productsTable,
+  sizeDimensions,
+} from "@/db/schema";
 import { discountPercent } from "@/lib/format";
+import {
+  mapBrand,
+  mapCategory,
+  mapColour,
+  mapProduct,
+  mapSize,
+  type OptionLookup,
+} from "@/services/catalogue-map";
+import { getCollectionBySlug as getOpsCollectionBySlug, getCollections, getStoreInfo } from "@/services/ops";
+import type { Colour, Product, StockStatus } from "@/types";
 
-export function getCategories() {
-  return [...categories].filter((c) => c.visible).sort((a, b) => a.order - b.order);
-}
-
-export function getCategoryBySlug(slug: string) {
-  return categories.find((c) => c.slug === slug);
-}
-
-export function getProductBySlug(slug: string) {
-  return products.find((p) => p.slug === slug && p.status === "published");
-}
-
-export function getProductById(id: string) {
-  return products.find((p) => p.id === id);
-}
-
-export function getPublishedProducts() {
-  return products.filter((p) => p.status === "published");
-}
-
-export function getFeaturedProducts() {
-  return getPublishedProducts()
-    .filter((p) => p.featured)
-    .sort((a, b) => b.popularity - a.popularity);
-}
-
-export function getRoyalRangeProducts() {
-  return getPublishedProducts().filter((p) => p.collectionId === "col-royal");
-}
-
-export function getProductsByIds(ids: string[]) {
-  return ids.map((id) => getProductById(id)).filter(Boolean) as Product[];
-}
-
-export function startingPrice(product: Product) {
-  const prices = product.variants.map((v) => v.price);
-  return Math.min(...prices);
-}
-
-export function maxDiscount(product: Product) {
-  return Math.max(...product.variants.map((v) => discountPercent(v.mrp, v.price)));
-}
-
-export function productColours(product: Product) {
-  const ids = [...new Set(product.variants.map((v) => v.colourId))];
-  return ids.map((id) => colours.find((c) => c.id === id)!).filter(Boolean);
-}
-
-export function worstStock(product: Product): StockStatus {
-  const order: StockStatus[] = ["out_of_stock", "low_stock", "made_to_order", "in_stock"];
-  for (const s of order) {
-    if (product.variants.some((v) => v.stockStatus === s)) return s;
-  }
-  return "in_stock";
-}
-
-export type SortKey = "popularity" | "price_asc" | "price_desc" | "newest" | "discount";
+export type SortKey =
+  | "popularity"
+  | "price_asc"
+  | "price_desc"
+  | "newest"
+  | "discount";
 
 export interface FilterState {
   subCategory?: string;
@@ -81,32 +47,281 @@ export interface FilterState {
   q?: string;
 }
 
-export function filterProducts(
+async function loadOptionsById(): Promise<OptionLookup> {
+  const rows = await db.select().from(options);
+  return new Map(rows.map((r) => [r.id, r]));
+}
+
+async function loadCategorySlugById(): Promise<Map<string, string>> {
+  const rows = await db.select().from(categoriesTable);
+  return new Map(rows.map((r) => [r.id, r.slug]));
+}
+
+async function loadVariantsByProductIds(productIds: string[]) {
+  if (!productIds.length) return new Map<string, typeof productVariants.$inferSelect[]>();
+  const rows = await db
+    .select()
+    .from(productVariants)
+    .where(inArray(productVariants.productId, productIds));
+  const map = new Map<string, typeof productVariants.$inferSelect[]>();
+  for (const row of rows) {
+    const list = map.get(row.productId) ?? [];
+    list.push(row);
+    map.set(row.productId, list);
+  }
+  return map;
+}
+
+export const getCategories = cache(async (opts?: { includeHidden?: boolean }) => {
+  const rows = await db
+    .select()
+    .from(categoriesTable)
+    .orderBy(asc(categoriesTable.sortOrder));
+  const mapped = rows.map(mapCategory);
+  if (opts?.includeHidden) return mapped;
+  return mapped.filter((c) => c.visible);
+});
+
+export const getCategoryBySlug = cache(async (slug: string) => {
+  const rows = await db
+    .select()
+    .from(categoriesTable)
+    .where(eq(categoriesTable.slug, slug))
+    .limit(1);
+  return rows[0] ? mapCategory(rows[0]) : undefined;
+});
+
+async function loadCollectionIdByProduct(
+  productIds: string[],
+): Promise<Map<string, string>> {
+  if (!productIds.length) return new Map();
+  const links = await db
+    .select()
+    .from(productCollections)
+    .where(inArray(productCollections.productId, productIds));
+  const map = new Map<string, string>();
+  for (const link of links) {
+    if (!map.has(link.productId)) map.set(link.productId, link.collectionId);
+  }
+  return map;
+}
+
+async function loadDimLabels(): Promise<Map<string, string>> {
+  const rows = await db.select().from(sizeDimensions);
+  return new Map(rows.map((d) => [d.id, d.label]));
+}
+
+async function hydrateProducts(
+  rows: (typeof productsTable.$inferSelect)[],
+): Promise<Product[]> {
+  if (!rows.length) return [];
+  const ids = rows.map((r) => r.id);
+  const [opts, catSlugs, variantsByProduct, collectionByProduct, dimLabels] =
+    await Promise.all([
+      loadOptionsById(),
+      loadCategorySlugById(),
+      loadVariantsByProductIds(ids),
+      loadCollectionIdByProduct(ids),
+      loadDimLabels(),
+    ]);
+
+  return rows.map((row) => {
+    const product = mapProduct(
+      row,
+      variantsByProduct.get(row.id) ?? [],
+      opts,
+      catSlugs.get(row.categoryId) ?? "mattresses",
+      dimLabels,
+    );
+    const collectionId = collectionByProduct.get(row.id);
+    if (collectionId) product.collectionId = collectionId;
+    return product;
+  });
+}
+
+export const getPublishedProducts = cache(async () => {
+  const rows = await db
+    .select()
+    .from(productsTable)
+    .where(eq(productsTable.status, "published"))
+    .orderBy(asc(productsTable.sortOrder));
+  return hydrateProducts(rows);
+});
+
+export const getAllProducts = cache(async () => {
+  const rows = await db
+    .select()
+    .from(productsTable)
+    .orderBy(asc(productsTable.sortOrder));
+  return hydrateProducts(rows);
+});
+
+export async function getProductBySlug(slug: string) {
+  const rows = await db
+    .select()
+    .from(productsTable)
+    .where(eq(productsTable.slug, slug))
+    .limit(1);
+  if (!rows[0] || rows[0].status !== "published") return undefined;
+  const [product] = await hydrateProducts(rows);
+  return product;
+}
+
+export async function getProductById(id: string) {
+  const rows = await db
+    .select()
+    .from(productsTable)
+    .where(eq(productsTable.id, id))
+    .limit(1);
+  if (!rows[0]) return undefined;
+  const [product] = await hydrateProducts(rows);
+  return product;
+}
+
+export async function getProductsByIds(ids: string[]) {
+  if (!ids.length) return [];
+  const unique = [...new Set(ids)];
+  const rows = await db
+    .select()
+    .from(productsTable)
+    .where(inArray(productsTable.id, unique));
+  const hydrated = await hydrateProducts(rows);
+  const byId = new Map(hydrated.map((p) => [p.id, p]));
+  return unique.map((id) => byId.get(id)).filter(Boolean) as Product[];
+}
+
+export async function getFeaturedProducts() {
+  const all = await getPublishedProducts();
+  return all
+    .filter((p) => p.featured)
+    .sort((a, b) => b.popularity - a.popularity);
+}
+
+export async function getProductsByCollectionSlug(slug: string) {
+  const col = await db
+    .select()
+    .from(collectionsTable)
+    .where(eq(collectionsTable.slug, slug))
+    .limit(1);
+  if (!col[0]) return [];
+  const links = await db
+    .select()
+    .from(productCollections)
+    .where(eq(productCollections.collectionId, col[0].id));
+  return getProductsByIds(links.map((l) => l.productId));
+}
+
+export async function getRoyalRangeProducts() {
+  return getProductsByCollectionSlug("royal-range");
+}
+
+export async function getMasters() {
+  const [brandRows, groupRows, optionRows, dimRows] = await Promise.all([
+    db.select().from(brandsTable).orderBy(asc(brandsTable.sortOrder)),
+    db.select().from(optionGroups).orderBy(asc(optionGroups.sortOrder)),
+    db.select().from(options).orderBy(asc(options.sortOrder)),
+    db.select().from(sizeDimensions).orderBy(asc(sizeDimensions.sortOrder)),
+  ]);
+
+  const colourGroup = groupRows.find((g) => g.key === "colour");
+  const sizeGroup = groupRows.find((g) => g.key === "size_group");
+  const colours = optionRows
+    .filter((o) => colourGroup && o.groupId === colourGroup.id)
+    .map(mapColour);
+  const sizeOpts = optionRows.filter(
+    (o) => sizeGroup && o.groupId === sizeGroup.id,
+  );
+  const sizeLabelById = new Map(sizeOpts.map((o) => [o.id, o.label]));
+
+  const [collectionList, storeInfo] = await Promise.all([
+    getCollections(),
+    getStoreInfo(),
+  ]);
+
+  return {
+    colours,
+    mattressBrands: brandRows.map(mapBrand),
+    collections: collectionList,
+    sizes: dimRows
+      .filter((d) => d.isActive)
+      .map((d) =>
+        mapSize(d, sizeLabelById.get(d.sizeGroupOptionId) ?? "Size"),
+      ),
+    storeInfo,
+  };
+}
+
+export async function getCollectionBySlug(slug: string) {
+  return getOpsCollectionBySlug(slug);
+}
+
+export function startingPrice(product: Product) {
+  const prices = product.variants.map((v) => v.price);
+  return prices.length ? Math.min(...prices) : 0;
+}
+
+export function maxDiscount(product: Product) {
+  if (!product.variants.length) return 0;
+  return Math.max(
+    ...product.variants.map((v) => discountPercent(v.mrp, v.price)),
+  );
+}
+
+export function productColours(product: Product): Colour[] {
+  const map = new Map<string, Colour>();
+  for (const v of product.variants) {
+    if (!v.colourId || map.has(v.colourId)) continue;
+    map.set(v.colourId, {
+      id: v.colourId,
+      name: v.colourName ?? "Colour",
+      hex: v.colourHex ?? "#CCCCCC",
+    });
+  }
+  return [...map.values()];
+}
+
+export function worstStock(product: Product): StockStatus {
+  const order: StockStatus[] = [
+    "out_of_stock",
+    "low_stock",
+    "made_to_order",
+    "in_stock",
+  ];
+  for (const s of order) {
+    if (product.variants.some((v) => v.stockStatus === s)) return s;
+  }
+  return "in_stock";
+}
+
+export function filterProductList(
+  list: Product[],
   categoryId: string | undefined,
   filters: FilterState,
   sort: SortKey,
+  categoryNames: Map<string, string> = new Map(),
 ): Product[] {
-  let list = getPublishedProducts();
-  if (categoryId) list = list.filter((p) => p.categoryId === categoryId);
+  let result = list;
+  if (categoryId) result = result.filter((p) => p.categoryId === categoryId);
 
   if (filters.subCategory) {
-    list = list.filter((p) => p.subCategoryId === filters.subCategory);
+    result = result.filter((p) => p.subCategoryId === filters.subCategory);
   }
   if (filters.q) {
     const q = filters.q.toLowerCase();
-    list = list.filter((p) => {
-      const cat = categories.find((c) => c.id === p.categoryId)?.name ?? "";
-      const col = collections.find((c) => c.id === p.collectionId)?.name ?? "";
-      const mats = p.material.toLowerCase();
+    result = result.filter((p) => {
+      const cat = categoryNames.get(p.categoryId) ?? "";
       const cols = productColours(p)
         .map((c) => c.name)
         .join(" ")
         .toLowerCase();
-      return [p.name, cat, col, mats, cols, ...p.tags].join(" ").toLowerCase().includes(q);
+      return [p.name, cat, p.material, cols, ...p.tags]
+        .join(" ")
+        .toLowerCase()
+        .includes(q);
     });
   }
   if (filters.priceMin != null || filters.priceMax != null) {
-    list = list.filter((p) => {
+    result = result.filter((p) => {
       const price = startingPrice(p);
       if (filters.priceMin != null && price < filters.priceMin) return false;
       if (filters.priceMax != null && price > filters.priceMax) return false;
@@ -114,34 +329,40 @@ export function filterProducts(
     });
   }
   if (filters.discountMin) {
-    list = list.filter((p) => maxDiscount(p) >= filters.discountMin!);
+    result = result.filter((p) => maxDiscount(p) >= filters.discountMin!);
   }
   if (filters.colours?.length) {
-    list = list.filter((p) =>
+    result = result.filter((p) =>
       p.variants.some((v) => filters.colours!.includes(v.colourId)),
     );
   }
   if (filters.materials?.length) {
-    list = list.filter((p) =>
-      filters.materials!.some((m) => p.material.toLowerCase().includes(m.toLowerCase())),
+    result = result.filter((p) =>
+      filters.materials!.some((m) =>
+        p.material.toLowerCase().includes(m.toLowerCase()),
+      ),
     );
   }
   if (filters.collections?.length) {
-    list = list.filter((p) => filters.collections!.includes(p.collectionId));
+    result = result.filter(
+      (p) => p.collectionId && filters.collections!.includes(p.collectionId),
+    );
   }
   if (filters.availability?.length) {
-    list = list.filter((p) =>
+    result = result.filter((p) =>
       p.variants.some((v) => filters.availability!.includes(v.stockStatus)),
     );
   }
   if (filters.extra) {
     for (const [key, values] of Object.entries(filters.extra)) {
       if (!values.length) continue;
-      list = list.filter((p) => values.includes(String(p.specs[key] ?? "")));
+      result = result.filter((p) =>
+        values.includes(String(p.specs[key] ?? "")),
+      );
     }
   }
 
-  const sorted = [...list];
+  const sorted = [...result];
   sorted.sort((a, b) => {
     if (sort === "price_asc") return startingPrice(a) - startingPrice(b);
     if (sort === "price_desc") return startingPrice(b) - startingPrice(a);
@@ -152,14 +373,25 @@ export function filterProducts(
   return sorted;
 }
 
-export function searchProducts(q: string) {
+/** @deprecated prefer filterProductList with preloaded products */
+export async function filterProducts(
+  categoryId: string | undefined,
+  filters: FilterState,
+  sort: SortKey,
+) {
+  const [list, cats] = await Promise.all([
+    getPublishedProducts(),
+    getCategories(),
+  ]);
+  return filterProductList(
+    list,
+    categoryId,
+    filters,
+    sort,
+    new Map(cats.map((c) => [c.id, c.name])),
+  );
+}
+
+export async function searchProducts(q: string) {
   return filterProducts(undefined, { q }, "popularity");
-}
-
-export function getMasters() {
-  return { colours, brands, collections, sizes, storeInfo };
-}
-
-export function getCollectionBySlug(slug: string) {
-  return collections.find((c) => c.slug === slug);
 }

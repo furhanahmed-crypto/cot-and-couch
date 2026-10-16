@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { AdminSidebar } from "@/components/admin/admin-sidebar";
 import { BrandMark } from "@/components/shared/brand-mark";
@@ -11,37 +11,51 @@ import {
   SidebarTrigger,
 } from "@/components/ui/sidebar";
 import { ROUTES } from "@/constants/routes";
-import { useStaffSession } from "@/hooks/use-staff-session";
+import { authClient } from "@/lib/auth/client";
+import { getStaffProfile } from "@/services/profile";
 
 export function AdminShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
-  const { session, ready } = useStaffSession();
   const isLogin = pathname === ROUTES.admin.login;
+  const { data: session, isPending } = authClient.useSession();
+  const [staffName, setStaffName] = useState<string | null>(null);
+  const [staffOk, setStaffOk] = useState<boolean | null>(isLogin ? true : null);
 
   useEffect(() => {
-    if (!ready) return;
-    if (!session && !isLogin) {
-      router.replace(ROUTES.admin.login);
-    }
-  }, [ready, session, isLogin, router]);
+    if (isLogin) return;
+    if (isPending) return;
 
-  if (!ready) {
-    return (
-      <div className="flex min-h-svh items-center justify-center bg-background text-sm text-muted-foreground">
-        Loading console…
-      </div>
-    );
-  }
+    if (!session?.user) {
+      router.replace(ROUTES.admin.login);
+      return;
+    }
+
+    let cancelled = false;
+    getStaffProfile().then((profile) => {
+      if (cancelled) return;
+      if (!profile) {
+        router.replace(ROUTES.admin.login);
+        setStaffOk(false);
+        return;
+      }
+      setStaffName(profile.name ?? profile.email);
+      setStaffOk(true);
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [isLogin, isPending, session, router]);
 
   if (isLogin) {
     return <div className="min-h-svh bg-background">{children}</div>;
   }
 
-  if (!session) {
+  if (isPending || staffOk !== true) {
     return (
       <div className="flex min-h-svh items-center justify-center bg-background text-sm text-muted-foreground">
-        Redirecting to login…
+        Loading console…
       </div>
     );
   }
@@ -56,7 +70,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
             <BrandMark href={ROUTES.admin.dashboard} compact className="max-w-[140px]" />
           </div>
           <p className="hidden truncate text-sm text-muted-foreground md:block">
-            Team console · {session.name}
+            Team console · {staffName ?? session?.user?.name}
           </p>
           <div className="ml-auto">
             <ThemeToggle />

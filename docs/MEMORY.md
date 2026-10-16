@@ -110,6 +110,77 @@ Chronological-ish record of **why** the prototype is shaped this way. Update whe
 
 ---
 
+## 2026-10-16 — Neon Auth wired (email only)
+
+**Done:**
+
+- `@neondatabase/auth` + Drizzle + `profiles` table (phone/OTP columns present, unused).
+- Custom `/login` + `/register` (email/password server actions).
+- `/admin/login` uses same Neon Auth; requires `profiles.role` in (`admin`,`team`).
+- Route protection via `src/proxy.ts` (Next.js 16).
+- App authorize by `profile.id` + `role` helpers in `src/lib/auth/profile.ts` / `src/services/profile.ts`.
+
+**Not done yet:** SMS OTP provider, RLS policies.
+
+---
+
+## 2026-10-16 — Shop catalogue + favourites from Neon
+
+**Done:**
+
+- Shop + admin catalogue reads from Neon (`products`, variants, options, mattress_brands, categories).
+- `profile_favourites` table; shortlist is DB-backed (login required).
+- Admin products / categories / pricing / stock write selected fields to DB.
+
+**Also done (ops pass):** `collections`, `product_collections`, `store_settings`, `gallery_items`, `reels`, `leads`, `orders`, `order_status_history`, `audit_logs`, `segments` — seeded + shop/admin reads + CRUD on masters/attributes/categories/products/gallery/reels/leads/settings.
+
+**PDF alignment (2026-10-16):** Colour master seed = teak / walnut / honey / natural (PDF wood finishes). Collections = Royal Range + Victoria only (Everyday Comfort / Work Studio removed). Admin nav = AD-01–AD-13 (Segments under Leads).
+
+---
+
+## 2026-10-16 — PLP filters: no duplicate colour
+
+**Bug:** Cots (and sofas/tables) showed **Colour / finish** twice — once from `FilterPanel` common colour master, once from `attributeTemplates` extra fields.
+
+**Fix:** Remove colour from category attribute templates; `FilterPanel` skips any extra field whose key/label is colour/finish/collection/availability/price/discount. Sticky filter column scrolls independently (`max-h` + `overflow-y-auto`); no nested colour scrollbar.
+
+---
+
+## 2026-10-16 — Favourites: one fetch per layout
+
+**Bug:** Each `ProductCard` + header called `getFavouriteIdsAction` on mount → dozens of POSTs and long “Rendering…” on PLP.
+
+**Fix:** Shop layout loads favourite IDs once server-side; `ShortlistProvider` shares them. `useShortlist` is context-only (no per-card server action).
+
+---
+
+## 2026-10-16 — PDP variants: Wakefit-style axes
+
+**Bug:** Sparse seed tied each colour to a different size/price; PDP filtered size by colour → switching colour jumped SKU and price.
+
+**Fix:** Seed full size × dimension × thickness × colour matrix; price = size + thickness only. PDP pickers are independent chips (size → dimension → thickness → colour); colour never resets other axes.
+
+---
+
+## 2026-10-16 — Catalogue DTOs (mattress-first)
+
+**Decision:** Shared filter tables + lean products/variants (not one table per filter).
+
+| Table | Role |
+|-------|------|
+| `categories` | mattresses, cots, sofas, computer-tables |
+| `mattress_brands` | 6 mattress brands; null `mattress_brand_id` = house-made |
+| `option_groups` + `options` | Admin-editable filters (purpose, size, thickness, …) |
+| `size_dimensions` | Inch presets under Single/Diwan/Queen/King |
+| `products` | Model + purpose/cover/filling/comfort |
+| `product_variants` | SKU = size + dimension/custom + thickness + colour + price |
+
+**Seed:** `npm run db:seed` — 6 mattress brands × 5 models + house-made cots/sofas/tables, options + dimensions, sample variants.
+
+**Images:** `public/images/{category}/` and `public/images/mattresses/{brand-slug}/{model}.jpg`. Shared seed data: `src/data/catalogue/seed-data.ts` (DB + mock).
+
+---
+
 ## Open questions (future)
 
 - Customer gate until phone OTP: temporary Neon Auth email vs light/public browse.

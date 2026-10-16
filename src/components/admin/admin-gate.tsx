@@ -1,13 +1,14 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Lock } from "lucide-react";
 import { MockBanner } from "@/components/admin/mock-banner";
 import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ROUTES } from "@/constants/routes";
-import { useStaffSession } from "@/hooks/use-staff-session";
 import { cn } from "@/lib/utils";
+import { isAdminProfile } from "@/services/profile";
 
 export function AdminGate({
   children,
@@ -16,11 +17,19 @@ export function AdminGate({
   children: React.ReactNode;
   title: string;
 }) {
-  const { isAdmin, ready } = useStaffSession();
+  const [ok, setOk] = useState<boolean | null>(null);
 
-  if (!ready) return null;
+  useEffect(() => {
+    isAdminProfile().then(setOk);
+  }, []);
 
-  if (!isAdmin) {
+  if (ok === null) {
+    return (
+      <p className="text-sm text-muted-foreground">Checking permissions…</p>
+    );
+  }
+
+  if (!ok) {
     return (
       <div className="space-y-6">
         <MockBanner compact />
@@ -31,7 +40,8 @@ export function AdminGate({
               {title}
             </CardTitle>
             <CardDescription>
-              This area is restricted to admin role in the mock console. Log in as admin to access.
+              This area is restricted to the admin role. Your profile role must be{" "}
+              <code>admin</code> in the database.
             </CardDescription>
           </CardHeader>
           <CardContent>

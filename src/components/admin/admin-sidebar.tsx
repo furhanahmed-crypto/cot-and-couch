@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { Lock, LogOut } from "lucide-react";
@@ -21,19 +22,32 @@ import {
 } from "@/components/ui/sidebar";
 import { ADMIN_NAV } from "@/constants/admin-nav";
 import { ROUTES } from "@/constants/routes";
-import { useStaffSession } from "@/hooks/use-staff-session";
+import { authClient } from "@/lib/auth/client";
+import { getStaffProfile } from "@/services/profile";
 
 export function AdminSidebar() {
   const pathname = usePathname();
   const router = useRouter();
-  const { session, logout, isAdmin } = useStaffSession();
+  const { data: session } = authClient.useSession();
   const { isMobile, setOpenMobile } = useSidebar();
+  const [role, setRole] = useState<"admin" | "team" | null>(null);
+  const [label, setLabel] = useState("Staff");
 
-  function handleLogout() {
-    logout();
+  useEffect(() => {
+    getStaffProfile().then((profile) => {
+      if (!profile) return;
+      setRole(profile.role === "admin" ? "admin" : "team");
+      setLabel(profile.name ?? profile.email);
+    });
+  }, [session?.user?.id]);
+
+  async function handleLogout() {
+    await authClient.signOut();
     if (isMobile) setOpenMobile(false);
     router.replace(ROUTES.admin.login);
   }
+
+  const isAdmin = role === "admin";
 
   return (
     <Sidebar collapsible="icon" variant="sidebar">
@@ -45,14 +59,12 @@ export function AdminSidebar() {
           className="max-w-[150px] group-data-[collapsible=icon]:hidden"
         />
         <div className="min-w-0 group-data-[collapsible=icon]:hidden">
-          <p className="truncate text-xs text-sidebar-foreground/70">
-            {session?.name ?? "Staff"}
-          </p>
+          <p className="truncate text-xs text-sidebar-foreground/70">{label}</p>
           <Badge
             variant="secondary"
             className="mt-1 capitalize bg-sidebar-accent text-sidebar-accent-foreground"
           >
-            {session?.role ?? "guest"}
+            {role ?? "…"}
           </Badge>
         </div>
       </SidebarHeader>

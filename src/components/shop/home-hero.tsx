@@ -9,10 +9,25 @@ import useEmblaCarousel from "embla-carousel-react";
 import { BrandMark } from "@/components/shared/brand-mark";
 import { BRAND } from "@/constants/brand";
 import { ROUTES } from "@/constants/routes";
-import { gallery, products } from "@/data/mock";
 import { cn } from "@/lib/utils";
+import type { GalleryItem, Product } from "@/types";
 
-export function HomeHero() {
+function resolveProduct(products: Product[], productId: string) {
+  return products.find(
+    (p) =>
+      p.id === productId ||
+      p.slug === productId ||
+      p.slug === productId.replace(/^prod-/, ""),
+  );
+}
+
+export function HomeHero({
+  products,
+  gallery,
+}: {
+  products: Product[];
+  gallery: GalleryItem[];
+}) {
   const slides = gallery.filter((g) => g.approved);
   const [selected, setSelected] = useState(0);
 
@@ -47,7 +62,7 @@ export function HomeHero() {
   if (!slides.length) return null;
 
   const active = slides[selected] ?? slides[0];
-  const product = products.find((p) => p.id === active.productId);
+  const product = resolveProduct(products, active.productId);
 
   return (
     <section
@@ -58,7 +73,7 @@ export function HomeHero() {
       <div ref={emblaRef} className="absolute inset-0">
         <div className="flex h-full touch-pan-y">
           {slides.map((slide, idx) => {
-            const slideProduct = products.find((p) => p.id === slide.productId);
+            const slideProduct = resolveProduct(products, slide.productId);
             return (
               <div
                 key={slide.id}

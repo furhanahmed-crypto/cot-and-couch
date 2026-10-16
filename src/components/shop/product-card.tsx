@@ -16,7 +16,6 @@ import {
   worstStock,
 } from "@/services/catalogue";
 import type { Product } from "@/types";
-import { colours as colourMaster } from "@/data/mock";
 
 export function ProductCard({
   product,
@@ -27,12 +26,15 @@ export function ProductCard({
 }) {
   const { has, toggle } = useShortlist();
   const price = startingPrice(product);
-  const mrp = Math.min(...product.variants.map((v) => v.mrp));
+  const mrp = product.variants.length
+    ? Math.min(...product.variants.map((v) => v.mrp))
+    : 0;
   const off = maxDiscount(product);
-  const swatches = productColours(product).slice(0, 4);
-  const extra = productColours(product).length - swatches.length;
+  const allColours = productColours(product);
+  const swatches = allColours.slice(0, 4);
+  const extra = allColours.length - swatches.length;
   const stock = worstStock(product);
-  const img = product.variants[0]?.images[0];
+  const img = product.variants[0]?.images[0] ?? undefined;
   const liked = has(product.id);
 
   return (
@@ -82,7 +84,7 @@ export function ProductCard({
               key={c.id}
               title={c.name}
               className="size-3.5 rounded-full ring-1 ring-border"
-              style={{ backgroundColor: colourMaster.find((x) => x.id === c.id)?.hex ?? c.hex }}
+              style={{ backgroundColor: c.hex }}
             />
           ))}
           {extra > 0 && (

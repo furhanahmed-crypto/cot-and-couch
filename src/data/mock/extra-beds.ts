@@ -79,7 +79,6 @@ export const extraBeds = beds.map((row, i) => {
         sku: `CC-BED-X${i + 1}`,
         colourId: colour,
         sizeId,
-        configuration: storage,
         mrp,
         price,
         stockQty: qty,
