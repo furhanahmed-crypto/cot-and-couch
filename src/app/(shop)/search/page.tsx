@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { Search } from "lucide-react";
 import { ProductCard } from "@/components/shop/product-card";
+import { ProductGridSkeleton } from "@/components/shop/shop-skeletons";
 import { Input } from "@/components/ui/input";
 import { searchProductsAction } from "@/app/(shop)/catalogue/actions";
 import type { Product } from "@/types";
@@ -50,7 +51,7 @@ export default function SearchPage() {
           Start typing to see results.
         </p>
       ) : loading ? (
-        <p className="text-sm text-muted-foreground">Searching…</p>
+        <ProductGridSkeleton count={4} />
       ) : results.length === 0 ? (
         <div className="rounded-xl border border-dashed p-10 text-center text-muted-foreground">
           No products match &ldquo;{q}&rdquo;.

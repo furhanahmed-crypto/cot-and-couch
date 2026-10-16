@@ -6,6 +6,7 @@ import { useState } from "react";
 import { Heart, LogOut, Menu, Search, User } from "lucide-react";
 import { BrandMark } from "@/components/shared/brand-mark";
 import { ThemeToggle } from "@/components/shared/theme-toggle";
+import { ShopNavLink } from "@/components/shop/shop-nav-link";
 import { buttonVariants } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -47,14 +48,14 @@ export function ShopHeader({ categories }: { categories: Category[] }) {
             </SheetHeader>
             <nav className="flex flex-col gap-0.5 p-3">
               {cats.map((c) => (
-                <Link
+                <ShopNavLink
                   key={c.id}
                   href={ROUTES.category(c.slug)}
                   className="rounded-lg px-3 py-2.5 text-sm hover:bg-muted"
                   onClick={() => setOpen(false)}
                 >
                   {c.name}
-                </Link>
+                </ShopNavLink>
               ))}
             </nav>
           </SheetContent>
@@ -64,19 +65,20 @@ export function ShopHeader({ categories }: { categories: Category[] }) {
 
         <nav className="ml-4 hidden items-center gap-1 lg:flex">
           {cats.map((c) => (
-            <Link
+            <ShopNavLink
               key={c.id}
               href={ROUTES.category(c.slug)}
               className="rounded-full px-3 py-1.5 text-sm text-muted-foreground transition hover:bg-muted hover:text-foreground"
             >
               {c.name}
-            </Link>
+            </ShopNavLink>
           ))}
         </nav>
 
         <div className="ml-auto flex shrink-0 items-center gap-0.5 sm:gap-1">
           <Link
             href={ROUTES.search}
+            prefetch
             className={cn(buttonVariants({ variant: "ghost", size: "icon" }))}
             aria-label="Search"
           >
@@ -84,6 +86,7 @@ export function ShopHeader({ categories }: { categories: Category[] }) {
           </Link>
           <Link
             href={ROUTES.shortlist}
+            prefetch
             className={cn(buttonVariants({ variant: "ghost", size: "icon" }), "relative")}
             aria-label="Shortlist"
           >
@@ -110,10 +113,16 @@ export function ShopHeader({ categories }: { categories: Category[] }) {
                     <div className="truncate">{user.email}</div>
                   </div>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={() => router.push(ROUTES.orders)}>
+                  <DropdownMenuItem
+                    nativeButton={false}
+                    render={<Link href={ROUTES.orders} prefetch />}
+                  >
                     My orders
                   </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => router.push(ROUTES.shortlist)}>
+                  <DropdownMenuItem
+                    nativeButton={false}
+                    render={<Link href={ROUTES.shortlist} prefetch />}
+                  >
                     My shortlist
                   </DropdownMenuItem>
                   <DropdownMenuItem onClick={clear}>Clear browse history</DropdownMenuItem>
@@ -128,14 +137,23 @@ export function ShopHeader({ categories }: { categories: Category[] }) {
                   </DropdownMenuItem>
                 </>
               ) : (
-                <DropdownMenuItem onClick={() => router.push(ROUTES.login)}>
+                <DropdownMenuItem
+                  nativeButton={false}
+                  render={<Link href={ROUTES.login} prefetch />}
+                >
                   Log in
                 </DropdownMenuItem>
               )}
-              <DropdownMenuItem onClick={() => router.push(ROUTES.privacy)}>
+              <DropdownMenuItem
+                nativeButton={false}
+                render={<Link href={ROUTES.privacy} prefetch />}
+              >
                 Privacy notice
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => router.push(ROUTES.admin.login)}>
+              <DropdownMenuItem
+                nativeButton={false}
+                render={<Link href={ROUTES.admin.login} prefetch />}
+              >
                 Staff console
               </DropdownMenuItem>
             </DropdownMenuContent>

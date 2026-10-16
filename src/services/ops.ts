@@ -4,6 +4,7 @@
 import { cache } from "react";
 import { asc, desc, eq } from "drizzle-orm";
 import { db } from "@/db";
+import { tagShopCache } from "@/lib/cache-tags";
 import {
   auditLogs,
   collections,
@@ -27,7 +28,9 @@ import type {
   Collection,
 } from "@/types";
 
-export const getStoreInfo = cache(async (): Promise<StoreInfo> => {
+export async function getStoreInfo(): Promise<StoreInfo> {
+  "use cache";
+  tagShopCache();
   const rows = await db.select().from(storeSettings).limit(1);
   const row = rows[0];
   if (!row) {
@@ -50,9 +53,11 @@ export const getStoreInfo = cache(async (): Promise<StoreInfo> => {
     whatsapp: row.whatsapp,
     privacyNotice: row.privacyNotice,
   };
-});
+}
 
-export const getCollections = cache(async (): Promise<Collection[]> => {
+export async function getCollections(): Promise<Collection[]> {
+  "use cache";
+  tagShopCache();
   const rows = await db
     .select()
     .from(collections)
@@ -65,9 +70,11 @@ export const getCollections = cache(async (): Promise<Collection[]> => {
     description: c.description ?? "",
     featured: c.featured,
   }));
-});
+}
 
 export async function getCollectionBySlug(slug: string) {
+  "use cache";
+  tagShopCache();
   const rows = await db
     .select()
     .from(collections)
@@ -84,7 +91,9 @@ export async function getCollectionBySlug(slug: string) {
   } satisfies Collection;
 }
 
-export const getGallery = cache(async (): Promise<GalleryItem[]> => {
+export async function getGallery(): Promise<GalleryItem[]> {
+  "use cache";
+  tagShopCache();
   const rows = await db
     .select()
     .from(galleryItems)
@@ -97,9 +106,11 @@ export const getGallery = cache(async (): Promise<GalleryItem[]> => {
     deliveryMonth: g.deliveryMonth,
     approved: g.approved,
   }));
-});
+}
 
-export const getReels = cache(async (opts?: { includeHidden?: boolean }): Promise<Reel[]> => {
+export async function getReels(opts?: { includeHidden?: boolean }): Promise<Reel[]> {
+  "use cache";
+  tagShopCache();
   const rows = await db.select().from(reels).orderBy(asc(reels.sortOrder));
   const mapped = rows.map((r) => ({
     id: r.id,
@@ -113,7 +124,7 @@ export const getReels = cache(async (opts?: { includeHidden?: boolean }): Promis
   }));
   if (opts?.includeHidden) return mapped;
   return mapped.filter((r) => r.active);
-});
+}
 
 export const getLeads = cache(async (): Promise<Lead[]> => {
   const rows = await db.select().from(leads).orderBy(desc(leads.lastSeenAt));

@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
-import type { FilterState } from "@/services/catalogue";
+import type { FilterState } from "@/lib/catalogue-utils";
 import type {
   AttributeField,
   Collection,

@@ -1,9 +1,16 @@
 /**
- * Catalogue reads from Neon. Pure helpers stay sync for client cards.
+ * Catalogue reads from Neon. Client cards must import sync helpers from
+ * `@/lib/catalogue-utils` so this file can stay server-only (`"use cache"`).
  */
 import { cache } from "react";
 import { and, asc, eq, inArray, sql } from "drizzle-orm";
 import { db } from "@/db";
+import { tagShopCache } from "@/lib/cache-tags";
+import {
+  filterProductList,
+  type FilterState,
+  type SortKey,
+} from "@/lib/catalogue-utils";
 import {
   categories as categoriesTable,
   collections as collectionsTable,
@@ -16,7 +23,6 @@ import {
   sizeDimensions,
   type ProductVariant,
 } from "@/db/schema";
-import { discountPercent } from "@/lib/format";
 import {
   mapBrand,
   mapCategory,
@@ -26,27 +32,16 @@ import {
   type OptionLookup,
 } from "@/services/catalogue-map";
 import { getCollectionBySlug as getOpsCollectionBySlug, getCollections, getStoreInfo } from "@/services/ops";
-import type { Colour, Product, StockStatus } from "@/types";
+import type { Product } from "@/types";
 
-export type SortKey =
-  | "popularity"
-  | "price_asc"
-  | "price_desc"
-  | "newest"
-  | "discount";
-
-export interface FilterState {
-  subCategory?: string;
-  priceMin?: number;
-  priceMax?: number;
-  discountMin?: number;
-  colours?: string[];
-  materials?: string[];
-  collections?: string[];
-  availability?: StockStatus[];
-  extra?: Record<string, string[]>;
-  q?: string;
-}
+export type { FilterState, SortKey } from "@/lib/catalogue-utils";
+export {
+  filterProductList,
+  maxDiscount,
+  productColours,
+  startingPrice,
+  worstStock,
+} from "@/lib/catalogue-utils";
 
 const loadOptionsById = cache(async (): Promise<OptionLookup> => {
   const rows = await db.select().from(options);
@@ -122,7 +117,9 @@ async function loadVariantsByProductIds(
   return map;
 }
 
-export const getCategories = cache(async (opts?: { includeHidden?: boolean }) => {
+export async function getCategories(opts?: { includeHidden?: boolean }) {
+  "use cache";
+  tagShopCache();
   const rows = await db
     .select()
     .from(categoriesTable)
@@ -130,16 +127,18 @@ export const getCategories = cache(async (opts?: { includeHidden?: boolean }) =>
   const mapped = rows.map(mapCategory);
   if (opts?.includeHidden) return mapped;
   return mapped.filter((c) => c.visible);
-});
+}
 
-export const getCategoryBySlug = cache(async (slug: string) => {
+export async function getCategoryBySlug(slug: string) {
+  "use cache";
+  tagShopCache();
   const rows = await db
     .select()
     .from(categoriesTable)
     .where(eq(categoriesTable.slug, slug))
     .limit(1);
   return rows[0] ? mapCategory(rows[0]) : undefined;
-});
+}
 
 async function loadCollectionIdByProduct(
   productIds: string[],
@@ -191,31 +190,33 @@ async function hydrateProducts(
 }
 
 /** Shop lists — slim variants (one per colour). */
-export const getPublishedProducts = cache(async () => {
+export async function getPublishedProducts() {
+  "use cache";
+  tagShopCache();
   const rows = await db
     .select()
     .from(productsTable)
     .where(eq(productsTable.status, "published"))
     .orderBy(asc(productsTable.sortOrder));
   return hydrateProducts(rows, "list");
-});
+}
 
 /** Category PLP — only that category, slim variants. */
-export const getPublishedProductsByCategoryId = cache(
-  async (categoryId: string) => {
-    const rows = await db
-      .select()
-      .from(productsTable)
-      .where(
-        and(
-          eq(productsTable.status, "published"),
-          eq(productsTable.categoryId, categoryId),
-        ),
-      )
-      .orderBy(asc(productsTable.sortOrder));
-    return hydrateProducts(rows, "list");
-  },
-);
+export async function getPublishedProductsByCategoryId(categoryId: string) {
+  "use cache";
+  tagShopCache();
+  const rows = await db
+    .select()
+    .from(productsTable)
+    .where(
+      and(
+        eq(productsTable.status, "published"),
+        eq(productsTable.categoryId, categoryId),
+      ),
+    )
+    .orderBy(asc(productsTable.sortOrder));
+  return hydrateProducts(rows, "list");
+}
 
 /** Admin — full variant matrix. */
 export const getAllProducts = cache(async () => {
@@ -227,6 +228,8 @@ export const getAllProducts = cache(async () => {
 });
 
 export async function getProductBySlug(slug: string) {
+  "use cache";
+  tagShopCache();
   const rows = await db
     .select()
     .from(productsTable)
@@ -238,6 +241,8 @@ export async function getProductBySlug(slug: string) {
 }
 
 export async function getProductById(id: string) {
+  "use cache";
+  tagShopCache();
   const rows = await db
     .select()
     .from(productsTable)
@@ -249,6 +254,8 @@ export async function getProductById(id: string) {
 }
 
 export async function getProductsByIds(ids: string[]) {
+  "use cache";
+  tagShopCache();
   if (!ids.length) return [];
   const unique = [...new Set(ids)];
   const rows = await db
@@ -261,13 +268,25 @@ export async function getProductsByIds(ids: string[]) {
 }
 
 export async function getFeaturedProducts() {
-  const all = await getPublishedProducts();
-  return all
-    .filter((p) => p.featured)
-    .sort((a, b) => b.popularity - a.popularity);
+  "use cache";
+  tagShopCache();
+  const rows = await db
+    .select()
+    .from(productsTable)
+    .where(
+      and(
+        eq(productsTable.status, "published"),
+        eq(productsTable.isFeatured, true),
+      ),
+    )
+    .orderBy(asc(productsTable.sortOrder));
+  const products = await hydrateProducts(rows, "list");
+  return products.sort((a, b) => b.popularity - a.popularity);
 }
 
 export async function getProductsByCollectionSlug(slug: string) {
+  "use cache";
+  tagShopCache();
   const col = await db
     .select()
     .from(collectionsTable)
@@ -286,6 +305,8 @@ export async function getRoyalRangeProducts() {
 }
 
 export async function getMasters() {
+  "use cache";
+  tagShopCache();
   const [brandRows, groupRows, optionRows, dimRows] = await Promise.all([
     db.select().from(brandsTable).orderBy(asc(brandsTable.sortOrder)),
     db.select().from(optionGroups).orderBy(asc(optionGroups.sortOrder)),
@@ -323,124 +344,6 @@ export async function getMasters() {
 
 export async function getCollectionBySlug(slug: string) {
   return getOpsCollectionBySlug(slug);
-}
-
-export function startingPrice(product: Product) {
-  const prices = product.variants.map((v) => v.price);
-  return prices.length ? Math.min(...prices) : 0;
-}
-
-export function maxDiscount(product: Product) {
-  if (!product.variants.length) return 0;
-  return Math.max(
-    ...product.variants.map((v) => discountPercent(v.mrp, v.price)),
-  );
-}
-
-export function productColours(product: Product): Colour[] {
-  const map = new Map<string, Colour>();
-  for (const v of product.variants) {
-    if (!v.colourId || map.has(v.colourId)) continue;
-    map.set(v.colourId, {
-      id: v.colourId,
-      name: v.colourName ?? "Colour",
-      hex: v.colourHex ?? "#CCCCCC",
-    });
-  }
-  return [...map.values()];
-}
-
-export function worstStock(product: Product): StockStatus {
-  const order: StockStatus[] = [
-    "out_of_stock",
-    "low_stock",
-    "made_to_order",
-    "in_stock",
-  ];
-  for (const s of order) {
-    if (product.variants.some((v) => v.stockStatus === s)) return s;
-  }
-  return "in_stock";
-}
-
-export function filterProductList(
-  list: Product[],
-  categoryId: string | undefined,
-  filters: FilterState,
-  sort: SortKey,
-  categoryNames: Map<string, string> = new Map(),
-): Product[] {
-  let result = list;
-  if (categoryId) result = result.filter((p) => p.categoryId === categoryId);
-
-  if (filters.subCategory) {
-    result = result.filter((p) => p.subCategoryId === filters.subCategory);
-  }
-  if (filters.q) {
-    const q = filters.q.toLowerCase();
-    result = result.filter((p) => {
-      const cat = categoryNames.get(p.categoryId) ?? "";
-      const cols = productColours(p)
-        .map((c) => c.name)
-        .join(" ")
-        .toLowerCase();
-      return [p.name, cat, p.material, cols, ...p.tags]
-        .join(" ")
-        .toLowerCase()
-        .includes(q);
-    });
-  }
-  if (filters.priceMin != null || filters.priceMax != null) {
-    result = result.filter((p) => {
-      const price = startingPrice(p);
-      if (filters.priceMin != null && price < filters.priceMin) return false;
-      if (filters.priceMax != null && price > filters.priceMax) return false;
-      return true;
-    });
-  }
-  if (filters.discountMin) {
-    result = result.filter((p) => maxDiscount(p) >= filters.discountMin!);
-  }
-  if (filters.colours?.length) {
-    result = result.filter((p) =>
-      p.variants.some((v) => filters.colours!.includes(v.colourId)),
-    );
-  }
-  if (filters.materials?.length) {
-    result = result.filter((p) =>
-      filters.materials!.some((m) =>
-        p.material.toLowerCase().includes(m.toLowerCase()),
-      ),
-    );
-  }
-  if (filters.collections?.length) {
-    result = result.filter(
-      (p) => p.collectionId && filters.collections!.includes(p.collectionId),
-    );
-  }
-  if (filters.availability?.length) {
-    result = result.filter((p) =>
-      p.variants.some((v) => filters.availability!.includes(v.stockStatus)),
-    );
-  }
-  if (filters.extra) {
-    for (const [key, values] of Object.entries(filters.extra)) {
-      if (!values.length) continue;
-      result = result.filter((p) =>
-        values.includes(String(p.specs[key] ?? "")),
-      );
-    }
-  }
-
-  const sorted = [...result];
-  sorted.sort((a, b) => {
-    if (sort === "price_asc") return startingPrice(a) - startingPrice(b);
-    if (sort === "price_desc") return startingPrice(b) - startingPrice(a);
-    if (sort === "newest") return b.createdAt.localeCompare(a.createdAt);
-    if (sort === "discount") return maxDiscount(b) - maxDiscount(a);
-    return b.popularity - a.popularity;
-  });
-  return sorted;
 }
 
 /** @deprecated prefer filterProductList with preloaded products */

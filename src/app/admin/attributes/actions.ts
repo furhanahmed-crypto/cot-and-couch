@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { asc, eq } from "drizzle-orm";
 import { db } from "@/db";
+import { revalidateShopCache } from "@/lib/cache-tags";
 import { optionGroups, options } from "@/db/schema";
 import { requireStaffProfile } from "@/services/profile";
 import { ROUTES } from "@/constants/routes";
@@ -54,6 +55,7 @@ export async function createOptionAction(input: {
   });
   revalidatePath(ROUTES.admin.attributes);
   revalidatePath(ROUTES.admin.masters);
+  revalidateShopCache();
   return { ok: true as const };
 }
 
@@ -74,6 +76,7 @@ export async function updateOptionAction(input: {
     .where(eq(options.id, input.id));
   revalidatePath(ROUTES.admin.attributes);
   revalidatePath(ROUTES.admin.masters);
+  revalidateShopCache();
   return { ok: true as const };
 }
 
@@ -82,6 +85,7 @@ export async function deleteOptionAction(id: string) {
   await db.delete(options).where(eq(options.id, id));
   revalidatePath(ROUTES.admin.attributes);
   revalidatePath(ROUTES.admin.masters);
+  revalidateShopCache();
   return { ok: true as const };
 }
 
@@ -98,6 +102,7 @@ export async function createOptionGroupAction(input: {
     sortOrder: 99,
   });
   revalidatePath(ROUTES.admin.attributes);
+  revalidateShopCache();
   return { ok: true as const };
 }
 
@@ -105,5 +110,6 @@ export async function deleteOptionGroupAction(id: string) {
   await requireStaffProfile();
   await db.delete(optionGroups).where(eq(optionGroups.id, id));
   revalidatePath(ROUTES.admin.attributes);
+  revalidateShopCache();
   return { ok: true as const };
 }

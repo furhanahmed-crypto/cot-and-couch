@@ -1,19 +1,29 @@
+import { Suspense } from "react";
 import { notFound } from "next/navigation";
 import { CategoryPlp } from "@/components/shop/category-plp";
 import { ReelsStrip } from "@/components/shop/reels-strip";
+import {
+  CategoryPageSkeleton,
+  ReelsStripSkeleton,
+} from "@/components/shop/shop-skeletons";
 import { attributeTemplates } from "@/data/mock/categories";
 import {
+  getCategories,
   getCategoryBySlug,
   getMasters,
   getPublishedProductsByCategoryId,
 } from "@/services/catalogue";
 
-export default async function CategoryPage({
-  params,
-}: {
-  params: Promise<{ slug: string }>;
-}) {
-  const { slug } = await params;
+export async function generateStaticParams() {
+  try {
+    const cats = await getCategories();
+    return cats.map((c) => ({ slug: c.slug }));
+  } catch {
+    return [];
+  }
+}
+
+async function CategoryContent({ slug }: { slug: string }) {
   const category = await getCategoryBySlug(slug);
   if (!category) notFound();
 
@@ -33,8 +43,31 @@ export default async function CategoryPage({
         extraFields={template?.fields}
       />
       <div className="mx-auto max-w-7xl px-3 pb-8 sm:px-4 md:px-6">
-        <ReelsStrip tag={category.slug} />
+        <Suspense fallback={<ReelsStripSkeleton />}>
+          <ReelsStrip tag={category.slug} />
+        </Suspense>
       </div>
     </>
+  );
+}
+
+async function CategoryFromParams({
+  params,
+}: {
+  params: Promise<{ slug: string }>;
+}) {
+  const { slug } = await params;
+  return <CategoryContent slug={slug} />;
+}
+
+export default function CategoryPage({
+  params,
+}: {
+  params: Promise<{ slug: string }>;
+}) {
+  return (
+    <Suspense fallback={<CategoryPageSkeleton />}>
+      <CategoryFromParams params={params} />
+    </Suspense>
   );
 }

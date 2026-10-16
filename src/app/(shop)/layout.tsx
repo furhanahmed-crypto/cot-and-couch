@@ -1,18 +1,30 @@
+import { Suspense } from "react";
+import { cacheLife, cacheTag } from "next/cache";
 import { ShopHeader } from "@/components/shop/shop-header";
 import { ShortlistProvider } from "@/components/shop/shortlist-provider";
+import { ShopHeaderSkeleton } from "@/components/shop/shop-skeletons";
 import { BrandMark } from "@/components/shared/brand-mark";
+import { SHOP_CACHE_TAG } from "@/lib/cache-tags";
 import { getCategories } from "@/services/catalogue";
 
-export default async function ShopLayout({
+async function ShopHeaderSlot() {
+  "use cache";
+  cacheLife("hours");
+  cacheTag(SHOP_CACHE_TAG);
+  const categories = await getCategories();
+  return <ShopHeader categories={categories} />;
+}
+
+export default function ShopLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const categories = await getCategories();
-
   return (
     <ShortlistProvider>
-      <ShopHeader categories={categories} />
+      <Suspense fallback={<ShopHeaderSkeleton />}>
+        <ShopHeaderSlot />
+      </Suspense>
       <main className="flex-1">{children}</main>
       <footer className="border-t border-border/70 py-6 sm:py-8">
         <div className="mx-auto flex max-w-7xl flex-col items-center gap-3 px-3 text-center sm:px-4">

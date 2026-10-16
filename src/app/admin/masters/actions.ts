@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { and, eq } from "drizzle-orm";
 import { db } from "@/db";
+import { revalidateShopCache } from "@/lib/cache-tags";
 import {
   collections,
   mattressBrands,
@@ -46,6 +47,7 @@ function revalidateMasters() {
   revalidatePath(ROUTES.admin.masters);
   revalidatePath("/");
   revalidatePath(ROUTES.catalogue);
+  revalidateShopCache();
 }
 
 // —— Colours ——

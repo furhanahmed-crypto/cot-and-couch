@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { eq } from "drizzle-orm";
 import { db } from "@/db";
+import { revalidateShopCache } from "@/lib/cache-tags";
 import {
   galleryItems,
   leads,
@@ -37,6 +38,7 @@ export async function updateStoreSettingsAction(input: {
   }
   revalidatePath(ROUTES.admin.settings);
   revalidatePath("/");
+  revalidateShopCache();
   return { ok: true as const };
 }
 
@@ -58,6 +60,7 @@ export async function createGalleryItemAction(input: {
   });
   revalidatePath(ROUTES.admin.gallery);
   revalidatePath("/");
+  revalidateShopCache();
   return { ok: true as const };
 }
 
@@ -78,6 +81,7 @@ export async function updateGalleryItemAction(input: {
     .where(eq(galleryItems.id, input.id));
   revalidatePath(ROUTES.admin.gallery);
   revalidatePath("/");
+  revalidateShopCache();
   return { ok: true as const };
 }
 
@@ -86,6 +90,7 @@ export async function deleteGalleryItemAction(id: string) {
   await db.delete(galleryItems).where(eq(galleryItems.id, id));
   revalidatePath(ROUTES.admin.gallery);
   revalidatePath("/");
+  revalidateShopCache();
   return { ok: true as const };
 }
 
@@ -110,6 +115,7 @@ export async function createReelAction(input: {
   });
   revalidatePath(ROUTES.admin.reels);
   revalidatePath("/");
+  revalidateShopCache();
   return { ok: true as const };
 }
 
@@ -132,6 +138,7 @@ export async function updateReelAction(input: {
     })
     .where(eq(reels.id, input.id));
   revalidatePath(ROUTES.admin.reels);
+  revalidateShopCache();
   return { ok: true as const };
 }
 
@@ -139,6 +146,7 @@ export async function deleteReelAction(id: string) {
   await requireStaffProfile();
   await db.delete(reels).where(eq(reels.id, id));
   revalidatePath(ROUTES.admin.reels);
+  revalidateShopCache();
   return { ok: true as const };
 }
 

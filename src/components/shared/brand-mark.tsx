@@ -25,6 +25,7 @@ export function BrandMark({
   return (
     <Link
       href={href}
+      prefetch
       className={cn("group inline-flex max-h-full shrink-0 items-center", className)}
       aria-label={BRAND.name}
     >

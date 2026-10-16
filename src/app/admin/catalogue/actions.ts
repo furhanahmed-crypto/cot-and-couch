@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { eq } from "drizzle-orm";
 import { db } from "@/db";
 import { categories, productVariants, products } from "@/db/schema";
+import { revalidateShopCache } from "@/lib/cache-tags";
 import { requireStaffProfile } from "@/services/profile";
 import { ROUTES } from "@/constants/routes";
 
@@ -14,6 +15,7 @@ export async function archiveProductAction(productId: string) {
     .set({ status: "archived", updatedAt: new Date() })
     .where(eq(products.id, productId));
   revalidatePath(ROUTES.admin.products);
+  revalidateShopCache();
   return { ok: true as const };
 }
 
@@ -32,6 +34,7 @@ export async function setVariantPriceAction(input: {
     .where(eq(productVariants.id, input.variantId));
   revalidatePath(ROUTES.admin.pricing);
   revalidatePath(ROUTES.admin.products);
+  revalidateShopCache();
   return { ok: true as const };
 }
 
@@ -45,6 +48,7 @@ export async function setVariantStockAction(input: {
     .set({ stockQty: input.stockQty })
     .where(eq(productVariants.id, input.variantId));
   revalidatePath(ROUTES.admin.stock);
+  revalidateShopCache();
   return { ok: true as const };
 }
 
@@ -59,6 +63,7 @@ export async function setCategoryActiveAction(input: {
     .where(eq(categories.id, input.categoryId));
   revalidatePath(ROUTES.admin.categories);
   revalidatePath("/");
+  revalidateShopCache();
   return { ok: true as const };
 }
 
@@ -75,6 +80,7 @@ export async function renameCategoryAction(input: {
     .where(eq(categories.id, input.categoryId));
   revalidatePath(ROUTES.admin.categories);
   revalidatePath("/");
+  revalidateShopCache();
   return { ok: true as const };
 }
 
@@ -94,6 +100,7 @@ export async function createCategoryAction(input: { name: string; slug: string }
   });
   revalidatePath(ROUTES.admin.categories);
   revalidatePath("/");
+  revalidateShopCache();
   return { ok: true as const };
 }
 
@@ -109,6 +116,7 @@ export async function deleteCategoryAction(categoryId: string) {
   }
   revalidatePath(ROUTES.admin.categories);
   revalidatePath("/");
+  revalidateShopCache();
   return { ok: true as const };
 }
 
@@ -138,6 +146,7 @@ export async function createProductAction(input: {
     status: "draft",
   });
   revalidatePath(ROUTES.admin.products);
+  revalidateShopCache();
   return { ok: true as const };
 }
 
@@ -145,5 +154,6 @@ export async function deleteProductAction(productId: string) {
   await requireStaffProfile();
   await db.delete(products).where(eq(products.id, productId));
   revalidatePath(ROUTES.admin.products);
+  revalidateShopCache();
   return { ok: true as const };
 }

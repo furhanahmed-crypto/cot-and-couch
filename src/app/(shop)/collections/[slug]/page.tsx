@@ -1,17 +1,27 @@
+import { Suspense } from "react";
 import { notFound } from "next/navigation";
 import { ProductCard } from "@/components/shop/product-card";
 import { ReelsStrip } from "@/components/shop/reels-strip";
 import {
+  CollectionPageSkeleton,
+  ReelsStripSkeleton,
+} from "@/components/shop/shop-skeletons";
+import {
   getCollectionBySlug,
   getProductsByCollectionSlug,
 } from "@/services/catalogue";
+import { getCollections } from "@/services/ops";
 
-export default async function CollectionPage({
-  params,
-}: {
-  params: Promise<{ slug: string }>;
-}) {
-  const { slug } = await params;
+export async function generateStaticParams() {
+  try {
+    const collections = await getCollections();
+    return collections.map((c) => ({ slug: c.slug }));
+  } catch {
+    return [];
+  }
+}
+
+async function CollectionContent({ slug }: { slug: string }) {
   const collection = await getCollectionBySlug(slug);
   if (!collection) notFound();
 
@@ -41,8 +51,31 @@ export default async function CollectionPage({
       )}
 
       <div className="mt-12">
-        <ReelsStrip tag={collection.slug} />
+        <Suspense fallback={<ReelsStripSkeleton />}>
+          <ReelsStrip tag={collection.slug} />
+        </Suspense>
       </div>
     </div>
+  );
+}
+
+async function CollectionFromParams({
+  params,
+}: {
+  params: Promise<{ slug: string }>;
+}) {
+  const { slug } = await params;
+  return <CollectionContent slug={slug} />;
+}
+
+export default function CollectionPage({
+  params,
+}: {
+  params: Promise<{ slug: string }>;
+}) {
+  return (
+    <Suspense fallback={<CollectionPageSkeleton />}>
+      <CollectionFromParams params={params} />
+    </Suspense>
   );
 }

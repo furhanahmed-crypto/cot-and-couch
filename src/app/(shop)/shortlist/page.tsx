@@ -1,14 +1,16 @@
+import { Suspense } from "react";
 import Link from "next/link";
 import { MessageCircle } from "lucide-react";
 import { ProductCard } from "@/components/shop/product-card";
 import { ShortlistShare } from "@/components/shop/shortlist-share";
+import { ShortlistPageSkeleton } from "@/components/shop/shop-skeletons";
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { ROUTES } from "@/constants/routes";
 import { listFavouriteProducts } from "@/services/favourites";
 import { getStoreInfo } from "@/services/ops";
 
-export default async function ShortlistPage() {
+async function ShortlistContent() {
   const [products, storeInfo] = await Promise.all([
     listFavouriteProducts(),
     getStoreInfo(),
@@ -32,6 +34,7 @@ export default async function ShortlistPage() {
           <p className="text-muted-foreground">No saved products yet.</p>
           <Link
             href={ROUTES.catalogue}
+            prefetch
             className={cn(
               buttonVariants(),
               "mt-4 inline-flex bg-brass text-ink hover:bg-brass/90",
@@ -57,5 +60,13 @@ export default async function ShortlistPage() {
         </div>
       )}
     </div>
+  );
+}
+
+export default function ShortlistPage() {
+  return (
+    <Suspense fallback={<ShortlistPageSkeleton />}>
+      <ShortlistContent />
+    </Suspense>
   );
 }

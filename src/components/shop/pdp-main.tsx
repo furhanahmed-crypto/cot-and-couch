@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { useShortlist } from "@/hooks/use-shortlist";
 import { discountPercent, formatINR, stockLabel } from "@/lib/format";
 import { cn } from "@/lib/utils";
-import { productColours } from "@/services/catalogue";
+import { productColours } from "@/lib/catalogue-utils";
 import type { Colour, Product, Variant } from "@/types";
 import { PdpDetails } from "./pdp-details";
 import { PdpGallery } from "./pdp-gallery";

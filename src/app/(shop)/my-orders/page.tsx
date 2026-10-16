@@ -1,11 +1,13 @@
+import { Suspense } from "react";
 import Link from "next/link";
 import { Package } from "lucide-react";
+import { OrdersPageSkeleton } from "@/components/shop/shop-skeletons";
 import { buttonVariants } from "@/components/ui/button";
 import { ROUTES } from "@/constants/routes";
 import { cn } from "@/lib/utils";
 import { getCurrentProfile } from "@/lib/auth/profile";
 
-export default async function MyOrdersPage() {
+async function OrdersContent() {
   const profile = await getCurrentProfile();
 
   if (!profile) {
@@ -34,6 +36,7 @@ export default async function MyOrdersPage() {
         </p>
         <Link
           href={ROUTES.catalogue}
+          prefetch
           className={cn(
             buttonVariants({ variant: "outline" }),
             "mt-4 inline-flex",
@@ -43,5 +46,13 @@ export default async function MyOrdersPage() {
         </Link>
       </div>
     </div>
+  );
+}
+
+export default function MyOrdersPage() {
+  return (
+    <Suspense fallback={<OrdersPageSkeleton />}>
+      <OrdersContent />
+    </Suspense>
   );
 }

@@ -1,9 +1,16 @@
+import { Suspense } from "react";
+import { cacheLife, cacheTag } from "next/cache";
 import Image from "next/image";
 import Link from "next/link";
+import { CatalogueIndexSkeleton } from "@/components/shop/shop-skeletons";
 import { ROUTES } from "@/constants/routes";
+import { SHOP_CACHE_TAG } from "@/lib/cache-tags";
 import { getCategories } from "@/services/catalogue";
 
-export default async function CatalogueIndexPage() {
+async function CatalogueIndexContent() {
+  "use cache";
+  cacheLife("hours");
+  cacheTag(SHOP_CACHE_TAG);
   const cats = await getCategories();
   return (
     <div className="mx-auto max-w-7xl px-4 py-8 md:px-6">
@@ -13,6 +20,7 @@ export default async function CatalogueIndexPage() {
           <Link
             key={c.id}
             href={ROUTES.category(c.slug)}
+            prefetch
             className="group relative aspect-[4/3] overflow-hidden rounded-2xl"
           >
             <Image
@@ -30,5 +38,13 @@ export default async function CatalogueIndexPage() {
         ))}
       </div>
     </div>
+  );
+}
+
+export default function CatalogueIndexPage() {
+  return (
+    <Suspense fallback={<CatalogueIndexSkeleton />}>
+      <CatalogueIndexContent />
+    </Suspense>
   );
 }

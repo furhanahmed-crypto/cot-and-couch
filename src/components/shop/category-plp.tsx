@@ -26,7 +26,7 @@ import {
   filterProductList,
   type FilterState,
   type SortKey,
-} from "@/services/catalogue";
+} from "@/lib/catalogue-utils";
 import { writeJson } from "@/services/storage";
 import type {
   AttributeField,

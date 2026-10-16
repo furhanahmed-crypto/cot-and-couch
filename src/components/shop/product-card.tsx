@@ -14,7 +14,7 @@ import {
   productColours,
   startingPrice,
   worstStock,
-} from "@/services/catalogue";
+} from "@/lib/catalogue-utils";
 import type { Product } from "@/types";
 
 export function ProductCard({

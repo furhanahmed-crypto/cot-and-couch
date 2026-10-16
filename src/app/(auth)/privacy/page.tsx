@@ -1,6 +1,7 @@
+import { Suspense } from "react";
 import { getStoreInfo } from "@/services/ops";
 
-export default async function PrivacyPage() {
+async function PrivacyContent() {
   const storeInfo = await getStoreInfo();
 
   return (
@@ -28,5 +29,19 @@ export default async function PrivacyPage() {
         </li>
       </ul>
     </article>
+  );
+}
+
+export default function PrivacyPage() {
+  return (
+    <Suspense
+      fallback={
+        <article className="fade-up rounded-2xl bg-card/80 p-6 ring-1 ring-border md:p-8">
+          <p className="text-sm text-muted-foreground">Loading privacy notice…</p>
+        </article>
+      }
+    >
+      <PrivacyContent />
+    </Suspense>
   );
 }

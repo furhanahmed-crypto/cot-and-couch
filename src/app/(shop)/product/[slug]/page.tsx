@@ -1,19 +1,19 @@
+import { Suspense } from "react";
 import { notFound } from "next/navigation";
 import { PdpCtaBar } from "@/components/shop/pdp-cta-bar";
 import { PdpMain } from "@/components/shop/pdp-main";
 import { ProductCard } from "@/components/shop/product-card";
 import { ReelsStrip } from "@/components/shop/reels-strip";
 import { ProductViewTracker } from "@/components/shop/product-view-tracker";
+import {
+  ProductPageSkeleton,
+  ReelsStripSkeleton,
+} from "@/components/shop/shop-skeletons";
 import { ROUTES } from "@/constants/routes";
 import { getMasters, getProductBySlug, getProductsByIds } from "@/services/catalogue";
 import { getStoreInfo } from "@/services/ops";
 
-export default async function ProductPage({
-  params,
-}: {
-  params: Promise<{ slug: string }>;
-}) {
-  const { slug } = await params;
+async function ProductContent({ slug }: { slug: string }) {
   const product = await getProductBySlug(slug);
   if (!product) notFound();
 
@@ -58,7 +58,9 @@ export default async function ProductPage({
         )}
 
         <div className="mt-12">
-          <ReelsStrip tag={product.slug} />
+          <Suspense fallback={<ReelsStripSkeleton />}>
+            <ReelsStrip tag={product.slug} />
+          </Suspense>
         </div>
       </div>
 
@@ -68,5 +70,26 @@ export default async function ProductPage({
         storeInfo={storeInfo}
       />
     </div>
+  );
+}
+
+async function ProductFromParams({
+  params,
+}: {
+  params: Promise<{ slug: string }>;
+}) {
+  const { slug } = await params;
+  return <ProductContent slug={slug} />;
+}
+
+export default function ProductPage({
+  params,
+}: {
+  params: Promise<{ slug: string }>;
+}) {
+  return (
+    <Suspense fallback={<ProductPageSkeleton />}>
+      <ProductFromParams params={params} />
+    </Suspense>
   );
 }
