@@ -2,11 +2,13 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import { useSyncExternalStore } from "react";
 import { HomeHero } from "@/components/shop/home-hero";
 import { ProductCard } from "@/components/shop/product-card";
 import { ReelsStrip } from "@/components/shop/reels-strip";
 import { StoreBlock } from "@/components/shop/store-block";
-import { ROUTES } from "@/constants/routes";
+import { ROUTES, STORAGE_KEYS } from "@/constants/routes";
+import { useIsClient } from "@/hooks/use-is-client";
 import { useRecentlyViewed } from "@/hooks/use-recently-viewed";
 import {
   getCategories,
@@ -14,9 +16,9 @@ import {
   getProductsByIds,
   getRoyalRangeProducts,
 } from "@/services/catalogue";
-import { readJson } from "@/services/storage";
-import { STORAGE_KEYS } from "@/constants/routes";
-import { useEffect, useState } from "react";
+import { getCachedJson, subscribeKey } from "@/services/storage";
+
+type LastBrowse = { path?: string } | null;
 
 export default function HomePage() {
   const cats = getCategories();
@@ -30,11 +32,13 @@ export default function HomePage() {
       : featured.map((p) => p.id),
   ).slice(0, 4);
 
-  const [continuePath, setContinuePath] = useState<string | null>(null);
-  useEffect(() => {
-    const last = readJson<{ path?: string } | null>(STORAGE_KEYS.lastBrowse, null);
-    if (last?.path) setContinuePath(last.path);
-  }, []);
+  const ready = useIsClient();
+  const lastBrowse = useSyncExternalStore(
+    (onChange) => subscribeKey(STORAGE_KEYS.lastBrowse, onChange),
+    () => getCachedJson<LastBrowse>(STORAGE_KEYS.lastBrowse, null),
+    () => null,
+  );
+  const continuePath = ready ? lastBrowse?.path ?? null : null;
 
   return (
     <div>

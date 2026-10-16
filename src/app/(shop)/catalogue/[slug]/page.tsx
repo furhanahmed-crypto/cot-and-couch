@@ -26,6 +26,14 @@ import {
 } from "@/services/catalogue";
 import { writeJson } from "@/services/storage";
 
+const SORT_ITEMS = [
+  { value: "popularity", label: "Popularity" },
+  { value: "price_asc", label: "Price: low to high" },
+  { value: "price_desc", label: "Price: high to low" },
+  { value: "newest", label: "Newest" },
+  { value: "discount", label: "Highest discount" },
+];
+
 export default function CategoryPage({
   params,
 }: {
@@ -34,47 +42,25 @@ export default function CategoryPage({
   const { slug } = use(params);
   const category = getCategoryBySlug(slug);
   const template = attributeTemplates.find((t) => t.id === category?.templateId);
-  const [sub, setSub] = useState<string | undefined>();
   const [sort, setSort] = useState<SortKey>("popularity");
   const [filters, setFilters] = useState<FilterState>({});
-  const [q, setQ] = useState("");
 
   useEffect(() => {
-    if (category) {
-      writeJson(STORAGE_KEYS.lastBrowse, {
-        path: `/catalogue/${category.slug}`,
-        filters,
-        sub,
-      });
-    }
-  }, [category, filters, sub]);
+    if (!category) return;
+    writeJson(STORAGE_KEYS.lastBrowse, {
+      path: `/catalogue/${category.slug}`,
+      filters,
+    });
+  }, [category, filters]);
 
   const list = useMemo(() => {
     if (!category) return [];
-    return filterProducts(
-      category.id,
-      { ...filters, subCategory: sub, q: q || undefined },
-      sort,
-    );
-  }, [category, filters, sub, sort, q]);
+    return filterProducts(category.id, filters, sort);
+  }, [category, filters, sort]);
 
   if (!category) {
     return <p className="p-8 text-center text-muted-foreground">Category not found.</p>;
   }
-
-  const clear = () => {
-    setFilters({});
-    setSub(undefined);
-    setQ("");
-  };
-
-  const sortItems = [
-    { value: "popularity", label: "Popularity" },
-    { value: "price_asc", label: "Price: low to high" },
-    { value: "price_desc", label: "Price: high to low" },
-    { value: "newest", label: "Newest" },
-    { value: "discount", label: "Highest discount" },
-  ];
 
   return (
     <div className="mx-auto max-w-7xl px-3 py-5 sm:px-4 md:px-6 md:py-8">
@@ -82,18 +68,22 @@ export default function CategoryPage({
         <h1 className="font-heading text-2xl sm:text-3xl md:text-4xl">{category.name}</h1>
         <div className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-1 scrollbar-none">
           <Badge
-            variant={!sub ? "default" : "outline"}
+            variant={!filters.subCategory ? "default" : "outline"}
             className="shrink-0 cursor-pointer"
-            onClick={() => setSub(undefined)}
+            onClick={() =>
+              setFilters((f) => ({ ...f, subCategory: undefined }))
+            }
           >
             All
           </Badge>
           {category.subCategories.map((sc) => (
             <Badge
               key={sc.id}
-              variant={sub === sc.id ? "default" : "outline"}
+              variant={filters.subCategory === sc.id ? "default" : "outline"}
               className="shrink-0 cursor-pointer"
-              onClick={() => setSub(sc.id)}
+              onClick={() =>
+                setFilters((f) => ({ ...f, subCategory: sc.id }))
+              }
             >
               {sc.name}
             </Badge>
@@ -103,14 +93,16 @@ export default function CategoryPage({
 
       <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
         <input
-          value={q}
-          onChange={(e) => setQ(e.target.value)}
+          value={filters.q ?? ""}
+          onChange={(e) =>
+            setFilters((f) => ({ ...f, q: e.target.value || undefined }))
+          }
           placeholder="Search in category…"
           className="h-9 w-full rounded-lg border border-input bg-card px-3 text-sm sm:min-w-[12rem] sm:flex-1 md:max-w-xs"
         />
         <div className="flex flex-wrap items-center gap-2">
           <Select
-            items={sortItems}
+            items={SORT_ITEMS}
             value={sort}
             onValueChange={(v) => {
               if (typeof v === "string") setSort(v as SortKey);
@@ -120,7 +112,7 @@ export default function CategoryPage({
               <SelectValue placeholder="Sort" />
             </SelectTrigger>
             <SelectContent>
-              {sortItems.map((item) => (
+              {SORT_ITEMS.map((item) => (
                 <SelectItem key={item.value} value={item.value}>
                   {item.label}
                 </SelectItem>
@@ -145,7 +137,7 @@ export default function CategoryPage({
                   filters={filters}
                   onChange={setFilters}
                   extraFields={template?.fields}
-                  onClear={clear}
+                  onClear={() => setFilters({})}
                 />
               </div>
             </SheetContent>
@@ -163,7 +155,7 @@ export default function CategoryPage({
               filters={filters}
               onChange={setFilters}
               extraFields={template?.fields}
-              onClear={clear}
+              onClear={() => setFilters({})}
             />
           </div>
         </aside>

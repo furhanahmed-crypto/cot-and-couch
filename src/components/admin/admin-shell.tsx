@@ -5,15 +5,15 @@ import { usePathname, useRouter } from "next/navigation";
 import { AdminSidebar } from "@/components/admin/admin-sidebar";
 import { BrandMark } from "@/components/shared/brand-mark";
 import { ThemeToggle } from "@/components/shared/theme-toggle";
-import { StaffSessionProvider, useStaffSession } from "@/components/admin/staff-session-provider";
 import {
   SidebarInset,
   SidebarProvider,
   SidebarTrigger,
 } from "@/components/ui/sidebar";
 import { ROUTES } from "@/constants/routes";
+import { useStaffSession } from "@/hooks/use-staff-session";
 
-function AdminShellInner({ children }: { children: React.ReactNode }) {
+export function AdminShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
   const { session, ready } = useStaffSession();
@@ -67,13 +67,5 @@ function AdminShellInner({ children }: { children: React.ReactNode }) {
         </div>
       </SidebarInset>
     </SidebarProvider>
-  );
-}
-
-export function AdminShell({ children }: { children: React.ReactNode }) {
-  return (
-    <StaffSessionProvider>
-      <AdminShellInner>{children}</AdminShellInner>
-    </StaffSessionProvider>
   );
 }

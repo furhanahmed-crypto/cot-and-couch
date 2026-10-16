@@ -1,6 +1,6 @@
 "use client";
 
-import { use, useEffect, useState } from "react";
+import { use, useEffect } from "react";
 import { PdpCtaBar } from "@/components/shop/pdp-cta-bar";
 import { PdpMain } from "@/components/shop/pdp-main";
 import { ProductCard } from "@/components/shop/product-card";
@@ -17,15 +17,10 @@ export default function ProductPage({
   const { slug } = use(params);
   const product = getProductBySlug(slug);
   const { track } = useRecentlyViewed();
-  const [productUrl, setProductUrl] = useState("");
 
   useEffect(() => {
     if (product) track(product.id);
   }, [product, track]);
-
-  useEffect(() => {
-    setProductUrl(`${window.location.origin}${ROUTES.product(slug)}`);
-  }, [slug]);
 
   if (!product) {
     return (
@@ -35,6 +30,7 @@ export default function ProductPage({
 
   const related = getProductsByIds(product.relatedIds);
   const completeRoom = getProductsByIds(product.completeRoomIds);
+  const productUrl = ROUTES.product(product.slug);
 
   return (
     <div className="pb-28">
@@ -68,7 +64,7 @@ export default function ProductPage({
         </div>
       </div>
 
-      <PdpCtaBar productName={product.name} productUrl={productUrl || ROUTES.product(slug)} />
+      <PdpCtaBar productName={product.name} productUrl={productUrl} />
     </div>
   );
 }

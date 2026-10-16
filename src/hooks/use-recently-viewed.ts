@@ -1,28 +1,30 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useSyncExternalStore } from "react";
 import { STORAGE_KEYS } from "@/constants/routes";
-import { readJson, writeJson } from "@/services/storage";
+import { getCachedJson, subscribeKey, writeJson } from "@/services/storage";
 
+const KEY = STORAGE_KEYS.recentlyViewed;
+const EMPTY: string[] = [];
 const MAX = 16;
 
 export function useRecentlyViewed() {
-  const [ids, setIds] = useState<string[]>([]);
-
-  useEffect(() => {
-    setIds(readJson<string[]>(STORAGE_KEYS.recentlyViewed, []));
-  }, []);
+  const ids = useSyncExternalStore(
+    (onChange) => subscribeKey(KEY, onChange),
+    () => getCachedJson<string[]>(KEY, EMPTY),
+    () => EMPTY,
+  );
 
   const track = useCallback((productId: string) => {
-    const prev = readJson<string[]>(STORAGE_KEYS.recentlyViewed, []);
-    const next = [productId, ...prev.filter((id) => id !== productId)].slice(0, MAX);
-    writeJson(STORAGE_KEYS.recentlyViewed, next);
-    setIds(next);
+    const prev = getCachedJson<string[]>(KEY, EMPTY);
+    writeJson(
+      KEY,
+      [productId, ...prev.filter((id) => id !== productId)].slice(0, MAX),
+    );
   }, []);
 
   const clear = useCallback(() => {
-    writeJson(STORAGE_KEYS.recentlyViewed, []);
-    setIds([]);
+    writeJson(KEY, EMPTY);
   }, []);
 
   return { ids, track, clear };

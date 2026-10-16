@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import Image from "next/image";
 import { Play } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -17,13 +17,16 @@ export function PdpGallery({
   className?: string;
 }) {
   const hasVideo = videos.length > 0;
+  const imagesKey = images.join("|");
   const [mode, setMode] = useState<"image" | "video">("image");
   const [index, setIndex] = useState(0);
+  const [seenKey, setSeenKey] = useState(imagesKey);
 
-  useEffect(() => {
+  if (imagesKey !== seenKey) {
+    setSeenKey(imagesKey);
     setIndex(0);
     setMode("image");
-  }, [images.join("|"), videos.join("|")]);
+  }
 
   const main = images[index] ?? images[0];
 

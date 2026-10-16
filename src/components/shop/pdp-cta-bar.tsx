@@ -29,9 +29,13 @@ export function PdpCtaBar({
   const [slotNote, setSlotNote] = useState("");
   const [callbackNote, setCallbackNote] = useState("");
 
-  const waProduct = `https://wa.me/${storeInfo.whatsapp}?text=${encodeURIComponent(
-    `Hi Cot & Couch, I'm interested in ${productName}.\n${productUrl}`,
-  )}`;
+  function openWhatsApp() {
+    const url = `${window.location.origin}${productUrl}`;
+    const href = `https://wa.me/${storeInfo.whatsapp}?text=${encodeURIComponent(
+      `Hi Cot & Couch, I'm interested in ${productName}.\n${url}`,
+    )}`;
+    window.open(href, "_blank", "noopener,noreferrer");
+  }
 
   const submitVisit = () => {
     toast.success("Visit request noted — our team will confirm on WhatsApp.");
@@ -118,8 +122,7 @@ export function PdpCtaBar({
               </Button>
               <Button
                 className="bg-[#25D366] text-white hover:bg-[#25D366]/90"
-                nativeButton={false}
-                render={<a href={waProduct} target="_blank" rel="noreferrer" />}
+                onClick={openWhatsApp}
               >
                 <MessageCircle className="size-4" /> WhatsApp
               </Button>

@@ -1,33 +1,33 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useSyncExternalStore } from "react";
 import { STORAGE_KEYS } from "@/constants/routes";
-import { readJson, writeJson } from "@/services/storage";
+import { getCachedJson, subscribeKey, writeJson } from "@/services/storage";
+
+const KEY = STORAGE_KEYS.shortlist;
+const EMPTY: string[] = [];
 
 export function useShortlist() {
-  const [ids, setIds] = useState<string[]>([]);
-
-  useEffect(() => {
-    setIds(readJson<string[]>(STORAGE_KEYS.shortlist, []));
-  }, []);
-
-  const persist = useCallback((next: string[]) => {
-    setIds(next);
-    writeJson(STORAGE_KEYS.shortlist, next);
-  }, []);
-
-  const toggle = useCallback(
-    (productId: string) => {
-      persist(
-        ids.includes(productId)
-          ? ids.filter((id) => id !== productId)
-          : [...ids, productId],
-      );
-    },
-    [ids, persist],
+  const ids = useSyncExternalStore(
+    (onChange) => subscribeKey(KEY, onChange),
+    () => getCachedJson<string[]>(KEY, EMPTY),
+    () => EMPTY,
   );
 
-  const has = useCallback((productId: string) => ids.includes(productId), [ids]);
+  const toggle = useCallback((productId: string) => {
+    const prev = getCachedJson<string[]>(KEY, EMPTY);
+    writeJson(
+      KEY,
+      prev.includes(productId)
+        ? prev.filter((id) => id !== productId)
+        : [...prev, productId],
+    );
+  }, []);
+
+  const has = useCallback(
+    (productId: string) => ids.includes(productId),
+    [ids],
+  );
 
   return { ids, toggle, has, count: ids.length };
 }

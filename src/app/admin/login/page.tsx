@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { KeyRound } from "lucide-react";
 import { toast } from "sonner";
-import { AdminOtpStep } from "@/components/admin/admin-otp-step";
 import { BrandMark } from "@/components/shared/brand-mark";
 import { Button, buttonVariants } from "@/components/ui/button";
 import {
@@ -25,12 +24,9 @@ import { cn } from "@/lib/utils";
 import { mockStaffLogin, verifyMockOtp } from "@/services/session";
 import type { StaffSession } from "@/types";
 
-type Step = "credentials" | "otp";
-
 export default function AdminLoginPage() {
   const router = useRouter();
   const { session, ready, login } = useStaffSession();
-  const [step, setStep] = useState<Step>("credentials");
   const [mobile, setMobile] = useState("");
   const [password, setPassword] = useState("");
   const [otp, setOtp] = useState("");
@@ -47,7 +43,6 @@ export default function AdminLoginPage() {
     setMobile(DEMO.adminMobile);
     setPassword(DEMO.adminPassword);
     setOtp("");
-    setStep("credentials");
     setPendingStaff(null);
     setCredsOpen(false);
     toast.message("Demo credentials filled", {
@@ -64,7 +59,6 @@ export default function AdminLoginPage() {
     }
     setPendingStaff(staff);
     setOtp("");
-    setStep("otp");
     toast.message("OTP sent (mock)", {
       description: "Enter any 6 digits to continue.",
     });
@@ -72,10 +66,7 @@ export default function AdminLoginPage() {
 
   function submitOtp(e: React.FormEvent) {
     e.preventDefault();
-    if (!pendingStaff) {
-      setStep("credentials");
-      return;
-    }
+    if (!pendingStaff) return;
     if (!verifyMockOtp(otp)) {
       toast.error("OTP must be any 6 digits");
       return;
@@ -97,7 +88,7 @@ export default function AdminLoginPage() {
         </div>
 
         <div className="space-y-4 rounded-2xl border border-border bg-card p-6 shadow-sm">
-          {step === "credentials" ? (
+          {!pendingStaff ? (
             <form onSubmit={submitCredentials} className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="mobile">Mobile</Label>
@@ -135,20 +126,47 @@ export default function AdminLoginPage() {
               </Button>
             </form>
           ) : (
-            <AdminOtpStep
-              mobile={mobile}
-              otp={otp}
-              onOtpChange={setOtp}
-              onBack={() => {
-                setStep("credentials");
-                setPendingStaff(null);
-                setOtp("");
-              }}
-              onVerify={submitOtp}
-            />
+            <form onSubmit={submitOtp} className="space-y-4">
+              <div className="space-y-1">
+                <p className="font-heading text-lg text-ink">Enter OTP</p>
+                <p className="text-sm text-muted-foreground">
+                  Mock code sent to +91 {mobile}. Use any 6 digits.
+                </p>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="otp">6-digit OTP</Label>
+                <Input
+                  id="otp"
+                  inputMode="numeric"
+                  maxLength={6}
+                  placeholder="e.g. 123456"
+                  value={otp}
+                  onChange={(e) =>
+                    setOtp(e.target.value.replace(/\D/g, "").slice(0, 6))
+                  }
+                  className="tracking-[0.35em]"
+                  autoFocus
+                  required
+                />
+              </div>
+              <Button type="submit" className="w-full bg-ink">
+                Verify & sign in
+              </Button>
+              <Button
+                type="button"
+                variant="ghost"
+                className="w-full"
+                onClick={() => {
+                  setPendingStaff(null);
+                  setOtp("");
+                }}
+              >
+                Back to mobile & password
+              </Button>
+            </form>
           )}
 
-          {isDevMode && step === "credentials" && (
+          {isDevMode && !pendingStaff && (
             <Button
               type="button"
               variant="outline"

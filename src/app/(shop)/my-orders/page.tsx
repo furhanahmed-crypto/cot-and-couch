@@ -3,13 +3,13 @@
 import Link from "next/link";
 import { Package } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { Button, buttonVariants } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
+import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ROUTES } from "@/constants/routes";
 import { sales } from "@/data/mock";
 import { useCustomerSession } from "@/hooks/use-customer-session";
 import { formatINR } from "@/lib/format";
+import { cn } from "@/lib/utils";
 import { getProductById } from "@/services/catalogue";
 import type { OrderStatus } from "@/types";
 
@@ -23,32 +23,13 @@ const statusLabel: Record<OrderStatus, string> = {
 };
 
 export default function MyOrdersPage() {
-  const { session, ready, isLoggedIn } = useCustomerSession();
+  const { session, ready } = useCustomerSession();
 
-  const orders = ready && session
-    ? sales.filter((o) => o.customerMobile === session.mobile)
-    : [];
-
-  if (!ready) {
+  if (!ready || !session) {
     return <p className="p-8 text-center text-muted-foreground">Loading orders…</p>;
   }
 
-  if (!isLoggedIn || !session) {
-    return (
-      <div className="mx-auto max-w-lg px-4 py-12 text-center">
-        <p className="text-muted-foreground">Sign in to view orders linked to your mobile.</p>
-        <Link
-          href={ROUTES.login}
-          className={cn(
-            buttonVariants(),
-            "mt-4 inline-flex bg-brass text-ink hover:bg-brass/90",
-          )}
-        >
-          Log in
-        </Link>
-      </div>
-    );
-  }
+  const orders = sales.filter((o) => o.customerMobile === session.mobile);
 
   return (
     <div className="mx-auto max-w-3xl px-4 py-6 md:px-6 md:py-8">
@@ -95,7 +76,8 @@ export default function MyOrdersPage() {
                       Advance paid: {formatINR(order.advancePaid)}
                     </p>
                     <p className="text-muted-foreground">
-                      Expected delivery: {order.expectedDelivery} · Handled by {order.salesperson}
+                      Expected delivery: {order.expectedDelivery} · Handled by{" "}
+                      {order.salesperson}
                     </p>
                     <p className="text-muted-foreground">{order.address}</p>
                     {product && (

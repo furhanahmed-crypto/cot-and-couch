@@ -6,7 +6,7 @@ import { useState } from "react";
 import { Heart, LogOut, Menu, Search, User } from "lucide-react";
 import { BrandMark } from "@/components/shared/brand-mark";
 import { ThemeToggle } from "@/components/shared/theme-toggle";
-import { Button, buttonVariants } from "@/components/ui/button";
+import { buttonVariants } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
