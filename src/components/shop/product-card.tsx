@@ -44,7 +44,11 @@ export function ProductCard({
         className,
       )}
     >
-      <Link href={ROUTES.product(product.slug)} className="relative block aspect-[4/5] overflow-hidden bg-muted">
+      <Link
+        href={ROUTES.product(product.slug)}
+        prefetch={false}
+        className="relative block aspect-[4/5] overflow-hidden bg-muted"
+      >
         {img && (
           <Image
             src={img}
@@ -71,7 +75,11 @@ export function ProductCard({
         <Heart className={cn("size-4", liked && "fill-destructive text-destructive")} />
       </Button>
       <div className="flex flex-1 flex-col gap-1.5 p-3">
-        <Link href={ROUTES.product(product.slug)} className="font-medium leading-snug hover:text-brass">
+        <Link
+          href={ROUTES.product(product.slug)}
+          prefetch={false}
+          className="font-medium leading-snug hover:text-brass"
+        >
           {product.name}
         </Link>
         <div className="flex flex-wrap items-baseline gap-2">

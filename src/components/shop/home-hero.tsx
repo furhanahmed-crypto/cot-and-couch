@@ -111,6 +111,7 @@ export function HomeHero({
         {product && (
           <Link
             href={ROUTES.product(product.slug)}
+            prefetch={false}
             className="fade-up-delay mt-5 inline-flex w-fit items-center gap-2 rounded-full bg-white/10 px-4 py-2 text-sm backdrop-blur transition hover:bg-white/20"
           >
             Delivered in {active.area} · {active.deliveryMonth}

@@ -11,7 +11,6 @@ export async function toggleFavouriteAction(productId: string) {
   const result = await toggleFavourite(productId);
   if (result.ok) {
     revalidatePath(ROUTES.shortlist);
-    revalidatePath("/");
   }
   return result;
 }

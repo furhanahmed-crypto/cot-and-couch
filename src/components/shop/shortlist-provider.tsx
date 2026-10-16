@@ -4,11 +4,15 @@ import {
   createContext,
   useCallback,
   useContext,
+  useEffect,
   useMemo,
   useState,
   useTransition,
 } from "react";
-import { toggleFavouriteAction } from "@/app/(shop)/favourites/actions";
+import {
+  getFavouriteIdsAction,
+  toggleFavouriteAction,
+} from "@/app/(shop)/favourites/actions";
 
 type ShortlistContextValue = {
   ids: string[];
@@ -20,15 +24,28 @@ type ShortlistContextValue = {
 
 const ShortlistContext = createContext<ShortlistContextValue | null>(null);
 
-export function ShortlistProvider({
-  initialIds,
-  children,
-}: {
-  initialIds: string[];
-  children: React.ReactNode;
-}) {
-  const [ids, setIds] = useState(initialIds);
+/**
+ * Shared shortlist. Loads favourites once on the client so shop layout
+ * does not block every RSC navigation on auth + DB.
+ */
+export function ShortlistProvider({ children }: { children: React.ReactNode }) {
+  const [ids, setIds] = useState<string[]>([]);
+  const [ready, setReady] = useState(false);
   const [, startTransition] = useTransition();
+
+  useEffect(() => {
+    let cancelled = false;
+    getFavouriteIdsAction()
+      .then((next) => {
+        if (!cancelled) setIds(next);
+      })
+      .finally(() => {
+        if (!cancelled) setReady(true);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const toggle = useCallback((productId: string) => {
     setIds((prev) =>
@@ -66,11 +83,11 @@ export function ShortlistProvider({
     () => ({
       ids,
       count: ids.length,
-      ready: true,
+      ready,
       has,
       toggle,
     }),
-    [ids, has, toggle],
+    [ids, ready, has, toggle],
   );
 
   return (

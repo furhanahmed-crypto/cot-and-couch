@@ -168,6 +168,10 @@ Chronological-ish record of **why** the prototype is shaped this way. Update whe
 
 **Fix:** `list` mode = `DISTINCT ON (product_id, colour_option_id)` cheapest SKU per colour; category pages load that category only. `full` mode only for PDP + admin.
 
+**Follow-up (still slow after deploy):** Network showed product `_rsc` prefetches (Link default) each loading full mattress SKUs; layout also blocked on auth+favourites every nav.
+
+**Fix 2:** `prefetch={false}` on product cards; favourites load once client-side (layout only fetches categories); dedupe variant images in RSC payload; `cache()` on `getCurrentProfile`.
+
 ---
 
 ## 2026-10-16 — Catalogue DTOs (mattress-first)

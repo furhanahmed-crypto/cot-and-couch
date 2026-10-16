@@ -190,9 +190,17 @@ export function mapProduct(
     filling ? `${filling.label} fill` : undefined,
   ].filter(Boolean) as string[];
 
-  const mappedVariants = variants
-    .filter((v) => v.isActive)
-    .map((v) => mapVariant(v, opts, row.imageUrl, dimLabelById));
+  // Same product image on every SKU bloats RSC payloads (mattresses ≈ 480 SKUs).
+  // Keep the image on the first SKU only; PDP falls back for gallery.
+  const active = variants.filter((v) => v.isActive);
+  const mappedVariants = active.map((v, i) =>
+    mapVariant(
+      v,
+      opts,
+      i === 0 || active.length <= 8 ? row.imageUrl : null,
+      dimLabelById,
+    ),
+  );
 
   return {
     id: row.id,

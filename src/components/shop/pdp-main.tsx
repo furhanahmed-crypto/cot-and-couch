@@ -137,6 +137,10 @@ export function PdpMain({
     sizeGroups.find((g) => g.id === axis.sizeGroupOptionId)?.isCustom ?? false;
 
   const variant = resolveVariant(variants, axis);
+  const galleryImages =
+    variant.images.length > 0
+      ? variant.images
+      : (variants.find((v) => v.images.length)?.images ?? []);
   const off = discountPercent(variant.mrp, variant.price);
 
   function selectSizeGroup(groupId: string) {
@@ -201,7 +205,7 @@ export function PdpMain({
 
   return (
     <div className="grid gap-8 lg:grid-cols-2 lg:gap-10">
-      <PdpGallery images={variant.images} videos={variant.videos} alt={product.name} />
+      <PdpGallery images={galleryImages} videos={variant.videos} alt={product.name} />
       <div className="space-y-5">
         <div className="flex items-start justify-between gap-3">
           <h1 className="font-heading text-2xl leading-tight md:text-3xl">

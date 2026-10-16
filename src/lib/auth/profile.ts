@@ -1,3 +1,4 @@
+import { cache } from "react";
 import { eq } from "drizzle-orm";
 import { db } from "@/db";
 import { profiles, type Profile } from "@/db/schema";
@@ -36,8 +37,8 @@ export async function ensureProfile(input: {
   return inserted[0];
 }
 
-/** Current Neon Auth user + app profile, or null. */
-export async function getCurrentProfile(): Promise<Profile | null> {
+/** Current Neon Auth user + app profile, or null. Once per request. */
+export const getCurrentProfile = cache(async (): Promise<Profile | null> => {
   const { data: session } = await auth.getSession();
   if (!session?.user) return null;
 
@@ -54,4 +55,4 @@ export async function getCurrentProfile(): Promise<Profile | null> {
     email: session.user.email,
     name: session.user.name,
   });
-}
+});

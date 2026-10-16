@@ -48,15 +48,15 @@ export interface FilterState {
   q?: string;
 }
 
-async function loadOptionsById(): Promise<OptionLookup> {
+const loadOptionsById = cache(async (): Promise<OptionLookup> => {
   const rows = await db.select().from(options);
   return new Map(rows.map((r) => [r.id, r]));
-}
+});
 
-async function loadCategorySlugById(): Promise<Map<string, string>> {
+const loadCategorySlugById = cache(async (): Promise<Map<string, string>> => {
   const rows = await db.select().from(categoriesTable);
   return new Map(rows.map((r) => [r.id, r.slug]));
-}
+});
 
 type VariantMode = "list" | "full";
 
@@ -156,10 +156,10 @@ async function loadCollectionIdByProduct(
   return map;
 }
 
-async function loadDimLabels(): Promise<Map<string, string>> {
+const loadDimLabels = cache(async (): Promise<Map<string, string>> => {
   const rows = await db.select().from(sizeDimensions);
   return new Map(rows.map((d) => [d.id, d.label]));
-}
+});
 
 async function hydrateProducts(
   rows: (typeof productsTable.$inferSelect)[],

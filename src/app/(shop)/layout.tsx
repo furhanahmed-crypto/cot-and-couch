@@ -2,20 +2,16 @@ import { ShopHeader } from "@/components/shop/shop-header";
 import { ShortlistProvider } from "@/components/shop/shortlist-provider";
 import { BrandMark } from "@/components/shared/brand-mark";
 import { getCategories } from "@/services/catalogue";
-import { getFavouriteIdsForCurrentUser } from "@/services/favourites";
 
 export default async function ShopLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const [categories, favouriteIds] = await Promise.all([
-    getCategories(),
-    getFavouriteIdsForCurrentUser(),
-  ]);
+  const categories = await getCategories();
 
   return (
-    <ShortlistProvider initialIds={favouriteIds}>
+    <ShortlistProvider>
       <ShopHeader categories={categories} />
       <main className="flex-1">{children}</main>
       <footer className="border-t border-border/70 py-6 sm:py-8">
