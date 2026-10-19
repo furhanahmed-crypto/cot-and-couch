@@ -28,16 +28,16 @@ Short, binding rules for Cot & Couch. Prioritize clarity over cleverness. Read `
 
 Follow consistent naming throughout the project.
 
-| Item | Convention | Example |
-|---|---|---|
-| Constants | `SCREAMING_SNAKE_CASE` | `API_BASE_URL` |
-| Components and component filenames | `PascalCase` | `ProductCard.tsx` |
-| Variables and functions | `camelCase` | `productList`, `calculateTotal()` |
-| Custom React hooks | `camelCase`, prefixed with `use` | `useAuth.ts` |
-| Object properties | `camelCase` | `firstName` |
-| Types and interfaces | `PascalCase` | `ProductResponse` |
-| Utility and service filenames | Descriptive `camelCase` | `formatDate.ts` |
-| Route segments | `kebab-case` | `product-details` |
+| Item                               | Convention                       | Example                           |
+| ---------------------------------- | -------------------------------- | --------------------------------- |
+| Constants                          | `SCREAMING_SNAKE_CASE`           | `API_BASE_URL`                    |
+| Components and component filenames | `PascalCase`                     | `ProductCard.tsx`                 |
+| Variables and functions            | `camelCase`                      | `productList`, `calculateTotal()` |
+| Custom React hooks                 | `camelCase`, prefixed with `use` | `useAuth.ts`                      |
+| Object properties                  | `camelCase`                      | `firstName`                       |
+| Types and interfaces               | `PascalCase`                     | `ProductResponse`                 |
+| Utility and service filenames      | Descriptive `camelCase`          | `formatDate.ts`                   |
+| Route segments                     | `kebab-case`                     | `product-details`                 |
 
 - Use meaningful, descriptive names. Avoid vague names when a precise name is available.
 - Follow framework-required naming conventions where necessary, consistently and without compromising functionality.
