@@ -1,57 +1,48 @@
 import { PageHeader } from "@/components/admin/page-header";
-import { Badge } from "@/components/ui/badge";
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { formatINR } from "@/lib/format";
+  SalesManager,
+  type SaleProductOption,
+} from "@/components/admin/sales-manager";
+import { getAllProducts } from "@/services/catalogue";
 import { getOrders } from "@/services/ops";
 
 export const instant = false;
 
 export default async function SalesPage() {
-  const sales = await getOrders();
+  const [sales, products] = await Promise.all([
+    getOrders(),
+    getAllProducts(),
+  ]);
+
+  const productOptions: SaleProductOption[] = products.map((p) => ({
+    id: p.id,
+    name: p.name,
+    variants: p.variants.map((v) => ({
+      id: v.id,
+      label: [
+        v.sku,
+        v.sizeDimensionLabel || v.sizeGroupLabel,
+        v.thicknessLabel,
+        v.colourName,
+      ]
+        .filter(Boolean)
+        .join(" · "),
+    })),
+  }));
+
+  const productNames = Object.fromEntries(products.map((p) => [p.id, p.name]));
 
   return (
     <div className="space-y-6">
-      <PageHeader title="Sales / orders" description="Orders from Neon." />
-      <div className="overflow-x-auto rounded-xl border border-border bg-card">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Customer</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead>Price</TableHead>
-              <TableHead>Delivery</TableHead>
-              <TableHead>Salesperson</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {sales.map((o) => (
-              <TableRow key={o.id}>
-                <TableCell>
-                  <div className="font-medium">{o.customerName}</div>
-                  <div className="text-xs text-muted-foreground">
-                    {o.customerMobile}
-                  </div>
-                </TableCell>
-                <TableCell>
-                  <Badge variant="outline" className="capitalize">
-                    {o.status.replace(/_/g, " ")}
-                  </Badge>
-                </TableCell>
-                <TableCell>{formatINR(o.agreedPrice)}</TableCell>
-                <TableCell>{o.expectedDelivery || "—"}</TableCell>
-                <TableCell>{o.salesperson || "—"}</TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </div>
+      <PageHeader
+        title="Sales & delivery"
+        description="Record showroom sales and move orders from confirmed → on the way → delivered."
+      />
+      <SalesManager
+        orders={sales}
+        products={productOptions}
+        productNames={productNames}
+      />
     </div>
   );
 }

@@ -138,6 +138,8 @@ export interface Product {
 /** Admin product editor option lookups. */
 export interface ProductEditorLookups {
   brands: Brand[];
+  /** Brand id → linked option ids (empty = all options available). */
+  brandOptionIds: Record<string, string[]>;
   purpose: { id: string; label: string }[];
   coverMaterial: { id: string; label: string }[];
   filling: { id: string; label: string }[];

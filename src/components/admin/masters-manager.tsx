@@ -17,6 +17,7 @@ import {
   updateColourAction,
   updateSizeAction,
 } from "@/app/admin/masters/actions";
+import { AppSelect } from "@/components/ui/app-select";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -659,17 +660,15 @@ function SizeAddForm({
     >
       <div className="space-y-1">
         <Label>Group</Label>
-        <select
-          className="h-9 rounded-lg border border-input bg-background px-2 text-sm"
+        <AppSelect
           value={sizeGroupSlug}
-          onChange={(e) => setSizeGroupSlug(e.target.value)}
-        >
-          {sizeGroups.map((g) => (
-            <option key={g.slug} value={g.slug}>
-              {g.label}
-            </option>
-          ))}
-        </select>
+          onValueChange={setSizeGroupSlug}
+          triggerClassName="w-[9rem]"
+          items={sizeGroups.map((g) => ({
+            value: g.slug,
+            label: g.label,
+          }))}
+        />
       </div>
       <div className="space-y-1">
         <Label>Length (in)</Label>

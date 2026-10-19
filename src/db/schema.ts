@@ -5,6 +5,7 @@ import {
   numeric,
   pgEnum,
   pgTable,
+  primaryKey,
   text,
   timestamp,
   unique,
@@ -71,6 +72,11 @@ export const mattressBrands = pgTable("mattress_brands", {
   slug: text("slug").notNull().unique(),
   sortOrder: integer("sort_order").notNull().default(0),
   isActive: boolean("is_active").notNull().default(true),
+  /** Brand defaults shown in Categories → brand sheet (warranty, trial, etc.). */
+  defaults: jsonb("defaults")
+    .$type<Record<string, string>>()
+    .notNull()
+    .default({}),
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
 });
 
@@ -101,6 +107,23 @@ export const options = pgTable(
     isActive: boolean("is_active").notNull().default(true),
   },
   (t) => [unique("options_group_slug").on(t.groupId, t.slug)],
+);
+
+/**
+ * Which catalogue options a mattress brand offers
+ * (purpose / comfort / filling / cover_material).
+ */
+export const mattressBrandOptions = pgTable(
+  "mattress_brand_options",
+  {
+    brandId: uuid("brand_id")
+      .notNull()
+      .references(() => mattressBrands.id, { onDelete: "cascade" }),
+    optionId: uuid("option_id")
+      .notNull()
+      .references(() => options.id, { onDelete: "cascade" }),
+  },
+  (t) => [primaryKey({ columns: [t.brandId, t.optionId] })],
 );
 
 /**

@@ -14,6 +14,7 @@ import {
   specCompleteness,
   stockSummary,
 } from "@/components/admin/admin-products-helpers";
+import { AppSelect } from "@/components/ui/app-select";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
@@ -34,9 +35,6 @@ type StatusFilter = "all" | "published" | "draft" | "archived";
 type StockFilter = "all" | "in_stock" | "low" | "made_to_order" | "out";
 type SpecFilter = "all" | "complete" | "incomplete";
 type SortKey = "updated" | "name" | "price" | "stock";
-
-const selectClass =
-  "h-9 rounded-lg border border-input bg-background px-2 text-sm text-foreground";
 
 export function AdminProductsTable({
   products,
@@ -289,7 +287,7 @@ export function AdminProductsTable({
         </Link>
       </div>
 
-      <div className="flex min-w-0 flex-col gap-2 lg:flex-row lg:items-center">
+      <div className="-mx-1 flex min-w-0 items-center gap-2 overflow-x-auto px-1 pb-0.5">
         <Input
           value={query}
           onChange={(e) => {
@@ -297,79 +295,73 @@ export function AdminProductsTable({
             setPage(1);
           }}
           placeholder="Search name, SKU, collection…"
-          className="min-w-0 max-w-full lg:max-w-xs"
+          className="h-9 w-56 shrink-0 sm:w-64"
         />
-        <div className="flex min-w-0 flex-1 flex-wrap items-center gap-2">
-          <select
-            className={selectClass}
-            value={status}
-            onChange={(e) => {
-              setStatus(e.target.value as StatusFilter);
-              setPage(1);
-            }}
-            aria-label="Status"
-          >
-            <option value="all">Status: All</option>
-            <option value="published">Published</option>
-            <option value="draft">Draft</option>
-            <option value="archived">Archived</option>
-          </select>
-          <select
-            className={selectClass}
-            value={collectionId}
-            onChange={(e) => {
-              setCollectionId(e.target.value);
-              setPage(1);
-            }}
-            aria-label="Collection"
-          >
-            <option value="all">Collection</option>
-            {collections.map((c) => (
-              <option key={c.id} value={c.id}>
-                {c.name}
-              </option>
-            ))}
-          </select>
-          <select
-            className={selectClass}
-            value={stock}
-            onChange={(e) => {
-              setStock(e.target.value as StockFilter);
-              setPage(1);
-            }}
-            aria-label="Stock"
-          >
-            <option value="all">Stock</option>
-            <option value="in_stock">In stock</option>
-            <option value="low">Low stock</option>
-            <option value="made_to_order">Made to order</option>
-            <option value="out">Out of stock</option>
-          </select>
-          <select
-            className={selectClass}
-            value={specs}
-            onChange={(e) => {
-              setSpecs(e.target.value as SpecFilter);
-              setPage(1);
-            }}
-            aria-label="Spec completeness"
-          >
-            <option value="all">Spec completeness</option>
-            <option value="complete">Complete</option>
-            <option value="incomplete">Incomplete</option>
-          </select>
-          <select
-            className={cn(selectClass, "lg:ml-auto")}
-            value={sort}
-            onChange={(e) => setSort(e.target.value as SortKey)}
-            aria-label="Sort"
-          >
-            <option value="updated">Sort: Last updated</option>
-            <option value="name">Sort: Name</option>
-            <option value="price">Sort: Price</option>
-            <option value="stock">Sort: Stock</option>
-          </select>
-        </div>
+        <AppSelect
+          value={status}
+          onValueChange={(v) => {
+            setStatus(v as StatusFilter);
+            setPage(1);
+          }}
+          triggerClassName="h-9 w-[8.75rem] shrink-0"
+          items={[
+            { value: "all", label: "Status: All" },
+            { value: "published", label: "Published" },
+            { value: "draft", label: "Draft" },
+            { value: "archived", label: "Archived" },
+          ]}
+        />
+        <AppSelect
+          value={collectionId}
+          onValueChange={(v) => {
+            setCollectionId(v);
+            setPage(1);
+          }}
+          triggerClassName="h-9 w-[9.5rem] shrink-0"
+          items={[
+            { value: "all", label: "Collection" },
+            ...collections.map((c) => ({ value: c.id, label: c.name })),
+          ]}
+        />
+        <AppSelect
+          value={stock}
+          onValueChange={(v) => {
+            setStock(v as StockFilter);
+            setPage(1);
+          }}
+          triggerClassName="h-9 w-[8.5rem] shrink-0"
+          items={[
+            { value: "all", label: "Stock" },
+            { value: "in_stock", label: "In stock" },
+            { value: "low", label: "Low stock" },
+            { value: "made_to_order", label: "Made to order" },
+            { value: "out", label: "Out of stock" },
+          ]}
+        />
+        <AppSelect
+          value={specs}
+          onValueChange={(v) => {
+            setSpecs(v as SpecFilter);
+            setPage(1);
+          }}
+          triggerClassName="h-9 w-[10.5rem] shrink-0"
+          items={[
+            { value: "all", label: "Spec completeness" },
+            { value: "complete", label: "Complete" },
+            { value: "incomplete", label: "Incomplete" },
+          ]}
+        />
+        <AppSelect
+          value={sort}
+          onValueChange={(v) => setSort(v as SortKey)}
+          triggerClassName="ml-auto h-9 w-[10.75rem] shrink-0"
+          items={[
+            { value: "updated", label: "Sort: Last updated" },
+            { value: "name", label: "Sort: Name" },
+            { value: "price", label: "Sort: Price" },
+            { value: "stock", label: "Sort: Stock" },
+          ]}
+        />
       </div>
 
       <div className="min-w-0 rounded-xl border border-border bg-card">

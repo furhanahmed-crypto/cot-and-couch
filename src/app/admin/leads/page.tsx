@@ -1,18 +1,22 @@
 import { PageHeader } from "@/components/admin/page-header";
 import { LeadsManager } from "@/components/admin/leads-manager";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { getLeads, getSegments } from "@/services/ops";
+import { getAdminLeads } from "@/services/leads";
+import { getSegments } from "@/services/ops";
 
 export const instant = false;
 
 export default async function LeadsPage() {
-  const [leads, segments] = await Promise.all([getLeads(), getSegments()]);
+  const [leads, segments] = await Promise.all([
+    getAdminLeads(),
+    getSegments(),
+  ]);
 
   return (
     <div className="space-y-6">
       <PageHeader
         title="Leads"
-        description="CRM leads — edit intent, follow-up, or remove. Segments listed below (PDF AD-11)."
+        description={`${leads.length} contacts — storefront sign-ups (email / OTP) sync here automatically.`}
       />
       <LeadsManager leads={leads} />
       <div>

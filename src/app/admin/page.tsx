@@ -7,7 +7,8 @@ import {
   type TopProductRow,
 } from "@/components/admin/admin-dashboard";
 import { getAllProducts, getCategories } from "@/services/catalogue";
-import { getGallery, getLeads, getOrders } from "@/services/ops";
+import { getAdminLeads } from "@/services/leads";
+import { getGallery, getOrders } from "@/services/ops";
 import { getStaffProfile } from "@/services/profile";
 import { ROUTES } from "@/constants/routes";
 
@@ -24,7 +25,7 @@ async function DashboardContent() {
     await Promise.all([
       getAllProducts(),
       getCategories({ includeHidden: true }),
-      getLeads(),
+      getAdminLeads(),
       getOrders(),
       getGallery(),
       getStaffProfile(),

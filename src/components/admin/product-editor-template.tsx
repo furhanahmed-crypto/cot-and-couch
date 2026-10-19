@@ -1,5 +1,7 @@
 "use client";
 
+import { useMemo } from "react";
+import { AppSelect } from "@/components/ui/app-select";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -8,9 +10,6 @@ import {
   type CategoryProductTemplate,
 } from "@/constants/admin-product-templates";
 import type { ProductEditorLookups } from "@/types";
-
-const selectClass =
-  "h-9 w-full max-w-full rounded-lg border border-input bg-background px-2 text-sm";
 
 export type MattressSpecState = {
   mattressBrandId: string;
@@ -54,6 +53,15 @@ export function ProductEditorTemplate({
 
   const isMattress = categorySlug === "mattresses";
 
+  const brandFilter = useMemo(() => {
+    const ids = lookups.brandOptionIds[mattress.mattressBrandId];
+    if (!ids?.length) return null;
+    return new Set(ids);
+  }, [lookups.brandOptionIds, mattress.mattressBrandId]);
+
+  const filterOpts = <T extends { id: string }>(list: T[]) =>
+    brandFilter ? list.filter((o) => brandFilter.has(o.id)) : list;
+
   return (
     <section className="min-w-0 space-y-4 rounded-xl border border-border bg-card p-4">
       <div className="flex flex-wrap items-start justify-between gap-2">
@@ -92,28 +100,28 @@ export function ProductEditorTemplate({
             required
             value={mattress.purposeOptionId}
             onChange={(v) => onMattressChange({ purposeOptionId: v })}
-            options={lookups.purpose}
+            options={filterOpts(lookups.purpose)}
           />
           <FieldSelect
             label="Firmness"
             required
             value={mattress.comfortOptionId}
             onChange={(v) => onMattressChange({ comfortOptionId: v })}
-            options={lookups.comfort}
+            options={filterOpts(lookups.comfort)}
           />
           <FieldSelect
             label="Layer construction"
             required
             value={mattress.fillingOptionId}
             onChange={(v) => onMattressChange({ fillingOptionId: v })}
-            options={lookups.filling}
+            options={filterOpts(lookups.filling)}
           />
           <FieldSelect
             label="Cover fabric"
             required
             value={mattress.coverMaterialOptionId}
             onChange={(v) => onMattressChange({ coverMaterialOptionId: v })}
-            options={lookups.coverMaterial}
+            options={filterOpts(lookups.coverMaterial)}
           />
           <div className="min-w-0 space-y-1">
             <Label>
@@ -215,26 +223,25 @@ function FieldSelect({
   required?: boolean;
   allowEmpty?: boolean;
 }) {
+  const items = [
+    ...(allowEmpty || !required
+      ? [{ value: "__none__", label: "Select…" }]
+      : []),
+    ...options.map((o) => ({ value: o.id, label: o.label })),
+  ];
   return (
     <div className="min-w-0 space-y-1">
       <Label>
         {label}
         {required ? <span className="text-destructive"> *</span> : null}
       </Label>
-      <select
-        className={selectClass}
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-      >
-        {(allowEmpty || !required) && (
-          <option value="">Select…</option>
-        )}
-        {options.map((o) => (
-          <option key={o.id} value={o.id}>
-            {o.label}
-          </option>
-        ))}
-      </select>
+      <AppSelect
+        value={value || "__none__"}
+        onValueChange={(v) => onChange(v === "__none__" ? "" : v)}
+        items={items}
+        placeholder="Select…"
+        triggerClassName="w-full"
+      />
     </div>
   );
 }

@@ -1,21 +1,21 @@
 import { AdminGate } from "@/components/admin/admin-gate";
 import { PageHeader } from "@/components/admin/page-header";
-import { AdminCategoriesList } from "@/components/admin/admin-categories-list";
-import { getCategories } from "@/services/catalogue";
+import { AdminCategoryTemplates } from "@/components/admin/admin-category-templates";
+import { getCategoryTemplatesData } from "@/services/admin-categories";
 
 export const instant = false;
 
 export default async function CategoriesPage() {
-  const categories = await getCategories({ includeHidden: true });
+  const data = await getCategoryTemplatesData();
 
   return (
     <AdminGate title="Categories">
       <div className="space-y-6">
         <PageHeader
-          title="Categories"
-          description="Live categories from Neon — visibility writes to the database."
+          title="Categories & templates"
+          description="Four live categories — mattress brands and per-brand options open in a sheet."
         />
-        <AdminCategoriesList categories={categories} />
+        <AdminCategoryTemplates data={data} />
       </div>
     </AdminGate>
   );

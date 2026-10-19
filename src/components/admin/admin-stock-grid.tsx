@@ -3,6 +3,7 @@
 import { useMemo, useState, useTransition } from "react";
 import { toast } from "sonner";
 import { setVariantStockAction } from "@/app/admin/catalogue/actions";
+import { AppSelect } from "@/components/ui/app-select";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -87,18 +88,16 @@ export function AdminStockGrid({ products }: { products: StockProduct[] }) {
       <div className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-end">
         <div className="space-y-1">
           <Label htmlFor="stock-product">Product</Label>
-          <select
+          <AppSelect
             id="stock-product"
-            className="h-9 w-full max-w-xl rounded-lg border border-input bg-background px-2 text-sm"
             value={product?.id ?? ""}
-            onChange={(e) => setProductId(e.target.value)}
-          >
-            {products.map((p) => (
-              <option key={p.id} value={p.id}>
-                {p.categoryName} — {p.name} ({p.variants.length} SKUs)
-              </option>
-            ))}
-          </select>
+            onValueChange={setProductId}
+            triggerClassName="w-full max-w-xl"
+            items={products.map((p) => ({
+              value: p.id,
+              label: `${p.categoryName} — ${p.name} (${p.variants.length} SKUs)`,
+            }))}
+          />
         </div>
         <p className="text-sm text-muted-foreground">{summary}</p>
       </div>

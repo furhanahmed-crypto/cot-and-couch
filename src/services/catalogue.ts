@@ -15,6 +15,7 @@ import {
 import {
   categories as categoriesTable,
   collections as collectionsTable,
+  mattressBrandOptions,
   mattressBrands as brandsTable,
   optionGroups,
   options,
@@ -387,20 +388,22 @@ export async function searchProducts(q: string) {
 /** Admin product editor — brands + option groups (uncached). */
 export async function getProductEditorLookups(): Promise<ProductEditorLookups> {
   await connection();
-  const [brandRows, groupRows, optionRows, dimRows] = await Promise.all([
-    db.select().from(brandsTable).orderBy(asc(brandsTable.sortOrder)),
-    db.select().from(optionGroups).orderBy(asc(optionGroups.sortOrder)),
-    db
-      .select()
-      .from(options)
-      .where(eq(options.isActive, true))
-      .orderBy(asc(options.sortOrder)),
-    db
-      .select()
-      .from(sizeDimensions)
-      .where(eq(sizeDimensions.isActive, true))
-      .orderBy(asc(sizeDimensions.sortOrder)),
-  ]);
+  const [brandRows, groupRows, optionRows, dimRows, brandLinks] =
+    await Promise.all([
+      db.select().from(brandsTable).orderBy(asc(brandsTable.sortOrder)),
+      db.select().from(optionGroups).orderBy(asc(optionGroups.sortOrder)),
+      db
+        .select()
+        .from(options)
+        .where(eq(options.isActive, true))
+        .orderBy(asc(options.sortOrder)),
+      db
+        .select()
+        .from(sizeDimensions)
+        .where(eq(sizeDimensions.isActive, true))
+        .orderBy(asc(sizeDimensions.sortOrder)),
+      db.select().from(mattressBrandOptions),
+    ]);
 
   const groupIdByKey = new Map(groupRows.map((g) => [g.key, g.id]));
   const opts = (key: string) => {
@@ -411,8 +414,16 @@ export async function getProductEditorLookups(): Promise<ProductEditorLookups> {
       .map((o) => ({ id: o.id, label: o.label, slug: o.slug }));
   };
 
+  const brandOptionIds: Record<string, string[]> = {};
+  for (const link of brandLinks) {
+    const list = brandOptionIds[link.brandId] ?? [];
+    list.push(link.optionId);
+    brandOptionIds[link.brandId] = list;
+  }
+
   return {
     brands: brandRows.filter((b) => b.isActive).map(mapBrand),
+    brandOptionIds,
     purpose: opts("purpose").map(({ id, label }) => ({ id, label })),
     coverMaterial: opts("cover_material").map(({ id, label }) => ({
       id,

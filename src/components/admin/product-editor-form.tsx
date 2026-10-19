@@ -10,6 +10,7 @@ import {
 } from "@/components/admin/product-editor-template";
 import { ProductEditorMedia } from "@/components/admin/product-editor-media";
 import { ProductEditorVariants } from "@/components/admin/product-editor-variants";
+import { AppSelect } from "@/components/ui/app-select";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -180,16 +181,17 @@ export function ProductEditorForm({
             </div>
             <div className="space-y-1">
               <Label htmlFor="pe-status">Status</Label>
-              <select
+              <AppSelect
                 id="pe-status"
-                className="h-9 w-full max-w-full rounded-lg border border-input bg-background px-2 text-sm"
                 value={status}
-                onChange={(e) => setStatus(e.target.value as ProductStatus)}
-              >
-                <option value="draft">Draft</option>
-                <option value="published">Published</option>
-                <option value="archived">Archived</option>
-              </select>
+                onValueChange={(v) => setStatus(v as ProductStatus)}
+                triggerClassName="w-full"
+                items={[
+                  { value: "draft", label: "Draft" },
+                  { value: "published", label: "Published" },
+                  { value: "archived", label: "Archived" },
+                ]}
+              />
             </div>
           </section>
 

@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { Plus } from "lucide-react";
 import { createProductAction } from "@/app/admin/catalogue/product-actions";
+import { AppSelect } from "@/components/ui/app-select";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -76,18 +77,16 @@ export function AdminProductsCreate({ categories }: { categories: Category[] }) 
             </div>
             <div className="space-y-1">
               <Label htmlFor="np-cat">Category</Label>
-              <select
+              <AppSelect
                 id="np-cat"
-                className="h-9 w-full rounded-lg border border-input bg-background px-2 text-sm"
                 value={categoryId}
-                onChange={(e) => setCategoryId(e.target.value)}
-              >
-                {categories.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.name}
-                  </option>
-                ))}
-              </select>
+                onValueChange={setCategoryId}
+                triggerClassName="w-full"
+                items={categories.map((c) => ({
+                  value: c.id,
+                  label: c.name,
+                }))}
+              />
             </div>
           </div>
           <DialogFooter>

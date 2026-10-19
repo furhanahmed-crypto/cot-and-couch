@@ -51,6 +51,7 @@ async function clearCatalogue() {
   await db.delete(schema.productVariants);
   await db.delete(schema.products);
   await db.delete(schema.sizeDimensions);
+  await db.delete(schema.mattressBrandOptions);
   await db.delete(schema.options);
   await db.delete(schema.optionGroups);
   await db.delete(schema.mattressBrands);
@@ -135,6 +136,109 @@ async function seed() {
   const fillingBy = bySlug(fillings);
   const comfortBy = bySlug(comforts);
   const colourBy = bySlug(colours);
+
+  // Extra brand-specific mattress types / materials
+  const extraPurposes = await addOptions(g.purpose.id, [
+    { label: "Cooling", slug: "cooling" },
+    { label: "Orthopaedic", slug: "orthopaedic" },
+    { label: "Hybrid support", slug: "hybrid-support" },
+  ]);
+  const extraComforts = await addOptions(g.comfort.id, [
+    { label: "Plush", slug: "plush" },
+  ]);
+  const extraFillings = await addOptions(g.filling.id, [
+    { label: "Latex", slug: "latex" },
+  ]);
+  const extraCovers = await addOptions(g.cover_material.id, [
+    { label: "Knitted fabric", slug: "knitted-fabric" },
+  ]);
+  Object.assign(purposeBy, bySlug(extraPurposes));
+  Object.assign(comfortBy, bySlug(extraComforts));
+  Object.assign(fillingBy, bySlug(extraFillings));
+  Object.assign(coverBy, bySlug(extraCovers));
+
+  type BrandOptPlan = {
+    purposes: string[];
+    comforts: string[];
+    fillings: string[];
+    covers: string[];
+  };
+
+  const brandOptionPlan: Record<string, BrandOptPlan> = {
+    "wake-fit": {
+      purposes: ["sleeping", "pain-relief", "cooling"],
+      comforts: ["firm", "medium", "soft", "dual-comfort"],
+      fillings: ["coir", "polyfoam", "latex"],
+      covers: ["cotton", "polyester", "knitted-fabric"],
+    },
+    sleepwell: {
+      purposes: ["sleeping", "pain-relief", "orthopaedic"],
+      comforts: ["firm", "medium", "dual-comfort", "plush"],
+      fillings: ["coir", "cotton", "polyfoam"],
+      covers: ["cotton", "polyester-blend"],
+    },
+    "livpure-smart": {
+      purposes: ["sleeping", "cooling", "hybrid-support"],
+      comforts: ["soft", "medium"],
+      fillings: ["polyfoam", "latex"],
+      covers: ["polyester", "knitted-fabric"],
+    },
+    "centuary-mattresses": {
+      purposes: ["sleeping", "pain-relief", "orthopaedic"],
+      comforts: ["firm", "medium"],
+      fillings: ["coir", "polyfoam"],
+      covers: ["cotton", "polyester"],
+    },
+    sleepyhug: {
+      purposes: ["sleeping", "cooling"],
+      comforts: ["soft", "medium", "plush"],
+      fillings: ["polyfoam", "cotton"],
+      covers: ["polyester-blend", "knitted-fabric"],
+    },
+    "the-sleep-company": {
+      purposes: ["sleeping", "pain-relief", "hybrid-support"],
+      comforts: ["firm", "dual-comfort", "plush"],
+      fillings: ["latex", "polyfoam"],
+      covers: ["cotton", "knitted-fabric"],
+    },
+  };
+
+  const brandLinks: { brandId: string; optionId: string }[] = [];
+  for (const [brandSlug, plan] of Object.entries(brandOptionPlan)) {
+    const brand = mattressBrandBySlug[brandSlug];
+    if (!brand) continue;
+    const pick = (
+      map: Record<string, { id: string }>,
+      slugs: string[],
+    ) => {
+      for (const os of slugs) {
+        const opt = map[os];
+        if (opt) brandLinks.push({ brandId: brand.id, optionId: opt.id });
+      }
+    };
+    pick(purposeBy, plan.purposes);
+    pick(comfortBy, plan.comforts);
+    pick(fillingBy, plan.fillings);
+    pick(coverBy, plan.covers);
+    await db
+      .update(schema.mattressBrands)
+      .set({
+        defaults: {
+          warrantyYears: brandSlug === "the-sleep-company" ? "10" : "5",
+          trialNights: brandSlug === "wake-fit" ? "100" : "30",
+          removableCover: "yes",
+          flippable: brandSlug.includes("sleep") ? "yes" : "no",
+          idealFor:
+            brandSlug === "wake-fit"
+              ? "Side sleepers, couples"
+              : "Everyday sleep",
+        },
+      })
+      .where(eq(schema.mattressBrands.id, brand.id));
+  }
+  if (brandLinks.length) {
+    await db.insert(schema.mattressBrandOptions).values(brandLinks);
+  }
 
   const dimInserts: {
     sizeGroupOptionId: string;

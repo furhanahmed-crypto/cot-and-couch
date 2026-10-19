@@ -4,6 +4,7 @@ import { eq } from "drizzle-orm";
 import { db } from "@/db";
 import { profiles, type Profile } from "@/db/schema";
 import { auth } from "@/lib/auth/server";
+import { ensureLeadForProfile } from "@/services/leads";
 
 /** Create profile if missing. Safe to call after every sign-up / sign-in. */
 export async function ensureProfile(input: {
@@ -20,7 +21,13 @@ export async function ensureProfile(input: {
     .where(eq(profiles.authUserId, input.authUserId))
     .limit(1);
 
-  if (existing[0]) return existing[0];
+  if (existing[0]) {
+    // Returning storefront login — create lead if missing, bump last seen.
+    if (existing[0].role === "customer") {
+      await ensureLeadForProfile(existing[0], { touchLastSeen: true });
+    }
+    return existing[0];
+  }
 
   const inserted = await db
     .insert(profiles)
@@ -35,7 +42,9 @@ export async function ensureProfile(input: {
     })
     .returning();
 
-  return inserted[0];
+  const profile = inserted[0];
+  await ensureLeadForProfile(profile, { touchLastSeen: true });
+  return profile;
 }
 
 /**
