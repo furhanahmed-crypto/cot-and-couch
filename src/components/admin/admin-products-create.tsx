@@ -43,9 +43,9 @@ export function AdminProductsCreate({ categories }: { categories: Category[] }) 
 
   return (
     <>
-      <Button type="button" onClick={() => setOpen(true)}>
+      <Button type="button" size="sm" onClick={() => setOpen(true)}>
         <Plus className="size-4" />
-        New product
+        Add product
       </Button>
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="sm:max-w-md">
