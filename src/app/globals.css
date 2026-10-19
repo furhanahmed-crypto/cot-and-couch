@@ -49,76 +49,81 @@
   --radius-2xl: calc(var(--radius) * 1.8);
 }
 
-/* Premium showroom: ink teal + limestone + brass — not purple / cream-terracotta */
+/*
+ * Brand palette:
+ * cream #F6F1EB · sand #EBDED1 · espresso #3E2723 · white
+ * Buttons use espresso primary (no orange/terracotta fills).
+ * --brass aliases primary for legacy bg-brass / text-brass utilities.
+ */
 :root {
-  --background: #f4f5f3;
-  --foreground: #1c1917;
+  --background: #f6f1eb;
+  --foreground: #3e2723;
   --card: #ffffff;
-  --card-foreground: #1c1917;
+  --card-foreground: #3e2723;
   --popover: #ffffff;
-  --popover-foreground: #1c1917;
-  --primary: #0f2a2a;
-  --primary-foreground: #f7f4ef;
-  --secondary: #e7e9e6;
-  --secondary-foreground: #0f2a2a;
-  --muted: #e8ebe8;
-  --muted-foreground: #5c635e;
-  --accent: #c4a574;
-  --accent-foreground: #1c1917;
+  --popover-foreground: #3e2723;
+  --primary: #3e2723;
+  --primary-foreground: #f6f1eb;
+  --secondary: #ebded1;
+  --secondary-foreground: #3e2723;
+  --muted: #ebded1;
+  --muted-foreground: #7a5c4a;
+  --accent: #ebded1;
+  --accent-foreground: #3e2723;
   --destructive: #b42318;
-  --border: #d5dad5;
-  --input: #d5dad5;
-  --ring: #0f2a2a;
-  --brass: #c4a574;
-  --ink: #0f2a2a;
-  --stone: #f4f5f3;
-  --chart-1: #0f2a2a;
-  --chart-2: #c4a574;
-  --chart-3: #4a6b5d;
+  --border: #e0d2c3;
+  --input: #e0d2c3;
+  --ring: #3e2723;
+  --brass: #3e2723;
+  --ink: #3e2723;
+  --stone: #f6f1eb;
+  --chart-1: #3e2723;
+  --chart-2: #6b5344;
+  --chart-3: #a89080;
   --chart-4: #8b7355;
-  --chart-5: #2c3e3a;
+  --chart-5: #5c4033;
   --radius: 0.5rem;
-  /* Admin console — Figma ink teal shell (#0F2A28 / #1D3D3A / brass dot) */
-  --sidebar: #0f2a28;
-  --sidebar-foreground: #f7f4ef;
-  --sidebar-primary: #c49a5a;
-  --sidebar-primary-foreground: #0f2a28;
-  --sidebar-accent: #1d3d3a;
+  --sidebar: #3e2723;
+  --sidebar-foreground: #f6f1eb;
+  --sidebar-primary: #f6f1eb;
+  --sidebar-primary-foreground: #3e2723;
+  --sidebar-accent: #4a322e;
   --sidebar-accent-foreground: #ffffff;
-  --sidebar-border: #1f4040;
-  --sidebar-ring: #c49a5a;
+  --sidebar-border: #5c4033;
+  --sidebar-ring: #a89080;
 }
 
+/* Dark: near-black 950 surfaces; brown buttons (not orange) */
 .dark {
-  --background: #0c1414;
-  --foreground: #f2efe9;
-  --card: #142222;
-  --card-foreground: #f2efe9;
-  --popover: #142222;
-  --popover-foreground: #f2efe9;
-  --primary: #d4b896;
-  --primary-foreground: #0f2a2a;
-  --secondary: #1a2e2e;
-  --secondary-foreground: #f2efe9;
-  --muted: #1a2e2e;
-  --muted-foreground: #a8b0aa;
-  --accent: #c4a574;
-  --accent-foreground: #0c1414;
+  --background: #0c0a09;
+  --foreground: #f5f0eb;
+  --card: #171412;
+  --card-foreground: #f5f0eb;
+  --popover: #171412;
+  --popover-foreground: #f5f0eb;
+  --primary: #6b5344;
+  --primary-foreground: #f5f0eb;
+  --secondary: #1c1917;
+  --secondary-foreground: #f5f0eb;
+  --muted: #1c1917;
+  --muted-foreground: #a8a29e;
+  --accent: #1c1917;
+  --accent-foreground: #f5f0eb;
   --destructive: #f97066;
-  --border: rgb(255 255 255 / 12%);
-  --input: rgb(255 255 255 / 14%);
-  --ring: #c4a574;
-  --brass: #c4a574;
-  --ink: #d4b896;
-  --stone: #0c1414;
-  --sidebar: #0a1212;
-  --sidebar-foreground: #f2efe9;
-  --sidebar-primary: #c4a574;
-  --sidebar-primary-foreground: #0a1212;
-  --sidebar-accent: #142222;
-  --sidebar-accent-foreground: #f2efe9;
-  --sidebar-border: rgb(255 255 255 / 10%);
-  --sidebar-ring: #c4a574;
+  --border: rgb(245 240 235 / 10%);
+  --input: rgb(245 240 235 / 12%);
+  --ring: #a89080;
+  --brass: #6b5344;
+  --ink: #f5f0eb;
+  --stone: #0c0a09;
+  --sidebar: #09090b;
+  --sidebar-foreground: #f5f0eb;
+  --sidebar-primary: #f5f0eb;
+  --sidebar-primary-foreground: #09090b;
+  --sidebar-accent: #1c1917;
+  --sidebar-accent-foreground: #f5f0eb;
+  --sidebar-border: rgb(245 240 235 / 8%);
+  --sidebar-ring: #a89080;
 }
 
 @layer base {

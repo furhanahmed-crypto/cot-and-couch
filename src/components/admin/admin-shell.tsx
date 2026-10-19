@@ -8,6 +8,7 @@ import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { ROUTES } from "@/constants/routes";
 import { authClient } from "@/lib/auth/client";
 import { getStaffProfile } from "@/services/profile";
+import { cn } from "@/lib/utils";
 
 export function AdminShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -46,22 +47,27 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
     return <div className="min-h-svh bg-background">{children}</div>;
   }
 
-  if (isPending || staffOk !== true) {
-    return (
-      <div className="flex min-h-svh items-center justify-center bg-background text-sm text-muted-foreground">
-        Loading console…
-      </div>
-    );
-  }
+  const ready = !isPending && staffOk === true;
 
   return (
     <SidebarProvider defaultOpen>
       <AdminSidebar />
-      <SidebarInset className="bg-stone">
-        <AdminTopbar
-          staffName={staffName ?? session?.user?.name ?? "Admin"}
-        />
-        <div className="mx-auto w-full max-w-6xl flex-1 px-3 py-4 sm:px-4 md:px-6 md:py-8">
+      <SidebarInset className="min-w-0 bg-stone">
+        {ready ? (
+          <AdminTopbar
+            staffName={staffName ?? session?.user?.name ?? "Admin"}
+          />
+        ) : (
+          <header className="flex h-14 items-center border-b border-border/70 px-4 text-sm text-muted-foreground md:h-16">
+            Loading console…
+          </header>
+        )}
+        <div
+          className={cn(
+            "relative mx-auto w-full min-w-0 max-w-6xl flex-1 px-3 py-4 sm:px-4 md:px-6 md:py-8",
+            !ready && "pointer-events-none opacity-40",
+          )}
+        >
           {children}
         </div>
       </SidebarInset>

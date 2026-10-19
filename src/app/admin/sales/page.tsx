@@ -11,6 +11,8 @@ import {
 import { formatINR } from "@/lib/format";
 import { getOrders } from "@/services/ops";
 
+export const instant = false;
+
 export default async function SalesPage() {
   const sales = await getOrders();
 

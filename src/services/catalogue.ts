@@ -3,6 +3,7 @@
  * `@/lib/catalogue-utils` so this file can stay server-only (`"use cache"`).
  */
 import { cache } from "react";
+import { connection } from "next/server";
 import { and, asc, eq, inArray, sql } from "drizzle-orm";
 import { db } from "@/db";
 import { tagShopCache } from "@/lib/cache-tags";
@@ -218,8 +219,9 @@ export async function getPublishedProductsByCategoryId(categoryId: string) {
   return hydrateProducts(rows, "list");
 }
 
-/** Admin — full variant matrix. */
+/** Admin — full variant matrix (request-time; not in static shell). */
 export const getAllProducts = cache(async () => {
+  await connection();
   const rows = await db
     .select()
     .from(productsTable)
@@ -255,6 +257,7 @@ export async function getProductById(id: string) {
 
 /** Admin editor — uncached so edits show immediately. */
 export async function getAdminProductById(id: string) {
+  await connection();
   const rows = await db
     .select()
     .from(productsTable)

@@ -179,32 +179,32 @@ export function productSlug(brandSlug: string, modelKey: string) {
 }
 
 /**
- * Mattress pricing by size group + thickness only.
- * Colour never changes price — seed expands every colour at the same MRP/offer.
+ * Mattress SKUs follow the product-editor HTML: size (L×W) × thickness only.
+ * No colour/finish on mattresses (photos are one set per product).
  */
-export const MATTRESS_SIZE_BASE = {
-  single: { mrp: 12999, price: 9999 },
-  diwan: { mrp: 16999, price: 13999 },
-  queen: { mrp: 24999, price: 19999 },
-  king: { mrp: 29999, price: 23999 },
-  custom: { mrp: 27999, price: 22999 },
-} as const;
+export const MATTRESS_SIZE_SKUS = [
+  { size: "single", lengthIn: 72, widthIn: 36, mrp: 12999, price: 9999 },
+  { size: "diwan", lengthIn: 75, widthIn: 48, mrp: 16999, price: 13999 },
+  { size: "queen", lengthIn: 78, widthIn: 60, mrp: 24999, price: 19999 },
+  { size: "king", lengthIn: 78, widthIn: 72, mrp: 29999, price: 23999 },
+] as const;
 
-/** Added on top of size base (same for every colour / dimension in that group). */
+/** Thicknesses offered on each mattress model in seed (HTML demo: 6 in · 8 in). */
+export const MATTRESS_THICKNESS_SKUS = ["6-inch", "8-inch"] as const;
+
 export const MATTRESS_THICKNESS_ADD = {
   "4-inch": 0,
   "5-inch": 800,
-  "6-inch": 2000,
+  "6-inch": 0,
   "8-inch": 4000,
 } as const;
 
 export function mattressPrice(
-  size: keyof typeof MATTRESS_SIZE_BASE,
-  thickness: keyof typeof MATTRESS_THICKNESS_ADD,
+  sizePlan: (typeof MATTRESS_SIZE_SKUS)[number],
+  thickness: (typeof MATTRESS_THICKNESS_SKUS)[number],
 ) {
-  const base = MATTRESS_SIZE_BASE[size];
   const add = MATTRESS_THICKNESS_ADD[thickness];
-  return { mrp: base.mrp + add, price: base.price + add };
+  return { mrp: sizePlan.mrp + add, price: sizePlan.price + add };
 }
 
 /** House-made product (mattress_brand_id null). */

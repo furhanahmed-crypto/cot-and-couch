@@ -94,7 +94,7 @@ export function ShopHeader({ categories }: { categories: Category[] }) {
           >
             <Heart className="size-4" />
             {count > 0 && (
-              <span className="absolute -right-0.5 -top-0.5 flex size-4 items-center justify-center rounded-full bg-brass text-[10px] font-bold text-ink">
+              <span className="absolute -right-0.5 -top-0.5 flex size-4 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-primary-foreground">
                 {count}
               </span>
             )}
@@ -107,7 +107,7 @@ export function ShopHeader({ categories }: { categories: Category[] }) {
           >
             <ShoppingCart className="size-4" />
             {cartCount > 0 && (
-              <span className="absolute -right-0.5 -top-0.5 flex size-4 items-center justify-center rounded-full bg-brass text-[10px] font-bold text-ink">
+              <span className="absolute -right-0.5 -top-0.5 flex size-4 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-primary-foreground">
                 {cartCount > 99 ? "99+" : cartCount}
               </span>
             )}

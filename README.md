@@ -77,7 +77,7 @@ Sessions are **Neon Auth cookies** (not localStorage). Shortlist / recently view
 - Showroom CTAs: enquire, WhatsApp, visit — **not** online checkout
 - Customer mock OTP login
 - Admin: dashboard, catalogue CRUD (in-memory), enquiries inbox, Team vs Admin UI demo
-- Light/dark theme (premium ink teal / limestone / brass — see [DESIGN.md](./docs/DESIGN.md))
+- Light/dark theme (espresso / cream / terracotta — see [DESIGN.md](./docs/DESIGN.md))
 
 ### Excluded
 

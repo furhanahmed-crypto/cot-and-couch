@@ -16,20 +16,21 @@ export async function staffSignIn(
     return { error: "Email and password are required." };
   }
 
-  const { error } = await auth.signIn.email({ email, password });
+  const { data, error } = await auth.signIn.email({ email, password });
   if (error) {
     return { error: error.message || "Could not sign in." };
   }
 
-  const { data: session } = await auth.getSession();
-  if (!session?.user) {
+  const user =
+    data?.user ?? (await auth.getSession()).data?.user ?? null;
+  if (!user) {
     return { error: "Session missing after sign-in." };
   }
 
   await ensureProfile({
-    authUserId: session.user.id,
-    email: session.user.email,
-    name: session.user.name,
+    authUserId: user.id,
+    email: user.email,
+    name: user.name,
   });
 
   const profile = await getCurrentProfile();

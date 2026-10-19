@@ -1,10 +1,13 @@
+import { Suspense } from "react";
 import { Eye, MousePointerClick, Package, Truck, UserCheck } from "lucide-react";
 import { PageHeader } from "@/components/admin/page-header";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { getAllProducts } from "@/services/catalogue";
 import { getLeads, getOrders } from "@/services/ops";
 
-export default async function AdminDashboardPage() {
+export const instant = false;
+
+async function DashboardContent() {
   const [products, leads, sales] = await Promise.all([
     getAllProducts(),
     getLeads(),
@@ -40,8 +43,7 @@ export default async function AdminDashboardPage() {
     {
       label: "Open deliveries",
       value: String(
-        sales.filter((s) => !["delivered", "closed"].includes(s.status))
-          .length,
+        sales.filter((s) => !["delivered", "closed"].includes(s.status)).length,
       ),
       hint: "Not yet delivered or closed",
       icon: Truck,
@@ -55,27 +57,39 @@ export default async function AdminDashboardPage() {
   ];
 
   return (
+    <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+      {metrics.map((m) => (
+        <Card key={m.label}>
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground">
+              {m.label}
+            </CardTitle>
+            <m.icon className="size-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <p className="font-heading text-2xl leading-tight">{m.value}</p>
+            <p className="mt-1 text-xs text-muted-foreground">{m.hint}</p>
+          </CardContent>
+        </Card>
+      ))}
+    </div>
+  );
+}
+
+export default function AdminDashboardPage() {
+  return (
     <div className="space-y-6">
       <PageHeader
         title="Dashboard"
         description="Live metrics from Neon catalogue + ops tables."
       />
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-        {metrics.map((m) => (
-          <Card key={m.label}>
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">
-                {m.label}
-              </CardTitle>
-              <m.icon className="size-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <p className="font-heading text-2xl leading-tight">{m.value}</p>
-              <p className="mt-1 text-xs text-muted-foreground">{m.hint}</p>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
+      <Suspense
+        fallback={
+          <p className="text-sm text-muted-foreground">Loading metrics…</p>
+        }
+      >
+        <DashboardContent />
+      </Suspense>
     </div>
   );
 }

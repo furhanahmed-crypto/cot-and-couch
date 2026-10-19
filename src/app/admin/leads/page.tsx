@@ -3,6 +3,8 @@ import { LeadsManager } from "@/components/admin/leads-manager";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { getLeads, getSegments } from "@/services/ops";
 
+export const instant = false;
+
 export default async function LeadsPage() {
   const [leads, segments] = await Promise.all([getLeads(), getSegments()]);
 

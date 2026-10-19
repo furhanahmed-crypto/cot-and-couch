@@ -49,18 +49,18 @@ export function ProductEditorForm({
   }
 
   return (
-    <div className="space-y-4">
+    <div className="min-w-0 space-y-4">
       <div className="flex flex-wrap items-center gap-2">
         <Button type="button" variant="outline" onClick={() => router.push(ROUTES.admin.products)}>
           Back to products
         </Button>
-        <Button type="button" disabled={pending} onClick={save} className="ml-auto">
+        <Button type="button" disabled={pending} onClick={save} className="sm:ml-auto">
           {pending ? "Saving…" : "Save draft"}
         </Button>
       </div>
 
-      <div className="grid gap-4 lg:grid-cols-[1fr_320px]">
-        <div className="space-y-4">
+      <div className="grid min-w-0 gap-4 xl:grid-cols-[minmax(0,1fr)_minmax(0,280px)]">
+        <div className="min-w-0 space-y-4">
           <section className="space-y-3 rounded-xl border border-border bg-card p-4">
             <h2 className="font-heading text-lg">Identity</h2>
             <div className="space-y-1">
@@ -84,7 +84,7 @@ export function ProductEditorForm({
               <Label htmlFor="pe-status">Status</Label>
               <select
                 id="pe-status"
-                className="h-9 w-full rounded-lg border border-input bg-background px-2 text-sm"
+                className="h-9 w-full max-w-full rounded-lg border border-input bg-background px-2 text-sm"
                 value={status}
                 onChange={(e) => setStatus(e.target.value as ProductStatus)}
               >
@@ -95,9 +95,15 @@ export function ProductEditorForm({
             </div>
           </section>
           <ProductEditorTemplate template={template} />
-          <ProductEditorVariants variants={product.variants} />
+          <ProductEditorVariants
+            productId={product.id}
+            variants={product.variants}
+            noColour={category?.slug === "mattresses"}
+          />
         </div>
-        <ProductEditorMedia imageUrls={images} note={template?.note} />
+        <div className="min-w-0 xl:sticky xl:top-20 xl:self-start">
+          <ProductEditorMedia imageUrls={images} note={template?.note} />
+        </div>
       </div>
     </div>
   );

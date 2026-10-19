@@ -56,7 +56,7 @@ export function ProductCardCart({ product }: { product: Product }) {
   return (
     <Button
       type="button"
-      className="mt-1 w-full bg-brass text-ink hover:bg-brass/90"
+      className="mt-1 w-full bg-primary text-primary-foreground hover:bg-primary/90"
       disabled={pending || !defaultVariant}
       onClick={handleAddToCart}
       aria-label={`Add ${product.name} to cart`}

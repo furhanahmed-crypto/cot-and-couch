@@ -37,29 +37,31 @@ export function AdminProductsTable({
   }, [products, query, byCat]);
 
   return (
-    <div className="space-y-4">
-      <div className="flex flex-wrap items-center gap-2">
+    <div className="min-w-0 space-y-4">
+      <div className="flex min-w-0 flex-wrap items-center gap-2">
         <Input
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           placeholder="Search products…"
-          className="max-w-sm"
+          className="min-w-0 max-w-full sm:max-w-sm"
         />
-        <div className="ml-auto">
+        <div className="ml-auto shrink-0">
           <AdminProductsCreate categories={categories} />
         </div>
       </div>
 
-      <div className="overflow-x-auto rounded-xl border border-border bg-card">
-        <Table>
+      <div className="min-w-0 rounded-xl border border-border bg-card">
+        <Table className="min-w-[900px]">
           <TableHeader>
             <TableRow>
-              <TableHead>Product</TableHead>
-              <TableHead>Category</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead>From price</TableHead>
-              <TableHead>Stock</TableHead>
-              <TableHead className="text-right">Actions</TableHead>
+              <TableHead className="min-w-[200px]">Product</TableHead>
+              <TableHead className="whitespace-nowrap">Category</TableHead>
+              <TableHead className="whitespace-nowrap">Status</TableHead>
+              <TableHead className="whitespace-nowrap">From price</TableHead>
+              <TableHead className="whitespace-nowrap">Stock</TableHead>
+              <TableHead className="sticky right-0 bg-card text-right whitespace-nowrap">
+                Actions
+              </TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>

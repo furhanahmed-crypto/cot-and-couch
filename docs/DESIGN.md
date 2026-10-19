@@ -14,7 +14,7 @@ Digital Window should feel like a **calm, high-end furniture showroom**: generou
 ### Avoid
 
 - Purple/violet gradients and generic “startup SaaS” hero blobs.
-- Overused **cream + terracotta** furniture clichés as the primary UI chrome.
+- **Green / teal** (not in brand).
 - Broadsheet/newspaper editorial layouts that fight product scanning.
 - Dark patterns (fake countdowns, forced signup walls before browse).
 
@@ -22,19 +22,20 @@ Digital Window should feel like a **calm, high-end furniture showroom**: generou
 
 ## Colour
 
+Brand reference: cream, sand, espresso brown, terracotta orange (no green).
+
 | Token | Hex | Usage |
 |-------|-----|--------|
-| Ink teal | `#0F2A2A` | Primary brand, headers, dark theme surfaces |
-| Limestone | `#F4F5F3` | Page background (light mode) |
-| Brass | `#C4A574` | Accents, highlights, subtle borders, focus rings |
-| Espresso | `#2C2420` | Body text on light backgrounds |
-| Muted sage | `#6B7B7A` | Secondary text, captions |
-| Surface white | `#FFFFFF` | Cards, modals |
+| Cream | `#F6F1EB` | Page background (light mode) |
+| Sand | `#EBDED1` | Muted / secondary surfaces |
+| Espresso | `#3E2723` | Primary brand, text, banners, admin shell |
+| Terracotta | `#D47C4A` | Accent emphasis, prices, focus rings, CTAs in dark mode |
+| White | `#FFFFFF` | Cards, modals, text on espresso banners |
 | Error | shadcn destructive | Form errors only |
 
-Map these to CSS variables in `globals.css` (`--background`, `--foreground`, `--primary`, `--accent`, etc.) for light and `.dark` themes. Ink teal drives dark mode backgrounds; limestone tints muted surfaces in light mode.
+Map these in `globals.css`. Utility aliases: `--ink` → espresso, `--brass` → terracotta, `--stone` → cream (kept so existing `text-ink` / `text-brass` classes stay valid).
 
-**Contrast:** body text must meet WCAG AA on limestone and ink teal; brass is for accents, not long paragraphs.
+**Contrast:** body text must meet WCAG AA on cream and espresso; terracotta is for accents and short emphasis, not long paragraphs.
 
 ---
 
@@ -67,7 +68,7 @@ Load via `next/font/google` in root layout; expose `--font-display` and `--font-
 
 ### Admin
 
-- Dense but readable: sidebar `ink teal`, content on limestone/white.
+- Dense but readable: sidebar espresso, content on cream/white.
 - Tables with zebra optional; actions right-aligned.
 - Role demo: badge colour brass (Admin) vs muted (Team).
 
@@ -108,15 +109,15 @@ Load via `next/font/google` in root layout; expose `--font-display` and `--font-
 
 ## Theming
 
-- Default **light** (limestone bg).
-- **Dark:** ink teal bg, limestone text, brass accents on primary buttons.
+- Default **light** (cream bg, espresso text, terracotta accents).
+- **Dark:** near-black 950 surfaces (`#0c0a09` / `#09090b`), cream text, terracotta accents.
 - Toggle in shop header; persist via `next-themes`.
 
 ---
 
 ## shadcn/ui
 
-Use existing primitives under `src/components/ui/`. Customise tokens in `globals.css`, not one-off hex in components. Primary button: ink teal fill, light text; secondary: outline brass or ghost on teal.
+Use existing primitives under `src/components/ui/`. Customise tokens in `globals.css`, not one-off hex in components. Primary button: espresso fill, cream text (light) / terracotta fill (dark); secondary: sand / outline terracotta.
 
 ---
 

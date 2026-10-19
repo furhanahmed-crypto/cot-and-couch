@@ -19,6 +19,8 @@ import {
   TABLE_MODELS,
   TABLE_VARIANT_PRICE,
   THICKNESSES,
+  MATTRESS_SIZE_SKUS,
+  MATTRESS_THICKNESS_SKUS,
   houseImagePath,
   houseProductSlug,
   mattressImagePath,
@@ -88,7 +90,7 @@ function purposeLabel(slug: string) {
   return PURPOSES.find((p) => p.slug === slug)?.label ?? slug;
 }
 
-/** Mock matrix: all sizes × first 2 dims × all thicknesses × all colours. */
+/** Mock: size × thickness only (matches HTML product editor / DB seed). */
 function mattressVariants(
   slug: string,
   brandSlug: string,
@@ -97,59 +99,35 @@ function mattressVariants(
   stockBase: number,
 ): Variant[] {
   const out: Variant[] = [];
-  for (const size of SIZE_GROUPS) {
-    const sizeKey = size.slug as
-      | "single"
-      | "diwan"
-      | "queen"
-      | "king"
-      | "custom";
-    const isCustom = sizeKey === "custom";
-    const pairs: ([number, number] | null)[] = isCustom
-      ? [null]
-      : (SIZE_DIMENSIONS[sizeKey] ?? []).slice(0, 2);
-
-    for (const pair of pairs) {
-      const lengthIn = pair?.[0] ?? null;
-      const widthIn = pair?.[1] ?? null;
-      const dimId =
-        lengthIn && widthIn
-          ? `size-${sizeKey}-${lengthIn}-${widthIn}`
-          : null;
-      for (const thick of THICKNESSES) {
-        const thickKey = thick.slug as
-          | "4-inch"
-          | "5-inch"
-          | "6-inch"
-          | "8-inch";
-        const priced = mattressPrice(sizeKey, thickKey);
-        for (const colour of COLOURS) {
-          out.push({
-            id: `var-${slug}-${sizeKey}-${lengthIn ?? "c"}-${widthIn ?? "c"}-${thickKey}-${colour.slug}`,
-            sku: `${brandSlug.slice(0, 6)}-${modelKey.slice(0, 8)}-${sizeKey}-${isCustom ? "custom" : `${lengthIn}x${widthIn}`}-${thickKey}-${colour.slug}`,
-            sizeGroupOptionId: `sg-${sizeKey}`,
-            sizeGroupLabel: size.label,
-            sizeGroupSlug: sizeKey,
-            sizeDimensionId: dimId,
-            sizeDimensionLabel:
-              lengthIn && widthIn ? `${lengthIn}x${widthIn} inch` : null,
-            isCustomSize: isCustom,
-            thicknessOptionId: `thick-${thickKey}`,
-            thicknessLabel: thick.label,
-            colourId: `colour-${colour.slug}`,
-            colourName: colour.label,
-            colourHex: colour.hex,
-            sizeId: dimId ?? undefined,
-            mrp: priced.mrp,
-            price: priced.price,
-            maxDiscountPercent: 25,
-            stockQty: isCustom ? 0 : stockBase,
-            stockStatus: isCustom ? "made_to_order" : "in_stock",
-            images: [image],
-            madeToOrderDays: isCustom ? [7, 14] : undefined,
-          });
-        }
-      }
+  for (const sizePlan of MATTRESS_SIZE_SKUS) {
+    const group = SIZE_GROUPS.find((s) => s.slug === sizePlan.size)!;
+    const thickOpts = THICKNESSES.filter((t) =>
+      (MATTRESS_THICKNESS_SKUS as readonly string[]).includes(t.slug),
+    );
+    for (const thick of thickOpts) {
+      const thickKey = thick.slug as (typeof MATTRESS_THICKNESS_SKUS)[number];
+      const priced = mattressPrice(sizePlan, thickKey);
+      const dimId = `size-${sizePlan.size}-${sizePlan.lengthIn}-${sizePlan.widthIn}`;
+      out.push({
+        id: `var-${slug}-${sizePlan.size}-${sizePlan.lengthIn}x${sizePlan.widthIn}-${thickKey}`,
+        sku: `${brandSlug.slice(0, 6)}-${modelKey.slice(0, 8)}-${sizePlan.size}-${sizePlan.lengthIn}x${sizePlan.widthIn}-${thickKey}`,
+        sizeGroupOptionId: `sg-${sizePlan.size}`,
+        sizeGroupLabel: group.label,
+        sizeGroupSlug: sizePlan.size,
+        sizeDimensionId: dimId,
+        sizeDimensionLabel: `${sizePlan.lengthIn}x${sizePlan.widthIn} inch`,
+        isCustomSize: false,
+        thicknessOptionId: `thick-${thickKey}`,
+        thicknessLabel: thick.label,
+        colourId: "",
+        sizeId: dimId,
+        mrp: priced.mrp,
+        price: priced.price,
+        maxDiscountPercent: 25,
+        stockQty: stockBase,
+        stockStatus: "in_stock",
+        images: [image],
+      });
     }
   }
   return out;

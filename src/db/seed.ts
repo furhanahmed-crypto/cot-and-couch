@@ -29,6 +29,8 @@ import {
   houseProductSlug,
   mattressImagePath,
   mattressPrice,
+  MATTRESS_SIZE_SKUS,
+  MATTRESS_THICKNESS_SKUS,
   productSlug,
 } from "@/data/catalogue/seed-data";
 import { seedOps } from "./seed-ops";
@@ -199,56 +201,33 @@ async function seed() {
         })
         .returning();
 
-      // Full Wakefit matrix: size × dimension × thickness × colour.
-      // Price = size + thickness only (colour never changes price).
+      // HTML product-editor model: size (L×W) × thickness only — no colour.
       const batch: VariantInsert[] = [];
-      for (const size of SIZE_GROUPS) {
-        const sizeKey = size.slug as
-          | "single"
-          | "diwan"
-          | "queen"
-          | "king"
-          | "custom";
-        const isCustom = sizeKey === "custom";
-        const dims = isCustom
-          ? ([null] as (ReturnType<typeof findDim> | null)[])
-          : (SIZE_DIMENSIONS[sizeKey] ?? []).map(([lengthIn, widthIn]) =>
-              findDim(sizeKey, lengthIn, widthIn),
-            );
-
-        for (const dim of dims) {
-          if (!isCustom && !dim) continue;
-          for (const thick of THICKNESSES) {
-            const thickKey = thick.slug as
-              | "4-inch"
-              | "5-inch"
-              | "6-inch"
-              | "8-inch";
-            const priced = mattressPrice(sizeKey, thickKey);
-            for (const colour of COLOURS) {
-              const skuParts = [
-                brand.slug.slice(0, 6),
-                model.key.slice(0, 8),
-                sizeKey,
-                isCustom ? "custom" : `${dim!.lengthIn}x${dim!.widthIn}`,
-                thickKey,
-                colour.slug,
-              ];
-              batch.push({
-                productId: product.id,
-                sku: skuParts.join("-").slice(0, 80),
-                sizeGroupOptionId: sizeBy[sizeKey].id,
-                sizeDimensionId: dim?.id ?? null,
-                isCustomSize: isCustom,
-                thicknessOptionId: thickBy[thickKey].id,
-                colourOptionId: colourBy[colour.slug].id,
-                mrp: String(priced.mrp),
-                price: String(priced.price),
-                stockQty: isCustom ? 0 : 6 + m,
-                isActive: true,
-              });
-            }
-          }
+      for (const sizePlan of MATTRESS_SIZE_SKUS) {
+        const dim = findDim(sizePlan.size, sizePlan.lengthIn, sizePlan.widthIn);
+        if (!dim) continue;
+        for (const thickKey of MATTRESS_THICKNESS_SKUS) {
+          const priced = mattressPrice(sizePlan, thickKey);
+          const skuParts = [
+            brand.slug.slice(0, 6),
+            model.key.slice(0, 8),
+            sizePlan.size,
+            `${sizePlan.lengthIn}x${sizePlan.widthIn}`,
+            thickKey,
+          ];
+          batch.push({
+            productId: product.id,
+            sku: skuParts.join("-").slice(0, 80),
+            sizeGroupOptionId: sizeBy[sizePlan.size].id,
+            sizeDimensionId: dim.id,
+            isCustomSize: false,
+            thicknessOptionId: thickBy[thickKey].id,
+            colourOptionId: null,
+            mrp: String(priced.mrp),
+            price: String(priced.price),
+            stockQty: 6 + m,
+            isActive: true,
+          });
         }
       }
       await insertVariants(batch);

@@ -64,7 +64,7 @@ Chronological-ish record of **why** the prototype is shaped this way. Update whe
 
 ---
 
-### Design direction: ink teal + limestone + brass
+### Design direction: espresso + cream + terracotta (brand reference; no green/teal)
 
 **Decision:** Premium palette and Fraunces/Figtree pairing; reject purple gradients and cream/terracotta cliché as primary UI.
 
@@ -174,6 +174,16 @@ Chronological-ish record of **why** the prototype is shaped this way. Update whe
 
 ---
 
+## 2026-10-19 — Admin product variants UX (HTML product editor)
+
+**Issue:** Mattress matrix (all dims × thicknesses × colours) made endless lists on product editor + Pricing/Stock.
+
+**Spec (HTML):** Mattresses = size (L×W) × thickness only, no colour; chip summary + compact editable grid + bulk edit.
+
+**Fix:** Seed 4 sizes × 2 thicknesses (8 SKUs/product, `colour_option_id` null). Product editor matches chip + table + bulk edit. Pricing/Stock pick a product first, then edit that product’s SKUs only.
+
+---
+
 ## 2026-10-16 — Catalogue DTOs (mattress-first)
 
 **Decision:** Shared filter tables + lean products/variants (not one table per filter).
@@ -238,6 +248,7 @@ Chronological-ish record of **why** the prototype is shaped this way. Update whe
 
 1. **Shell** — Figma sidebar, nav groups, admin chrome (match labels/order; keep existing Neon Auth). **Done 2026-10-19:** `ADMIN_NAV_GROUPS` (Overview / Catalogue / Commerce / Content / Admin), active brass dot, topbar greeting + View store.
 2. **Product editor** — HTML category templates; list + create/edit; variants/pricing/stock; media placeholders. **In progress 2026-10-19:** Products list + `/admin/products/[id]` editor (identity save to Neon; category template fields stubbed; media locked placeholders).
+3. **Cache Components note (2026-10-19):** Admin routes set `export const instant = false` and wrap uncached DB reads in `<Suspense>`. `getAllProducts` / `getAdminProductById` call `connection()` so they stream at request time. Admin layout always renders `{children}` (no loading gate that drops the page segment).
 3. **Schema** — Extend Neon for category specs + variant axes **category-by-category**, starting with Mattresses (closest to current schema), then Beds/Sofas/… until HTML templates are backed.
 4. **Rest of console** — Categories, Attributes, Masters, Pricing, Stock, Gallery, Reels, Sales, Leads, Users, Settings, Audit: align UI to Figma and finish missing CRUD where still mock/read-only.
 5. **Hardening** — ConfirmationModal on destructive actions; server-side admin vs team where required; docs/`TASKS.md` sync.

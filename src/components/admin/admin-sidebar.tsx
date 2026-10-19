@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { LogOut } from "lucide-react";
 import { AdminSidebarNav } from "@/components/admin/admin-sidebar-nav";
 import { BrandMark } from "@/components/shared/brand-mark";
-import { Badge } from "@/components/ui/badge";
+import { LogoMark } from "@/components/shared/logo-mark";
 import {
   Sidebar,
   SidebarContent,
@@ -26,13 +26,11 @@ export function AdminSidebar() {
   const { data: session } = authClient.useSession();
   const { isMobile, setOpenMobile } = useSidebar();
   const [role, setRole] = useState<"admin" | "team" | null>(null);
-  const [label, setLabel] = useState("Staff");
 
   useEffect(() => {
     getStaffProfile().then((profile) => {
       if (!profile) return;
       setRole(profile.role === "admin" ? "admin" : "team");
-      setLabel(profile.name ?? profile.email);
     });
   }, [session?.user?.id]);
 
@@ -44,38 +42,32 @@ export function AdminSidebar() {
 
   return (
     <Sidebar collapsible="icon" variant="sidebar">
-      <SidebarHeader className="gap-2 border-b border-sidebar-border px-3 py-4">
+      <SidebarHeader className="border-b border-sidebar-border px-3 py-3">
         <BrandMark
           href={ROUTES.admin.dashboard}
           tone="dark"
           compact
-          className="max-w-[150px] group-data-[collapsible=icon]:hidden"
+          className="max-w-[160px] group-data-[collapsible=icon]:hidden"
         />
-        <div className="min-w-0 group-data-[collapsible=icon]:hidden">
-          <p className="truncate text-xs text-[#C9D6D2]">
-            Admin console · Lingampally
-          </p>
-          <p className="mt-1 truncate text-sm text-sidebar-foreground">{label}</p>
-          <Badge
-            variant="secondary"
-            className="mt-1 capitalize bg-sidebar-accent text-sidebar-accent-foreground"
-          >
-            {role ?? "…"}
-          </Badge>
-        </div>
+        <LogoMark
+          href={ROUTES.admin.dashboard}
+          tone="dark"
+          compact
+          className="hidden group-data-[collapsible=icon]:inline-flex"
+        />
       </SidebarHeader>
 
       <SidebarContent className="gap-1">
         <AdminSidebarNav isAdmin={role === "admin"} />
       </SidebarContent>
 
-      <SidebarFooter className="border-t border-sidebar-border">
+      <SidebarFooter className="border-t border-sidebar-border pb-10">
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton
               tooltip="Log out"
               onClick={handleLogout}
-              className="text-[#C9D6D2]"
+              className="text-sidebar-foreground/70"
             >
               <LogOut />
               <span>Log out</span>

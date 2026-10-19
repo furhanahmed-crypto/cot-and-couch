@@ -86,8 +86,8 @@ function NavRow({
         onClick={onNavigate}
         className={
           active
-            ? "bg-[#1D3D3A] font-medium text-white data-[active=true]:bg-[#1D3D3A] data-[active=true]:text-white"
-            : "text-[#C9D6D2] hover:bg-sidebar-accent/80 hover:text-white"
+            ? "bg-sidebar-accent font-medium text-sidebar-accent-foreground data-[active=true]:bg-sidebar-accent data-[active=true]:text-sidebar-accent-foreground"
+            : "text-sidebar-foreground/70 hover:bg-sidebar-accent/80 hover:text-sidebar-foreground"
         }
       >
         <item.icon />
@@ -95,7 +95,7 @@ function NavRow({
         {active ? (
           <span
             aria-hidden
-            className="ml-auto size-1.5 shrink-0 rounded-full bg-[#C49A5A]"
+            className="ml-auto size-1.5 shrink-0 rounded-full bg-brass"
           />
         ) : null}
       </SidebarMenuButton>

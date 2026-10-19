@@ -2,6 +2,8 @@ import { PageHeader } from "@/components/admin/page-header";
 import { ReelsManager } from "@/components/admin/reels-manager";
 import { getReels } from "@/services/ops";
 
+export const instant = false;
+
 export default async function ReelsPage() {
   const reels = await getReels({ includeHidden: true });
 

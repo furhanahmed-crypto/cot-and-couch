@@ -9,6 +9,8 @@ import {
 } from "@/components/ui/table";
 import { getAuditLogs } from "@/services/ops";
 
+export const instant = false;
+
 export default async function AuditPage() {
   const logs = await getAuditLogs();
 

@@ -3,6 +3,8 @@ import { PageHeader } from "@/components/admin/page-header";
 import { SettingsForm } from "@/components/admin/settings-form";
 import { getStoreInfo } from "@/services/ops";
 
+export const instant = false;
+
 export default async function SettingsPage() {
   const store = await getStoreInfo();
 

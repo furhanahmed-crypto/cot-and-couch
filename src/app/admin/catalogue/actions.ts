@@ -12,6 +12,7 @@ export async function setVariantPriceAction(input: {
   variantId: string;
   price: string;
   mrp: string;
+  productId?: string;
 }) {
   await requireStaffProfile();
   await db
@@ -20,6 +21,9 @@ export async function setVariantPriceAction(input: {
     .where(eq(productVariants.id, input.variantId));
   revalidatePath(ROUTES.admin.pricing);
   revalidatePath(ROUTES.admin.products);
+  if (input.productId) {
+    revalidatePath(ROUTES.admin.productEdit(input.productId));
+  }
   revalidateShopCache();
   return { ok: true as const };
 }
@@ -27,6 +31,7 @@ export async function setVariantPriceAction(input: {
 export async function setVariantStockAction(input: {
   variantId: string;
   stockQty: number;
+  productId?: string;
 }) {
   await requireStaffProfile();
   await db
@@ -34,6 +39,10 @@ export async function setVariantStockAction(input: {
     .set({ stockQty: input.stockQty })
     .where(eq(productVariants.id, input.variantId));
   revalidatePath(ROUTES.admin.stock);
+  revalidatePath(ROUTES.admin.products);
+  if (input.productId) {
+    revalidatePath(ROUTES.admin.productEdit(input.productId));
+  }
   revalidateShopCache();
   return { ok: true as const };
 }
