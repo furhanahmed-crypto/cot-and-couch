@@ -124,15 +124,15 @@ Images: placeholders only (no upload/edit) until a later media phase.
 - [x] Category-aware editor shell (`/admin/products/[id]`)
 - [x] Common identity fields + category specs UI stubs (Beds → TV units)
 - [x] Variants & pricing table (read) + stock status
-- [x] Media placeholders (read-only; no add/edit images)
-- [ ] Draft / publish checklist UX (polish)
+- [x] Media — primary image URL editable (upload deferred)
+- [x] Draft / publish checklist UX (polish)
 - [x] Archive / delete with `ConfirmationModal` (duplicate later)
 
 ### Phase C — Schema (category-by-category)
 
-- [ ] Mattresses specs + variant axes fully Neon-backed
-- [ ] Beds → Sofas → Computer tables → Dining → Wardrobes → TV units
-- [ ] Server actions + services for create/update/delete (no mock-only)
+- [x] Mattresses specs + variant axes fully Neon-backed
+- [x] Beds → Sofas → Computer tables → Dining → Wardrobes → TV units (`products.attributes` jsonb)
+- [x] Server actions + services for create/update/delete + generate variants
 
 ### Phase D — Rest of console
 

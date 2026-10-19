@@ -1,11 +1,14 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState, useTransition } from "react";
+import { useMemo, useState, useTransition } from "react";
 import { toast } from "sonner";
 import { updateProductAction } from "@/app/admin/catalogue/product-actions";
+import {
+  ProductEditorTemplate,
+  type MattressSpecState,
+} from "@/components/admin/product-editor-template";
 import { ProductEditorMedia } from "@/components/admin/product-editor-media";
-import { ProductEditorTemplate } from "@/components/admin/product-editor-template";
 import { ProductEditorVariants } from "@/components/admin/product-editor-variants";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,37 +16,119 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { templateForCategorySlug } from "@/constants/admin-product-templates";
 import { ROUTES } from "@/constants/routes";
-import type { Category, Product, ProductStatus } from "@/types";
+import type {
+  Category,
+  Product,
+  ProductEditorLookups,
+  ProductStatus,
+} from "@/types";
 
 export function ProductEditorForm({
   product,
   category,
+  lookups,
 }: {
   product: Product;
   category: Category | undefined;
+  lookups: ProductEditorLookups;
 }) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
   const [name, setName] = useState(product.name);
   const [description, setDescription] = useState(product.description ?? "");
   const [status, setStatus] = useState<ProductStatus>(product.status);
+  const [imageUrl, setImageUrl] = useState(product.imageUrl ?? "");
+  const [attributes, setAttributes] = useState<Record<string, string>>(
+    product.attributes ?? {},
+  );
+  const [mattress, setMattress] = useState<MattressSpecState>({
+    mattressBrandId: product.mattressBrandId ?? "",
+    purposeOptionId: product.purposeOptionId ?? "",
+    comfortOptionId: product.comfortOptionId ?? "",
+    fillingOptionId: product.fillingOptionId ?? "",
+    coverMaterialOptionId: product.coverMaterialOptionId ?? "",
+    warrantyYears: String(
+      product.attributes?.warrantyYears || product.warrantyYears || "",
+    ),
+    removableCover: product.attributes?.removableCover ?? "",
+    flippable: product.attributes?.flippable ?? "",
+    trialNights: product.attributes?.trialNights ?? "",
+    idealFor: product.attributes?.idealFor ?? "",
+  });
+
   const template = templateForCategorySlug(category?.slug ?? "");
-  const images = product.variants.flatMap((v) => v.images).slice(0, 6);
+  const isMattress = category?.slug === "mattresses";
+
+  const checklist = useMemo(() => {
+    const items: { label: string; ok: boolean }[] = [
+      { label: "Name", ok: Boolean(name.trim()) },
+      { label: "Description", ok: Boolean(description.trim()) },
+      { label: "Primary image", ok: Boolean(imageUrl.trim()) },
+      { label: "At least one variant", ok: product.variants.length > 0 },
+    ];
+    if (isMattress) {
+      items.push(
+        { label: "Brand", ok: Boolean(mattress.mattressBrandId) },
+        { label: "Mattress type", ok: Boolean(mattress.purposeOptionId) },
+        { label: "Firmness", ok: Boolean(mattress.comfortOptionId) },
+        {
+          label: "Layer construction",
+          ok: Boolean(mattress.fillingOptionId),
+        },
+        {
+          label: "Cover fabric",
+          ok: Boolean(mattress.coverMaterialOptionId),
+        },
+        {
+          label: "Warranty",
+          ok: Boolean(mattress.warrantyYears.trim()),
+        },
+      );
+    }
+    return items;
+  }, [
+    name,
+    description,
+    imageUrl,
+    product.variants.length,
+    isMattress,
+    mattress,
+  ]);
+
+  const readyCount = checklist.filter((c) => c.ok).length;
 
   function save() {
     startTransition(async () => {
+      const nextAttrs = { ...attributes };
+      if (isMattress) {
+        nextAttrs.warrantyYears = mattress.warrantyYears.trim();
+        nextAttrs.removableCover = mattress.removableCover;
+        nextAttrs.flippable = mattress.flippable;
+        nextAttrs.trialNights = mattress.trialNights.trim();
+        nextAttrs.idealFor = mattress.idealFor.trim();
+      }
+
       const res = await updateProductAction({
         productId: product.id,
         name,
         description,
         status,
         isFeatured: product.featured,
+        imageUrl,
+        mattressBrandId: isMattress ? mattress.mattressBrandId || null : null,
+        purposeOptionId: isMattress ? mattress.purposeOptionId || null : null,
+        comfortOptionId: isMattress ? mattress.comfortOptionId || null : null,
+        fillingOptionId: isMattress ? mattress.fillingOptionId || null : null,
+        coverMaterialOptionId: isMattress
+          ? mattress.coverMaterialOptionId || null
+          : null,
+        attributes: nextAttrs,
       });
       if (!res.ok) {
         toast.error(res.error);
         return;
       }
-      toast.success("Product saved");
+      toast.success(status === "published" ? "Product published" : "Product saved");
       router.refresh();
     });
   }
@@ -51,11 +136,20 @@ export function ProductEditorForm({
   return (
     <div className="min-w-0 space-y-4">
       <div className="flex flex-wrap items-center gap-2">
-        <Button type="button" variant="outline" onClick={() => router.push(ROUTES.admin.products)}>
+        <Button
+          type="button"
+          variant="outline"
+          onClick={() => router.push(ROUTES.admin.products)}
+        >
           Back to products
         </Button>
-        <Button type="button" disabled={pending} onClick={save} className="sm:ml-auto">
-          {pending ? "Saving…" : "Save draft"}
+        <Button
+          type="button"
+          disabled={pending}
+          onClick={save}
+          className="sm:ml-auto"
+        >
+          {pending ? "Saving…" : status === "published" ? "Save" : "Save draft"}
         </Button>
       </div>
 
@@ -65,7 +159,11 @@ export function ProductEditorForm({
             <h2 className="font-heading text-lg">Identity</h2>
             <div className="space-y-1">
               <Label htmlFor="pe-name">Product name</Label>
-              <Input id="pe-name" value={name} onChange={(e) => setName(e.target.value)} />
+              <Input
+                id="pe-name"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+              />
             </div>
             <div className="space-y-1">
               <Label>Category</Label>
@@ -94,15 +192,56 @@ export function ProductEditorForm({
               </select>
             </div>
           </section>
-          <ProductEditorTemplate template={template} />
+
+          <ProductEditorTemplate
+            template={template}
+            categorySlug={category?.slug ?? ""}
+            lookups={lookups}
+            mattress={mattress}
+            onMattressChange={(patch) =>
+              setMattress((prev) => ({ ...prev, ...patch }))
+            }
+            attributes={attributes}
+            onAttributeChange={(key, value) =>
+              setAttributes((prev) => ({ ...prev, [key]: value }))
+            }
+          />
+
           <ProductEditorVariants
+            key={`${product.id}-${product.variants.length}`}
             productId={product.id}
             variants={product.variants}
-            noColour={category?.slug === "mattresses"}
+            noColour={isMattress}
+            categorySlug={category?.slug ?? ""}
           />
         </div>
-        <div className="min-w-0 xl:sticky xl:top-20 xl:self-start">
-          <ProductEditorMedia imageUrls={images} note={template?.note} />
+
+        <div className="min-w-0 space-y-4 xl:sticky xl:top-20 xl:self-start">
+          <ProductEditorMedia
+            imageUrl={imageUrl}
+            onImageUrlChange={setImageUrl}
+            note={template?.note}
+          />
+
+          <section className="rounded-xl border border-border bg-card p-4">
+            <h2 className="font-heading text-lg">Publish checklist</h2>
+            <p className="mt-1 text-sm text-muted-foreground">
+              {readyCount}/{checklist.length} ready
+            </p>
+            <ul className="mt-3 space-y-1.5 text-sm">
+              {checklist.map((item) => (
+                <li
+                  key={item.label}
+                  className={
+                    item.ok ? "text-foreground" : "text-muted-foreground"
+                  }
+                >
+                  <span className="mr-1.5">{item.ok ? "✓" : "○"}</span>
+                  {item.label}
+                </li>
+              ))}
+            </ul>
+          </section>
         </div>
       </div>
     </div>

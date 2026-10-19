@@ -107,6 +107,13 @@ export interface Product {
   subCategoryId: string;
   collectionId: string | null;
   mattressBrandId: string | null;
+  purposeOptionId: string | null;
+  coverMaterialOptionId: string | null;
+  fillingOptionId: string | null;
+  comfortOptionId: string | null;
+  imageUrl: string | null;
+  /** Category template extras (warranty, wood type, etc.). */
+  attributes: Record<string, string>;
   highlights: string[];
   description: string;
   dimensions: { lIn: number; wIn: number; hIn: number; weightKg?: number };
@@ -126,6 +133,25 @@ export interface Product {
   relatedIds: string[];
   completeRoomIds: string[];
   createdAt: string;
+}
+
+/** Admin product editor option lookups. */
+export interface ProductEditorLookups {
+  brands: Brand[];
+  purpose: { id: string; label: string }[];
+  coverMaterial: { id: string; label: string }[];
+  filling: { id: string; label: string }[];
+  comfort: { id: string; label: string }[];
+  sizeGroups: { id: string; label: string; slug: string }[];
+  thicknesses: { id: string; label: string; slug: string }[];
+  colours: { id: string; label: string; slug: string }[];
+  sizeDimensions: {
+    id: string;
+    sizeGroupOptionId: string;
+    label: string;
+    lengthIn: number;
+    widthIn: number;
+  }[];
 }
 
 export interface GalleryItem {

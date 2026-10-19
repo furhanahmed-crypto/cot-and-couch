@@ -149,6 +149,14 @@ export const products = pgTable("products", {
   fillingOptionId: uuid("filling_option_id").references(() => options.id),
   comfortOptionId: uuid("comfort_option_id").references(() => options.id),
   imageUrl: text("image_url"),
+  /**
+   * Flexible category fields (warranty, beds wood type, sofa foam, etc.).
+   * Keys are slugified template labels or fixed mattress keys.
+   */
+  attributes: jsonb("attributes")
+    .$type<Record<string, string>>()
+    .notNull()
+    .default({}),
   status: productStatusEnum("status").notNull().default("draft"),
   isFeatured: boolean("is_featured").notNull().default(false),
   sortOrder: integer("sort_order").notNull().default(0),

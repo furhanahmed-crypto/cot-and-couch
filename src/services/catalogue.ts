@@ -33,7 +33,7 @@ import {
   type OptionLookup,
 } from "@/services/catalogue-map";
 import { getCollectionBySlug as getOpsCollectionBySlug, getCollections, getStoreInfo } from "@/services/ops";
-import type { Product } from "@/types";
+import type { Product, ProductEditorLookups } from "@/types";
 
 export type { FilterState, SortKey } from "@/lib/catalogue-utils";
 export {
@@ -382,4 +382,53 @@ export async function filterProducts(
 
 export async function searchProducts(q: string) {
   return filterProducts(undefined, { q }, "popularity");
+}
+
+/** Admin product editor — brands + option groups (uncached). */
+export async function getProductEditorLookups(): Promise<ProductEditorLookups> {
+  await connection();
+  const [brandRows, groupRows, optionRows, dimRows] = await Promise.all([
+    db.select().from(brandsTable).orderBy(asc(brandsTable.sortOrder)),
+    db.select().from(optionGroups).orderBy(asc(optionGroups.sortOrder)),
+    db
+      .select()
+      .from(options)
+      .where(eq(options.isActive, true))
+      .orderBy(asc(options.sortOrder)),
+    db
+      .select()
+      .from(sizeDimensions)
+      .where(eq(sizeDimensions.isActive, true))
+      .orderBy(asc(sizeDimensions.sortOrder)),
+  ]);
+
+  const groupIdByKey = new Map(groupRows.map((g) => [g.key, g.id]));
+  const opts = (key: string) => {
+    const gid = groupIdByKey.get(key);
+    if (!gid) return [];
+    return optionRows
+      .filter((o) => o.groupId === gid)
+      .map((o) => ({ id: o.id, label: o.label, slug: o.slug }));
+  };
+
+  return {
+    brands: brandRows.filter((b) => b.isActive).map(mapBrand),
+    purpose: opts("purpose").map(({ id, label }) => ({ id, label })),
+    coverMaterial: opts("cover_material").map(({ id, label }) => ({
+      id,
+      label,
+    })),
+    filling: opts("filling").map(({ id, label }) => ({ id, label })),
+    comfort: opts("comfort").map(({ id, label }) => ({ id, label })),
+    sizeGroups: opts("size_group"),
+    thicknesses: opts("thickness"),
+    colours: opts("colour"),
+    sizeDimensions: dimRows.map((d) => ({
+      id: d.id,
+      sizeGroupOptionId: d.sizeGroupOptionId,
+      label: d.label,
+      lengthIn: d.lengthIn,
+      widthIn: d.widthIn,
+    })),
+  };
 }

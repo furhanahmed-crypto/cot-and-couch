@@ -53,6 +53,12 @@ type Seed = {
 export function makeProduct(seed: Seed): Product {
   return {
     mattressBrandId: seed.mattressBrandId ?? null,
+    purposeOptionId: null,
+    coverMaterialOptionId: null,
+    fillingOptionId: null,
+    comfortOptionId: null,
+    imageUrl: seed.variants[0]?.images[0] ?? null,
+    attributes: {},
     warrantyYears: seed.warrantyYears ?? 2,
     warrantyExclusions: "Misuse, stains, water damage",
     assembly: seed.assembly ?? "carpenter",

@@ -1,11 +1,13 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { useMemo, useState, useTransition } from "react";
 import { toast } from "sonner";
 import {
   setVariantPriceAction,
   setVariantStockAction,
 } from "@/app/admin/catalogue/actions";
+import { generateProductVariantsAction } from "@/app/admin/catalogue/product-actions";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -27,12 +29,15 @@ export function ProductEditorVariants({
   productId,
   variants: initial,
   noColour,
+  categorySlug,
 }: {
   productId: string;
   variants: Variant[];
   /** Mattresses: hide colour axis (HTML / category template). */
   noColour?: boolean;
+  categorySlug?: string;
 }) {
+  const router = useRouter();
   const [variants, setVariants] = useState(initial);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [pending, startTransition] = useTransition();
@@ -199,11 +204,35 @@ export function ProductEditorVariants({
     });
   }
 
+  function generate() {
+    startTransition(async () => {
+      const res = await generateProductVariantsAction(productId);
+      if (!res.ok) {
+        toast.error(res.error);
+        return;
+      }
+      toast.success(`Created ${res.count} variants`);
+      router.refresh();
+    });
+  }
+
   if (!variants.length) {
+    const hint =
+      categorySlug === "mattresses"
+        ? "Creates size (L×W) × thickness SKUs from masters (6 in · 8 in)."
+        : categorySlug === "cots"
+          ? "Creates size × colour SKUs from masters."
+          : "Creates colour SKUs on custom size from masters.";
     return (
       <section className="min-w-0 space-y-3 rounded-xl border border-border bg-card p-4">
         <h2 className="font-heading text-lg">Variants & pricing</h2>
-        <p className="text-sm text-muted-foreground">No variants yet for this product.</p>
+        <p className="text-sm text-muted-foreground">
+          No variants yet for this product.
+        </p>
+        <p className="text-xs text-muted-foreground">{hint}</p>
+        <Button type="button" disabled={pending} onClick={generate}>
+          {pending ? "Generating…" : "Generate variants from masters"}
+        </Button>
       </section>
     );
   }

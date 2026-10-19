@@ -115,3 +115,28 @@ export function templateForCategorySlug(slug: string) {
     CATEGORY_PRODUCT_TEMPLATES.find((t) => key.includes(t.slug.split("-")[0]!))
   );
 }
+
+/** Stable attribute key for free-text template fields. */
+export function templateFieldKey(label: string) {
+  return label
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "_")
+    .replace(/^_|_$/g, "");
+}
+
+/** Mattress fields bound to Neon FKs / fixed attribute keys. */
+export const MATTRESS_BOUND_FIELDS = {
+  Brand: "mattressBrandId",
+  "Mattress type": "purposeOptionId",
+  Firmness: "comfortOptionId",
+  "Layer construction": "fillingOptionId",
+  "Cover fabric": "coverMaterialOptionId",
+  "Brand warranty (years)": "warrantyYears",
+} as const;
+
+export const MATTRESS_OPTIONAL_ATTRS = {
+  "Removable cover": "removableCover",
+  Flippable: "flippable",
+  "Trial period (nights)": "trialNights",
+  "Ideal for": "idealFor",
+} as const;

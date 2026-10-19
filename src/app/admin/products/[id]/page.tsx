@@ -2,14 +2,19 @@ import { Suspense } from "react";
 import { notFound } from "next/navigation";
 import { PageHeader } from "@/components/admin/page-header";
 import { ProductEditorForm } from "@/components/admin/product-editor-form";
-import { getAdminProductById, getCategories } from "@/services/catalogue";
+import {
+  getAdminProductById,
+  getCategories,
+  getProductEditorLookups,
+} from "@/services/catalogue";
 
 export const instant = false;
 
 async function ProductEditorContent({ id }: { id: string }) {
-  const [product, categories] = await Promise.all([
+  const [product, categories, lookups] = await Promise.all([
     getAdminProductById(id),
     getCategories({ includeHidden: true }),
+    getProductEditorLookups(),
   ]);
   if (!product) notFound();
 
@@ -21,7 +26,11 @@ async function ProductEditorContent({ id }: { id: string }) {
         title={product.name}
         description={`Product editor · ${category?.name ?? "Category"} · ${product.status}`}
       />
-      <ProductEditorForm product={product} category={category} />
+      <ProductEditorForm
+        product={product}
+        category={category}
+        lookups={lookups}
+      />
     </>
   );
 }

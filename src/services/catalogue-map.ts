@@ -177,7 +177,8 @@ export function mapProduct(
     ? opts.get(row.comfortOptionId)
     : undefined;
 
-  const specs: Record<string, string | number | boolean> = {};
+  const attributes = (row.attributes ?? {}) as Record<string, string>;
+  const specs: Record<string, string | number | boolean> = { ...attributes };
   if (purpose) specs.purpose = purpose.label;
   if (cover) specs.cover = cover.label;
   if (filling) specs.filling = filling.label;
@@ -202,6 +203,13 @@ export function mapProduct(
     ),
   );
 
+  const warrantyFromAttr = Number(attributes.warrantyYears);
+  const warrantyYears = Number.isFinite(warrantyFromAttr)
+    ? warrantyFromAttr
+    : categorySlug === "mattresses"
+      ? 5
+      : 2;
+
   return {
     id: row.id,
     slug: row.slug,
@@ -213,12 +221,18 @@ export function mapProduct(
         : "sc-queen",
     collectionId: collectionFor(categorySlug, row.isFeatured),
     mattressBrandId: row.mattressBrandId,
+    purposeOptionId: row.purposeOptionId,
+    coverMaterialOptionId: row.coverMaterialOptionId,
+    fillingOptionId: row.fillingOptionId,
+    comfortOptionId: row.comfortOptionId,
+    imageUrl: row.imageUrl,
+    attributes,
     highlights: highlights.length ? highlights : ["Showroom exclusive"],
     description: row.description ?? row.name,
     dimensions: { lIn: 78, wIn: 60, hIn: 6 },
     material: filling?.label ?? "House-made",
     finish: cover?.label ?? "Standard",
-    warrantyYears: categorySlug === "mattresses" ? 5 : 2,
+    warrantyYears,
     warrantyExclusions: "Misuse, stains, water damage",
     assembly: categorySlug === "mattresses" ? "none" : "carpenter",
     deliveryDays: "2–12 days within Hyderabad",
