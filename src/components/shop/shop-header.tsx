@@ -16,7 +16,13 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
 import { ROUTES } from "@/constants/routes";
 import { useRecentlyViewed } from "@/hooks/use-recently-viewed";
 import { useShortlist } from "@/hooks/use-shortlist";
@@ -39,7 +45,10 @@ export function ShopHeader({ categories }: { categories: Category[] }) {
       <div className="mx-auto flex h-14 max-w-7xl items-center gap-2 px-3 sm:gap-3 sm:px-4 md:h-16 md:px-6">
         <Sheet open={open} onOpenChange={setOpen}>
           <SheetTrigger
-            className={cn(buttonVariants({ variant: "ghost", size: "icon" }), "shrink-0 lg:hidden")}
+            className={cn(
+              buttonVariants({ variant: "ghost", size: "icon" }),
+              "shrink-0 lg:hidden",
+            )}
             aria-label="Open menu"
           >
             <Menu className="size-5" />
@@ -89,12 +98,15 @@ export function ShopHeader({ categories }: { categories: Category[] }) {
           <Link
             href={ROUTES.shortlist}
             prefetch
-            className={cn(buttonVariants({ variant: "ghost", size: "icon" }), "relative")}
+            className={cn(
+              buttonVariants({ variant: "ghost", size: "icon" }),
+              "relative",
+            )}
             aria-label="Shortlist"
           >
             <Heart className="size-4" />
             {count > 0 && (
-              <span className="absolute -right-0.5 -top-0.5 flex size-4 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-primary-foreground">
+              <span className="absolute -right-0.5 -top-0.5 flex size-4 items-center justify-center rounded-full bg-brass text-[10px] font-bold text-ink">
                 {count}
               </span>
             )}
@@ -102,12 +114,15 @@ export function ShopHeader({ categories }: { categories: Category[] }) {
           <Link
             href={ROUTES.cart}
             prefetch
-            className={cn(buttonVariants({ variant: "ghost", size: "icon" }), "relative")}
+            className={cn(
+              buttonVariants({ variant: "ghost", size: "icon" }),
+              "relative",
+            )}
             aria-label={`Shopping cart with ${cartCount} items`}
           >
             <ShoppingCart className="size-4" />
             {cartCount > 0 && (
-              <span className="absolute -right-0.5 -top-0.5 flex size-4 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-primary-foreground">
+              <span className="absolute -right-0.5 -top-0.5 flex size-4 items-center justify-center rounded-full bg-brass text-[10px] font-bold text-ink">
                 {cartCount > 99 ? "99+" : cartCount}
               </span>
             )}
@@ -146,7 +161,9 @@ export function ShopHeader({ categories }: { categories: Category[] }) {
                   >
                     My cart
                   </DropdownMenuItem>
-                  <DropdownMenuItem onClick={clear}>Clear browse history</DropdownMenuItem>
+                  <DropdownMenuItem onClick={clear}>
+                    Clear browse history
+                  </DropdownMenuItem>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem
                     onClick={async () => {

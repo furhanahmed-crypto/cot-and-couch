@@ -60,7 +60,7 @@ export function ProductCard({
           />
         )}
         {off >= 10 && (
-          <Badge className="absolute left-2 top-2 bg-primary text-primary-foreground hover:bg-primary">
+          <Badge className="absolute left-2 top-2 bg-brass text-ink hover:bg-brass">
             Up to {off}% off
           </Badge>
         )}

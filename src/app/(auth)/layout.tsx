@@ -8,7 +8,7 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
         className="pointer-events-none absolute inset-0 opacity-40"
         style={{
           background:
-            "radial-gradient(ellipse at 20% 0%, #3e272322, transparent 50%), radial-gradient(ellipse at 90% 20%, #6b534433, transparent 45%)",
+            "radial-gradient(ellipse at 20% 0%, #d47c4a33, transparent 50%), radial-gradient(ellipse at 90% 20%, #3e272322, transparent 45%)",
         }}
       />
       <div className="relative mx-auto flex min-h-svh max-w-lg flex-col px-4 py-6">
