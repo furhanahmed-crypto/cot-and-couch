@@ -3,11 +3,12 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { Heart, LogOut, Menu, Search, User } from "lucide-react";
+import { Heart, LogOut, Menu, Search, ShoppingCart, User } from "lucide-react";
 import { BrandMark } from "@/components/shared/brand-mark";
 import { ThemeToggle } from "@/components/shared/theme-toggle";
 import { ShopNavLink } from "@/components/shop/shop-nav-link";
 import { buttonVariants } from "@/components/ui/button";
+import { useCart } from "@/hooks/use-cart";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -27,6 +28,7 @@ export function ShopHeader({ categories }: { categories: Category[] }) {
   const cats = categories;
   const { data: session } = authClient.useSession();
   const { count } = useShortlist();
+  const { count: cartCount } = useCart();
   const { clear } = useRecentlyViewed();
   const router = useRouter();
   const [open, setOpen] = useState(false);
@@ -97,6 +99,19 @@ export function ShopHeader({ categories }: { categories: Category[] }) {
               </span>
             )}
           </Link>
+          <Link
+            href={ROUTES.cart}
+            prefetch
+            className={cn(buttonVariants({ variant: "ghost", size: "icon" }), "relative")}
+            aria-label={`Shopping cart with ${cartCount} items`}
+          >
+            <ShoppingCart className="size-4" />
+            {cartCount > 0 && (
+              <span className="absolute -right-0.5 -top-0.5 flex size-4 items-center justify-center rounded-full bg-brass text-[10px] font-bold text-ink">
+                {cartCount > 99 ? "99+" : cartCount}
+              </span>
+            )}
+          </Link>
           <ThemeToggle />
           <DropdownMenu>
             <DropdownMenuTrigger
@@ -124,6 +139,12 @@ export function ShopHeader({ categories }: { categories: Category[] }) {
                     render={<Link href={ROUTES.shortlist} prefetch />}
                   >
                     My shortlist
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    nativeButton={false}
+                    render={<Link href={ROUTES.cart} prefetch />}
+                  >
+                    My cart
                   </DropdownMenuItem>
                   <DropdownMenuItem onClick={clear}>Clear browse history</DropdownMenuItem>
                   <DropdownMenuSeparator />

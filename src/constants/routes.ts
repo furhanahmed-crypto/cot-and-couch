@@ -8,6 +8,7 @@ export const ROUTES = {
   product: (slug: string) => `/product/${slug}`,
   collection: (slug: string) => `/collections/${slug}`,
   shortlist: "/shortlist",
+  cart: "/cart",
   search: "/search",
   orders: "/my-orders",
   privacy: "/privacy",

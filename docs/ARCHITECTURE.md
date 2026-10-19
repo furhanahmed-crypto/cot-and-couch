@@ -141,7 +141,8 @@ No middleware enforcement in early prototype; layout components redirect if sess
 
 ## Component conventions
 
-- **Shop chrome:** header with search, shortlist count, theme toggle, auth avatar.
+- **Shop chrome:** header with search, shortlist count, cart count, theme toggle, auth avatar.
+- **Client shop state:** Zustand stores in `src/stores/` (`cart-store`, `wishlist-store`); DB remains source of truth via server actions.
 - **Admin chrome:** sidebar navigation mapped to AD-xx modules, role badge for Team vs Admin demo.
 - **Forms:** shadcn `Input`, `Label`, `Select` (not native `<select>`), `Textarea`, `Button`.
 - **Data display:** `Table` for admin lists; cards for PLP.
@@ -159,6 +160,6 @@ Brand tokens live in `globals.css` (`:root` / `.dark`). See `DESIGN.md` for colo
 - No ORM, migrations, or Supabase client in Phase 1.
 - No `fetch('/api/...')` for catalogue CRUD.
 - No edge middleware for auth secrets.
-- No cart/checkout routes or payment SDKs.
+- No checkout or payment SDKs (cart save + WhatsApp enquire only).
 
 Future backend can replace `services/*.ts` implementations while keeping component contracts stable; types in `src/types/` should mirror intended API shapes early.

@@ -1,10 +1,14 @@
 "use client";
 
-import { useMemo, useState } from "react";
-import { Heart } from "lucide-react";
+import { useMemo, useState, useTransition } from "react";
+import { Heart, ShoppingCart } from "lucide-react";
+import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { CartQuantityControls } from "@/components/shop/cart-quantity-controls";
+import { useCart } from "@/hooks/use-cart";
 import { useShortlist } from "@/hooks/use-shortlist";
 import { discountPercent, formatINR, stockLabel } from "@/lib/format";
 import { cn } from "@/lib/utils";
@@ -68,6 +72,12 @@ function chipClass(active: boolean) {
   );
 }
 
+function parseCustomInches(value: string) {
+  const n = Number(value);
+  if (!Number.isFinite(n) || n <= 0) return null;
+  return Math.round(n);
+}
+
 export function PdpMain({
   product,
   colours,
@@ -81,7 +91,9 @@ export function PdpMain({
   const initial = variants[0];
   const swatches = productColours(product);
   const { has, toggle } = useShortlist();
+  const { addItem, findLine } = useCart();
   const liked = has(product.id);
+  const [pending, startTransition] = useTransition();
 
   const [axis, setAxis] = useState<Axis>(() => ({
     sizeGroupOptionId: initial?.sizeGroupOptionId ?? "",
@@ -89,6 +101,8 @@ export function PdpMain({
     thicknessOptionId: initial?.thicknessOptionId ?? null,
     colourId: initial?.colourId ?? "",
   }));
+  const [customLength, setCustomLength] = useState("");
+  const [customWidth, setCustomWidth] = useState("");
 
   const sizeGroups = useMemo(
     () =>
@@ -143,6 +157,19 @@ export function PdpMain({
       : (variants.find((v) => v.images.length)?.images ?? []);
   const off = discountPercent(variant.mrp, variant.price);
 
+  const selectedCustomLength = isCustomGroup
+    ? parseCustomInches(customLength)
+    : null;
+  const selectedCustomWidth = isCustomGroup
+    ? parseCustomInches(customWidth)
+    : null;
+  const cartLine = findLine(
+    product.id,
+    variant.id,
+    selectedCustomLength,
+    selectedCustomWidth,
+  );
+
   function selectSizeGroup(groupId: string) {
     const groupVariants = variants.filter((v) => v.sizeGroupOptionId === groupId);
     const custom = groupVariants[0]?.isCustomSize ?? false;
@@ -165,6 +192,10 @@ export function PdpMain({
       thicknessOptionId: nextThick,
       colourId: axis.colourId,
     });
+    if (!custom) {
+      setCustomLength("");
+      setCustomWidth("");
+    }
   }
 
   function selectDimension(dimId: string) {
@@ -193,6 +224,35 @@ export function PdpMain({
   function selectColour(colourId: string) {
     // Colour only — size / dimension / thickness stay put.
     setAxis({ ...axis, colourId });
+  }
+
+  function handleAddToCart() {
+    let customLengthIn: number | null = null;
+    let customWidthIn: number | null = null;
+
+    if (isCustomGroup) {
+      customLengthIn = parseCustomInches(customLength);
+      customWidthIn = parseCustomInches(customWidth);
+      if (!customLengthIn || !customWidthIn) {
+        toast.error("Enter custom length and width in inches.");
+        return;
+      }
+    }
+
+    startTransition(async () => {
+      const result = await addItem({
+        productId: product.id,
+        variantId: variant.id,
+        quantity: 1,
+        customLengthIn,
+        customWidthIn,
+      });
+      if (!result.ok) {
+        toast.error(result.error ?? "Could not add to cart");
+        return;
+      }
+      toast.success("Added to cart");
+    });
   }
 
   if (!initial) {
@@ -284,9 +344,39 @@ export function PdpMain({
           )}
 
           {isCustomGroup && (
-            <p className="text-sm text-muted-foreground">
-              Custom size — share L × W (inches) with the store team.
-            </p>
+            <div className="space-y-3">
+              <p className="text-sm text-muted-foreground">
+                Custom size — enter length and width in inches.
+              </p>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-2">
+                  <Label htmlFor="custom-length">Length (in)</Label>
+                  <Input
+                    id="custom-length"
+                    type="number"
+                    min={1}
+                    step={1}
+                    inputMode="numeric"
+                    placeholder="e.g. 78"
+                    value={customLength}
+                    onChange={(e) => setCustomLength(e.target.value)}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="custom-width">Width (in)</Label>
+                  <Input
+                    id="custom-width"
+                    type="number"
+                    min={1}
+                    step={1}
+                    inputMode="numeric"
+                    placeholder="e.g. 60"
+                    value={customWidth}
+                    onChange={(e) => setCustomWidth(e.target.value)}
+                  />
+                </div>
+              </div>
+            </div>
           )}
 
           {hasThickness && (
@@ -341,6 +431,25 @@ export function PdpMain({
           )}
 
           <p className="text-xs text-muted-foreground">SKU {variant.sku}</p>
+
+          {cartLine ? (
+            <CartQuantityControls
+              cartId={cartLine.id}
+              quantity={cartLine.quantity}
+              className="justify-between"
+            />
+          ) : (
+            <Button
+              type="button"
+              size="lg"
+              className="w-full bg-brass text-ink hover:bg-brass/90"
+              disabled={pending}
+              onClick={handleAddToCart}
+            >
+              <ShoppingCart className="size-4" />
+              {pending ? "Adding…" : "Add to cart"}
+            </Button>
+          )}
         </div>
 
         <PdpDetails product={product} />

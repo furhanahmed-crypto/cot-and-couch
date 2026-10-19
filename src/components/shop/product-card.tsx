@@ -3,6 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { Heart } from "lucide-react";
+import { ProductCardCart } from "@/components/shop/product-card-cart";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ROUTES } from "@/constants/routes";
@@ -84,7 +85,9 @@ export function ProductCard({
         </Link>
         <div className="flex flex-wrap items-baseline gap-2">
           <span className="text-base font-semibold">from {formatINR(price)}</span>
-          <span className="text-sm text-muted-foreground line-through">{formatINR(mrp)}</span>
+          <span className="text-sm text-muted-foreground line-through">
+            {formatINR(mrp)}
+          </span>
         </div>
         <div className="mt-1 flex items-center gap-1.5">
           {swatches.map((c) => (
@@ -105,6 +108,7 @@ export function ProductCard({
             product.variants.find((v) => v.stockStatus === stock)?.stockQty ?? 0,
           )}
         </Badge>
+        <ProductCardCart product={product} />
         <span className="sr-only">
           Discount {discountPercent(mrp, price)} percent
         </span>

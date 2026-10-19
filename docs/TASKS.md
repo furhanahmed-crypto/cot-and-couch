@@ -23,7 +23,8 @@ Update this file when completing work (see `RULES.md`).
 - [x] `src/types/` domain models
 - [x] `src/data/mock/` seed catalogue + ops data
 - [x] `src/services/` catalogue + session + storage
-- [x] `src/hooks/` (shortlist, recently viewed, sessions)
+- [x] `src/hooks/` (shortlist, cart, recently viewed)
+- [x] `src/stores/` Zustand cart + wishlist (shortlist) client state
 - [x] Production `npm run build` green
 
 ---
@@ -57,6 +58,7 @@ Update this file when completing work (see `RULES.md`).
 - [x] PB-02 Continue where you left off
 - [x] PB-03 Inspired by browsing
 - [x] PB-04 Shortlist + WhatsApp share
+- [x] PB-05 Cart (DB `carts`, custom L×W, qty controls, `/cart` page — no checkout)
 - [x] PB-06 Clear history from menu
 - [x] Admin leads / segments / intent (mock UI)
 
@@ -102,4 +104,44 @@ Update this file when completing work (see `RULES.md`).
 
 ## Explicitly not on this list (Phase 1)
 
-Cart, checkout, payments, real OTP/SMS, database, production RBAC, ERP/PIM sync, WhatsApp Cloud API — see `PRD.md` / `SECURITY.md`.
+Checkout, payments, real OTP/SMS, production RBAC, ERP/PIM sync, WhatsApp Cloud API — see `PRD.md` / `SECURITY.md`.
+
+---
+
+## Admin console rebuild (post Phase 1)
+
+Strategy and fallback: see `MEMORY.md` → “Admin console rebuild strategy”.
+Images: placeholders only (no upload/edit) until a later media phase.
+
+### Phase A — Shell (Figma)
+
+- [ ] Match Figma sidebar groups, nav labels/order, chrome
+- [ ] Keep Neon Auth; preserve admin vs team locks (improve server enforcement later)
+
+### Phase B — Product editor (HTML spec)
+
+- [ ] Products list aligned to design (filters, status, actions)
+- [ ] Category-aware editor shell (swap template by category)
+- [ ] Common fields + category specs UI (Beds → TV units per HTML)
+- [ ] Variants & pricing matrix + stock status
+- [ ] Media placeholders (read-only; no add/edit images)
+- [ ] Draft / publish checklist UX
+- [ ] Duplicate / archive / delete with `ConfirmationModal`
+
+### Phase C — Schema (category-by-category)
+
+- [ ] Mattresses specs + variant axes fully Neon-backed
+- [ ] Beds → Sofas → Computer tables → Dining → Wardrobes → TV units
+- [ ] Server actions + services for create/update/delete (no mock-only)
+
+### Phase D — Rest of console
+
+- [ ] Categories / Attributes / Masters UI ↔ Figma + full CRUD gaps
+- [ ] Pricing / Stock grids aligned
+- [ ] Gallery / Reels / Sales / Leads / Users / Settings / Audit
+
+### Fallback Z (only if primary path reverted)
+
+- [ ] Fetch products from DB → Zustand admin store
+- [ ] Demo mutations in Zustand only; no further schema expansion
+

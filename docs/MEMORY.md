@@ -193,10 +193,63 @@ Chronological-ish record of **why** the prototype is shaped this way. Update whe
 
 ---
 
+## 2026-10-19 — Cart (DB) + custom size L×W
+
+**Decision:** Enquiry-first shop now has a **saved cart** (no checkout). Table `carts` stores one line per profile + variant + optional custom inches.
+
+**Custom size:** On PDP, Custom size group shows Length/Width inputs (shadcn). Values persist on the cart line.
+
+**Badge:** Header cart badge = **distinct line count**, not quantity sum.
+
+---
+
+## 2026-10-19 — Zustand for cart + wishlist client state
+
+**Decision:** Replace React Context providers (`CartProvider`, `ShortlistProvider`) with Zustand stores:
+
+| Store | File | DB source of truth |
+|-------|------|--------------------|
+| Cart | `src/stores/cart-store.ts` | `carts` |
+| Wishlist | `src/stores/wishlist-store.ts` | `profile_favourites` (UI still “shortlist”) |
+
+**Boot:** `ShopStoresBoot` in shop layout calls `load()` once. Hooks `useCart` / `useShortlist` read stores. Server actions still mutate Neon; stores refresh after mutations.
+
+**Rationale:** Same pattern for cart and wishlist; no Context nesting; badge/cards/PDP share one client snapshot without per-card DB spam.
+
+---
+
+## 2026-10-19 — ConfirmationModal for destructive actions
+
+**Decision:** Reusable `ConfirmationModal` (`src/components/ui/confirmation-modal.tsx`) wraps shadcn `Dialog`. Use it for careful destructive actions (remove cart line, clear cart, and similar). Controlled via `open` / `onOpenChange`; supports `pending` and destructive confirm styling.
+
+---
+
+## 2026-10-19 — Admin console rebuild strategy
+
+**Sources:** Figma [Admin Console UI](https://www.figma.com/design/JzSUIqiH2lQ0Ev85iv2P2y/Cot---Couch-%E2%80%94-Admin-Console-UI) (sidebar/nav/chrome) + Downloads HTML “Product editor by category” (field lists, variants, publish checklist).
+
+**Client need:** Credible admin demo now; full DTO/schema finalization can follow.
+
+**Primary path (build first):** Complete phased admin — real Neon CRUD, category-aware product editor per HTML, Figma shell. Images stay **read-only placeholders** (no upload/edit) until a later media phase.
+
+**Fallback (if primary fails):** Revert code + DB migrations; keep UI from Figma/HTML; fetch products from DB into Zustand; demo create/edit/delete/archive in the store only (no schema expansion). Document as contingency — do not start here.
+
+**Phase order locked:**
+
+1. **Shell** — Figma sidebar, nav groups, admin chrome (match labels/order; keep existing Neon Auth).
+2. **Product editor** — HTML category templates (Beds, Mattresses, Sofas, Computer tables, Dining, Wardrobes, TV units); list + create/edit; variants/pricing/stock; media placeholders; draft/publish UX as designed.
+3. **Schema** — Extend Neon for category specs + variant axes **category-by-category**, starting with Mattresses (closest to current schema), then Beds/Sofas/… until HTML templates are backed.
+4. **Rest of console** — Categories, Attributes, Masters, Pricing, Stock, Gallery, Reels, Sales, Leads, Users, Settings, Audit: align UI to Figma and finish missing CRUD where still mock/read-only.
+5. **Hardening** — ConfirmationModal on destructive actions; server-side admin vs team where required; docs/`TASKS.md` sync.
+
+**Out of scope until later:** Product image upload/edit; checkout; customer phone OTP.
+
+---
+
 ## Open questions (future)
 
 - Customer gate until phone OTP: temporary Neon Auth email vs light/public browse.
-- Whether Phase 2 adds cart or stays enquiry-only.
+- Checkout / payments remain out of scope until PRD authorizes.
 - CRM destination for enquiries (WhatsApp Business API, etc.).
 - DPDP consent capture copy and storage region (Neon region choice).
 

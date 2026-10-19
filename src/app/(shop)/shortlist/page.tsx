@@ -1,4 +1,5 @@
 import { Suspense } from "react";
+import { connection } from "next/server";
 import Link from "next/link";
 import { MessageCircle } from "lucide-react";
 import { ProductCard } from "@/components/shop/product-card";
@@ -11,6 +12,7 @@ import { listFavouriteProducts } from "@/services/favourites";
 import { getStoreInfo } from "@/services/ops";
 
 async function ShortlistContent() {
+  await connection();
   const [products, storeInfo] = await Promise.all([
     listFavouriteProducts(),
     getStoreInfo(),

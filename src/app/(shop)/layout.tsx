@@ -1,8 +1,8 @@
 import { Suspense } from "react";
 import { cacheLife, cacheTag } from "next/cache";
 import { ShopHeader } from "@/components/shop/shop-header";
-import { ShortlistProvider } from "@/components/shop/shortlist-provider";
 import { ShopHeaderSkeleton } from "@/components/shop/shop-skeletons";
+import { ShopStoresBoot } from "@/components/shop/shop-stores-boot";
 import { BrandMark } from "@/components/shared/brand-mark";
 import { SHOP_CACHE_TAG } from "@/lib/cache-tags";
 import { getCategories } from "@/services/catalogue";
@@ -21,7 +21,8 @@ export default function ShopLayout({
   children: React.ReactNode;
 }) {
   return (
-    <ShortlistProvider>
+    <>
+      <ShopStoresBoot />
       <Suspense fallback={<ShopHeaderSkeleton />}>
         <ShopHeaderSlot />
       </Suspense>
@@ -34,6 +35,6 @@ export default function ShopLayout({
           </p>
         </div>
       </footer>
-    </ShortlistProvider>
+    </>
   );
 }

@@ -203,6 +203,32 @@ export const profileFavourites = pgTable(
   (t) => [unique("profile_favourites_unique").on(t.profileId, t.productId)],
 );
 
+/**
+ * One row = one cart line for a logged-in user.
+ * Custom length/width are set only when the chosen variant is custom size.
+ */
+export const carts = pgTable("carts", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  profileId: uuid("profile_id")
+    .notNull()
+    .references(() => profiles.id, { onDelete: "cascade" }),
+  productId: uuid("product_id")
+    .notNull()
+    .references(() => products.id, { onDelete: "cascade" }),
+  variantId: uuid("variant_id")
+    .notNull()
+    .references(() => productVariants.id, { onDelete: "cascade" }),
+  quantity: integer("quantity").notNull().default(1),
+  customLengthIn: integer("custom_length_in"),
+  customWidthIn: integer("custom_width_in"),
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .defaultNow()
+    .notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true })
+    .defaultNow()
+    .notNull(),
+});
+
 export type Profile = typeof profiles.$inferSelect;
 export type NewProfile = typeof profiles.$inferInsert;
 export type Category = typeof categories.$inferSelect;
@@ -213,6 +239,8 @@ export type SizeDimension = typeof sizeDimensions.$inferSelect;
 export type Product = typeof products.$inferSelect;
 export type ProductVariant = typeof productVariants.$inferSelect;
 export type ProfileFavourite = typeof profileFavourites.$inferSelect;
+export type Cart = typeof carts.$inferSelect;
+export type NewCart = typeof carts.$inferInsert;
 
 /** Marketing collections (Royal Range, Everyday, …). */
 export const collections = pgTable("collections", {
