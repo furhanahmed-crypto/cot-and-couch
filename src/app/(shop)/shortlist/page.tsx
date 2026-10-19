@@ -39,7 +39,7 @@ async function ShortlistContent() {
             prefetch
             className={cn(
               buttonVariants(),
-              "mt-4 inline-flex bg-brass text-ink hover:bg-brass/90",
+              "mt-4 inline-flex bg-primary text-primary-foreground hover:bg-primary/90",
             )}
           >
             Browse catalogue

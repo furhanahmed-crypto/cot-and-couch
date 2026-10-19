@@ -57,7 +57,7 @@ export function PdpCtaBar({
         <Dialog open={visitOpen} onOpenChange={setVisitOpen}>
           <DialogTrigger
             render={
-              <Button className="flex-1 bg-brass text-ink hover:bg-brass/90">
+              <Button className="flex-1">
                 <Store className="size-4" /> Visit Store
               </Button>
             }
@@ -94,7 +94,7 @@ export function PdpCtaBar({
               </div>
             </div>
             <DialogFooter>
-              <Button onClick={submitVisit} className="bg-brass text-ink hover:bg-brass/90">
+              <Button onClick={submitVisit}>
                 Request visit slot
               </Button>
             </DialogFooter>

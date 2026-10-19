@@ -31,7 +31,7 @@ export async function StoreBlock() {
             rel="noreferrer"
             className={cn(
               buttonVariants(),
-              "bg-brass text-ink hover:bg-brass/90",
+              "bg-primary text-primary-foreground hover:bg-primary/90",
             )}
           >
             Open in Maps

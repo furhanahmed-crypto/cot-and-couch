@@ -442,7 +442,7 @@ export function PdpMain({
             <Button
               type="button"
               size="lg"
-              className="w-full bg-brass text-ink hover:bg-brass/90"
+              className="w-full"
               disabled={pending}
               onClick={handleAddToCart}
             >
