@@ -253,6 +253,18 @@ export async function getProductById(id: string) {
   return product;
 }
 
+/** Admin editor — uncached so edits show immediately. */
+export async function getAdminProductById(id: string) {
+  const rows = await db
+    .select()
+    .from(productsTable)
+    .where(eq(productsTable.id, id))
+    .limit(1);
+  if (!rows[0]) return undefined;
+  const [product] = await hydrateProducts(rows, "full");
+  return product;
+}
+
 export async function getProductsByIds(ids: string[]) {
   "use cache";
   tagShopCache();

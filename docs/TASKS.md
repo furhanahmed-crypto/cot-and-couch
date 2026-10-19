@@ -115,18 +115,18 @@ Images: placeholders only (no upload/edit) until a later media phase.
 
 ### Phase A — Shell (Figma)
 
-- [ ] Match Figma sidebar groups, nav labels/order, chrome
-- [ ] Keep Neon Auth; preserve admin vs team locks (improve server enforcement later)
+- [x] Match Figma/HTML sidebar groups, nav labels/order, chrome
+- [x] Keep Neon Auth; preserve admin vs team locks (improve server enforcement later)
 
 ### Phase B — Product editor (HTML spec)
 
-- [ ] Products list aligned to design (filters, status, actions)
-- [ ] Category-aware editor shell (swap template by category)
-- [ ] Common fields + category specs UI (Beds → TV units per HTML)
-- [ ] Variants & pricing matrix + stock status
-- [ ] Media placeholders (read-only; no add/edit images)
-- [ ] Draft / publish checklist UX
-- [ ] Duplicate / archive / delete with `ConfirmationModal`
+- [x] Products list aligned to design (search, status, actions)
+- [x] Category-aware editor shell (`/admin/products/[id]`)
+- [x] Common identity fields + category specs UI stubs (Beds → TV units)
+- [x] Variants & pricing table (read) + stock status
+- [x] Media placeholders (read-only; no add/edit images)
+- [ ] Draft / publish checklist UX (polish)
+- [x] Archive / delete with `ConfirmationModal` (duplicate later)
 
 ### Phase C — Schema (category-by-category)
 

@@ -12,7 +12,7 @@ export default async function ProductsPage() {
     <div className="space-y-6">
       <PageHeader
         title="Products"
-        description="Live catalogue — add drafts, archive, or delete."
+        description="Catalogue list — create drafts, edit by category template, archive or delete."
       />
       <AdminProductsTable products={products} categories={categories} />
     </div>

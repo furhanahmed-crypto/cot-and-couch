@@ -1,15 +1,12 @@
 import {
   LayoutDashboard,
-  FolderTree,
-  SlidersHorizontal,
   Package,
+  FolderTree,
   Layers,
   IndianRupee,
-  Boxes,
-  Images,
-  Film,
   ShoppingBag,
   UsersRound,
+  Images,
   UserCog,
   Settings,
   ScrollText,
@@ -22,22 +19,76 @@ export type AdminNavItem = {
   label: string;
   icon: LucideIcon;
   adminOnly?: boolean;
+  matchPrefixes?: string[];
 };
 
-/** Nav mirrors Phase 1 PDF admin modules AD-01–AD-13 (no extras). */
-export const ADMIN_NAV: AdminNavItem[] = [
-  { href: ROUTES.admin.dashboard, label: "Dashboard", icon: LayoutDashboard },
-  { href: ROUTES.admin.categories, label: "Categories", icon: FolderTree, adminOnly: true },
-  { href: ROUTES.admin.attributes, label: "Attributes", icon: SlidersHorizontal, adminOnly: true },
-  { href: ROUTES.admin.products, label: "Products", icon: Package },
-  { href: ROUTES.admin.masters, label: "Masters", icon: Layers, adminOnly: true },
-  { href: ROUTES.admin.pricing, label: "Pricing", icon: IndianRupee, adminOnly: true },
-  { href: ROUTES.admin.stock, label: "Stock", icon: Boxes },
-  { href: ROUTES.admin.gallery, label: "Gallery", icon: Images },
-  { href: ROUTES.admin.reels, label: "Reels", icon: Film },
-  { href: ROUTES.admin.sales, label: "Sales", icon: ShoppingBag },
-  { href: ROUTES.admin.leads, label: "Leads", icon: UsersRound },
-  { href: ROUTES.admin.users, label: "Users", icon: UserCog, adminOnly: true },
-  { href: ROUTES.admin.settings, label: "Settings", icon: Settings, adminOnly: true },
-  { href: ROUTES.admin.audit, label: "Audit", icon: ScrollText, adminOnly: true },
+export type AdminNavGroup = { label: string; items: AdminNavItem[] };
+
+/** Figma + HTML shell: Overview → Catalogue → Commerce → Content → Admin. */
+export const ADMIN_NAV_GROUPS: AdminNavGroup[] = [
+  {
+    label: "Overview",
+    items: [
+      { href: ROUTES.admin.dashboard, label: "Dashboard", icon: LayoutDashboard },
+    ],
+  },
+  {
+    label: "Catalogue",
+    items: [
+      { href: ROUTES.admin.products, label: "Products", icon: Package },
+      {
+        href: ROUTES.admin.categories,
+        label: "Categories & templates",
+        icon: FolderTree,
+        adminOnly: true,
+        matchPrefixes: [ROUTES.admin.attributes],
+      },
+      { href: ROUTES.admin.masters, label: "Masters", icon: Layers, adminOnly: true },
+    ],
+  },
+  {
+    label: "Commerce",
+    items: [
+      {
+        href: ROUTES.admin.pricing,
+        label: "Pricing & stock",
+        icon: IndianRupee,
+        adminOnly: true,
+        matchPrefixes: [ROUTES.admin.stock],
+      },
+      { href: ROUTES.admin.sales, label: "Sales & delivery", icon: ShoppingBag },
+      { href: ROUTES.admin.leads, label: "Leads", icon: UsersRound },
+    ],
+  },
+  {
+    label: "Content",
+    items: [
+      {
+        href: ROUTES.admin.gallery,
+        label: "Gallery & reels",
+        icon: Images,
+        matchPrefixes: [ROUTES.admin.reels],
+      },
+    ],
+  },
+  {
+    label: "Admin",
+    items: [
+      { href: ROUTES.admin.users, label: "Users & roles", icon: UserCog, adminOnly: true },
+      { href: ROUTES.admin.settings, label: "Settings", icon: Settings, adminOnly: true },
+      { href: ROUTES.admin.audit, label: "Audit log", icon: ScrollText, adminOnly: true },
+    ],
+  },
 ];
+
+export const ADMIN_NAV: AdminNavItem[] = ADMIN_NAV_GROUPS.flatMap((g) => g.items);
+
+export function isAdminNavActive(pathname: string, item: AdminNavItem) {
+  if (pathname === item.href) return true;
+  if (item.href !== ROUTES.admin.dashboard && pathname.startsWith(item.href)) {
+    return true;
+  }
+  return (item.matchPrefixes ?? []).some(
+    (p) => pathname === p || pathname.startsWith(`${p}/`),
+  );
+}

@@ -236,8 +236,8 @@ Chronological-ish record of **why** the prototype is shaped this way. Update whe
 
 **Phase order locked:**
 
-1. **Shell** — Figma sidebar, nav groups, admin chrome (match labels/order; keep existing Neon Auth).
-2. **Product editor** — HTML category templates (Beds, Mattresses, Sofas, Computer tables, Dining, Wardrobes, TV units); list + create/edit; variants/pricing/stock; media placeholders; draft/publish UX as designed.
+1. **Shell** — Figma sidebar, nav groups, admin chrome (match labels/order; keep existing Neon Auth). **Done 2026-10-19:** `ADMIN_NAV_GROUPS` (Overview / Catalogue / Commerce / Content / Admin), active brass dot, topbar greeting + View store.
+2. **Product editor** — HTML category templates; list + create/edit; variants/pricing/stock; media placeholders. **In progress 2026-10-19:** Products list + `/admin/products/[id]` editor (identity save to Neon; category template fields stubbed; media locked placeholders).
 3. **Schema** — Extend Neon for category specs + variant axes **category-by-category**, starting with Mattresses (closest to current schema), then Beds/Sofas/… until HTML templates are backed.
 4. **Rest of console** — Categories, Attributes, Masters, Pricing, Stock, Gallery, Reels, Sales, Leads, Users, Settings, Audit: align UI to Figma and finish missing CRUD where still mock/read-only.
 5. **Hardening** — ConfirmationModal on destructive actions; server-side admin vs team where required; docs/`TASKS.md` sync.

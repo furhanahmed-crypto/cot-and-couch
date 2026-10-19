@@ -34,15 +34,24 @@ npm run dev
 
 Open [http://localhost:3000](http://localhost:3000) → **Register** with email → you land in the shop.
 
-### 3. Make yourself staff (admin)
+### 3. Staff / team console login
 
-In Neon **SQL Editor**:
+Sign in at [`/admin/login`](http://localhost:3000/admin/login).
+
+**Demo team credentials**
+
+| Field | Value |
+|-------|--------|
+| Email | `test@cotandcouch.com` |
+| Password | `cotandcouch2026` |
+| Role | `team` |
+
+To promote another Neon Auth user to staff, run in Neon **SQL Editor**:
 
 ```sql
-update profiles set role = 'admin' where email = 'your@email.com';
+update profiles set role = 'team' where email = 'your@email.com';
+-- or role = 'admin' for full console access
 ```
-
-Then sign in at `/admin/login` with the same email/password.
 
 ---
 

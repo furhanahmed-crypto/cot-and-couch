@@ -1,18 +1,15 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
-import { Lock, LogOut } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { LogOut } from "lucide-react";
+import { AdminSidebarNav } from "@/components/admin/admin-sidebar-nav";
 import { BrandMark } from "@/components/shared/brand-mark";
 import { Badge } from "@/components/ui/badge";
 import {
   Sidebar,
   SidebarContent,
   SidebarFooter,
-  SidebarGroup,
-  SidebarGroupContent,
-  SidebarGroupLabel,
   SidebarHeader,
   SidebarMenu,
   SidebarMenuButton,
@@ -20,13 +17,11 @@ import {
   SidebarRail,
   useSidebar,
 } from "@/components/ui/sidebar";
-import { ADMIN_NAV } from "@/constants/admin-nav";
 import { ROUTES } from "@/constants/routes";
 import { authClient } from "@/lib/auth/client";
 import { getStaffProfile } from "@/services/profile";
 
 export function AdminSidebar() {
-  const pathname = usePathname();
   const router = useRouter();
   const { data: session } = authClient.useSession();
   const { isMobile, setOpenMobile } = useSidebar();
@@ -47,8 +42,6 @@ export function AdminSidebar() {
     router.replace(ROUTES.admin.login);
   }
 
-  const isAdmin = role === "admin";
-
   return (
     <Sidebar collapsible="icon" variant="sidebar">
       <SidebarHeader className="gap-2 border-b border-sidebar-border px-3 py-4">
@@ -59,7 +52,10 @@ export function AdminSidebar() {
           className="max-w-[150px] group-data-[collapsible=icon]:hidden"
         />
         <div className="min-w-0 group-data-[collapsible=icon]:hidden">
-          <p className="truncate text-xs text-sidebar-foreground/70">{label}</p>
+          <p className="truncate text-xs text-[#C9D6D2]">
+            Admin console · Lingampally
+          </p>
+          <p className="mt-1 truncate text-sm text-sidebar-foreground">{label}</p>
           <Badge
             variant="secondary"
             className="mt-1 capitalize bg-sidebar-accent text-sidebar-accent-foreground"
@@ -69,59 +65,18 @@ export function AdminSidebar() {
         </div>
       </SidebarHeader>
 
-      <SidebarContent>
-        <SidebarGroup>
-          <SidebarGroupLabel>Console</SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {ADMIN_NAV.map((item) => {
-                const locked = Boolean(item.adminOnly && !isAdmin);
-                const active =
-                  pathname === item.href ||
-                  (item.href !== ROUTES.admin.dashboard &&
-                    pathname.startsWith(item.href));
-
-                if (locked) {
-                  return (
-                    <SidebarMenuItem key={item.href}>
-                      <SidebarMenuButton
-                        disabled
-                        tooltip={`${item.label} (Admin only)`}
-                        className="opacity-50"
-                      >
-                        <item.icon />
-                        <span>{item.label}</span>
-                        <Lock className="ml-auto size-3.5 text-brass" />
-                      </SidebarMenuButton>
-                    </SidebarMenuItem>
-                  );
-                }
-
-                return (
-                  <SidebarMenuItem key={item.href}>
-                    <SidebarMenuButton
-                      isActive={active}
-                      tooltip={item.label}
-                      render={<Link href={item.href} />}
-                      onClick={() => {
-                        if (isMobile) setOpenMobile(false);
-                      }}
-                    >
-                      <item.icon />
-                      <span>{item.label}</span>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                );
-              })}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
+      <SidebarContent className="gap-1">
+        <AdminSidebarNav isAdmin={role === "admin"} />
       </SidebarContent>
 
       <SidebarFooter className="border-t border-sidebar-border">
         <SidebarMenu>
           <SidebarMenuItem>
-            <SidebarMenuButton tooltip="Log out" onClick={handleLogout}>
+            <SidebarMenuButton
+              tooltip="Log out"
+              onClick={handleLogout}
+              className="text-[#C9D6D2]"
+            >
               <LogOut />
               <span>Log out</span>
             </SidebarMenuButton>

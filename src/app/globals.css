@@ -78,14 +78,15 @@
   --chart-4: #8b7355;
   --chart-5: #2c3e3a;
   --radius: 0.5rem;
-  --sidebar: #0f2a2a;
+  /* Admin console — Figma ink teal shell (#0F2A28 / #1D3D3A / brass dot) */
+  --sidebar: #0f2a28;
   --sidebar-foreground: #f7f4ef;
-  --sidebar-primary: #c4a574;
-  --sidebar-primary-foreground: #0f2a2a;
-  --sidebar-accent: #1a3a3a;
-  --sidebar-accent-foreground: #f7f4ef;
+  --sidebar-primary: #c49a5a;
+  --sidebar-primary-foreground: #0f2a28;
+  --sidebar-accent: #1d3d3a;
+  --sidebar-accent-foreground: #ffffff;
   --sidebar-border: #1f4040;
-  --sidebar-ring: #c4a574;
+  --sidebar-ring: #c49a5a;
 }
 
 .dark {
