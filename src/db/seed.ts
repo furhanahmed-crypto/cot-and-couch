@@ -7,6 +7,7 @@ import { neon } from "@neondatabase/serverless";
 import { drizzle } from "drizzle-orm/neon-http";
 import { eq } from "drizzle-orm";
 import * as schema from "./schema";
+import { categoryConfigSeedRows } from "@/constants/category-config";
 import {
   MATTRESS_BRANDS,
   CATEGORIES,
@@ -125,6 +126,27 @@ async function seed() {
   const fillings = await addOptions(g.filling.id, FILLINGS);
   const comforts = await addOptions(g.comfort.id, COMFORTS);
   const colours = await addOptions(g.colour.id, COLOURS);
+
+  // Beds / Sofas / Computer tables — Figma category config masters
+  const furnitureSeed = categoryConfigSeedRows();
+  const furnitureGroups = await db
+    .insert(schema.optionGroups)
+    .values(furnitureSeed.groups)
+    .returning();
+  const furnitureGroupByKey = Object.fromEntries(
+    furnitureGroups.map((row) => [row.key, row]),
+  );
+  for (const [groupKey, rows] of Object.entries(
+    furnitureSeed.opts.reduce<
+      Record<string, { label: string; slug: string }[]>
+    >((acc, o) => {
+      (acc[o.groupKey] ??= []).push({ label: o.label, slug: o.slug });
+      return acc;
+    }, {}),
+  )) {
+    const group = furnitureGroupByKey[groupKey];
+    if (group) await addOptions(group.id, rows);
+  }
 
   const bySlug = (rows: { slug: string; id: string }[]) =>
     Object.fromEntries(rows.map((r) => [r.slug, r]));

@@ -1,5 +1,10 @@
-import { asc, eq } from "drizzle-orm";
+import { asc } from "drizzle-orm";
 import { connection } from "next/server";
+import {
+  CATEGORY_CONFIGS,
+  categoryConfigForSlug,
+  type CategoryConfigDef,
+} from "@/constants/category-config";
 import { db } from "@/db";
 import {
   mattressBrandOptions,
@@ -28,6 +33,14 @@ export type AdminMattressBrand = {
   optionIds: string[];
 };
 
+export type CategoryConfigAdmin = CategoryConfigDef & {
+  groupsWithOptions: {
+    key: string;
+    label: string;
+    options: AdminOption[];
+  }[];
+};
+
 export type CategoryTemplatesData = {
   categories: Category[];
   brands: AdminMattressBrand[];
@@ -35,6 +48,9 @@ export type CategoryTemplatesData = {
     "purpose" | "comfort" | "filling" | "cover_material",
     AdminOption[]
   >;
+  furnitureConfigs: CategoryConfigAdmin[];
+  /** All furniture option groups keyed by group key */
+  furnitureOptionsByKey: Record<string, AdminOption[]>;
 };
 
 const MATTRESS_GROUPS = [
@@ -70,17 +86,37 @@ export async function getCategoryTemplatesData(): Promise<CategoryTemplatesData>
     cover_material: [],
   };
 
+  const furnitureOptionsByKey: Record<string, AdminOption[]> = {};
+
   for (const o of optionRows) {
     const key = groupKeyById.get(o.groupId);
-    if (!key || !(MATTRESS_GROUPS as readonly string[]).includes(key)) continue;
-    optionsByGroup[key as keyof typeof optionsByGroup].push({
+    if (!key) continue;
+    const mapped: AdminOption = {
       id: o.id,
       label: o.label,
       slug: o.slug,
       groupKey: key,
       isActive: o.isActive,
-    });
+    };
+    if ((MATTRESS_GROUPS as readonly string[]).includes(key)) {
+      optionsByGroup[key as keyof typeof optionsByGroup].push(mapped);
+    } else {
+      const list = furnitureOptionsByKey[key] ?? [];
+      list.push(mapped);
+      furnitureOptionsByKey[key] = list;
+    }
   }
+
+  const furnitureConfigs: CategoryConfigAdmin[] = CATEGORY_CONFIGS.map(
+    (def) => ({
+      ...def,
+      groupsWithOptions: def.groups.map((g) => ({
+        key: g.key,
+        label: g.label,
+        options: furnitureOptionsByKey[g.key] ?? [],
+      })),
+    }),
+  );
 
   return {
     categories,
@@ -94,31 +130,20 @@ export async function getCategoryTemplatesData(): Promise<CategoryTemplatesData>
       optionIds: optionIdsByBrand.get(b.id) ?? [],
     })),
     optionsByGroup,
+    furnitureConfigs,
+    furnitureOptionsByKey,
   };
 }
 
-/** Option IDs linked to a brand (empty = fall back to all active in group). */
-export async function getBrandOptionIds(brandId: string): Promise<string[]> {
-  const rows = await db
-    .select({ optionId: mattressBrandOptions.optionId })
-    .from(mattressBrandOptions)
-    .where(eq(mattressBrandOptions.brandId, brandId));
-  return rows.map((r) => r.optionId);
-}
-
-export async function getOptionsForBrandGroups(brandId: string | null) {
+export async function getFurnitureOptionsForCategory(slug: string) {
+  const def = categoryConfigForSlug(slug);
+  if (!def) return { def: null, optionsByKey: {} as Record<string, AdminOption[]> };
   const data = await getCategoryTemplatesData();
-  if (!brandId) return data.optionsByGroup;
-  const brand = data.brands.find((b) => b.id === brandId);
-  if (!brand || brand.optionIds.length === 0) return data.optionsByGroup;
-
-  const allowed = new Set(brand.optionIds);
-  return {
-    purpose: data.optionsByGroup.purpose.filter((o) => allowed.has(o.id)),
-    comfort: data.optionsByGroup.comfort.filter((o) => allowed.has(o.id)),
-    filling: data.optionsByGroup.filling.filter((o) => allowed.has(o.id)),
-    cover_material: data.optionsByGroup.cover_material.filter((o) =>
-      allowed.has(o.id),
-    ),
-  };
+  const optionsByKey: Record<string, AdminOption[]> = {};
+  for (const g of def.groups) {
+    optionsByKey[g.key] = (data.furnitureOptionsByKey[g.key] ?? []).filter(
+      (o) => o.isActive,
+    );
+  }
+  return { def, optionsByKey };
 }

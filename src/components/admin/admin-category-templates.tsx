@@ -17,8 +17,11 @@ import {
 import { toast } from "sonner";
 import {
   createBrandGroupOptionAction,
+  createCategoryConfigOptionAction,
   createMattressBrandAction,
+  deleteCategoryConfigOptionAction,
   deleteMattressBrandAction,
+  updateCategoryConfigOptionAction,
   updateMattressBrandAction,
 } from "@/app/admin/categories/actions";
 import {
@@ -39,10 +42,10 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
-import { templateForCategorySlug } from "@/constants/admin-product-templates";
 import type {
   AdminMattressBrand,
   AdminOption,
+  CategoryConfigAdmin,
   CategoryTemplatesData,
 } from "@/services/admin-categories";
 import { cn } from "@/lib/utils";
@@ -79,9 +82,18 @@ export function AdminCategoryTemplates({ data }: { data: CategoryTemplatesData }
   const [pending, startTransition] = useTransition();
   const [brandName, setBrandName] = useState("");
   const [editing, setEditing] = useState<AdminMattressBrand | null>(null);
+  const [configEdit, setConfigEdit] = useState<CategoryConfigAdmin | null>(null);
 
   const mattressCategory = data.categories.find((c) => c.slug === "mattresses");
-  const otherCategories = data.categories.filter((c) => c.slug !== "mattresses");
+  const configBySlug = new Map(
+    data.furnitureConfigs.map((c) => [c.slug, c]),
+  );
+
+  useEffect(() => {
+    if (!configEdit) return;
+    const fresh = data.furnitureConfigs.find((c) => c.slug === configEdit.slug);
+    if (fresh) setConfigEdit(fresh);
+  }, [data.furnitureConfigs, configEdit?.slug]);
 
   function refresh() {
     router.refresh();
@@ -199,57 +211,95 @@ export function AdminCategoryTemplates({ data }: { data: CategoryTemplatesData }
         </CategorySection>
       ) : null}
 
-      {otherCategories.map((cat) => {
-        const template = templateForCategorySlug(cat.slug);
-        return (
-          <CategorySection
-            key={cat.id}
-            title={cat.name}
-            slug={cat.slug}
-            visible={cat.visible}
-            pending={pending}
-            onRename={(name) => {
-              startTransition(async () => {
-                await renameCategoryAction({ categoryId: cat.id, name });
-                refresh();
-              });
-            }}
-            onToggleVisible={() => {
-              startTransition(async () => {
-                await setCategoryActiveAction({
-                  categoryId: cat.id,
-                  isActive: !cat.visible,
+      {data.categories
+        .filter((c) => c.slug !== "mattresses")
+        .map((cat) => {
+          const config = configBySlug.get(cat.slug);
+          const live = cat.visible;
+          return (
+            <CategorySection
+              key={cat.id}
+              title={config?.title ?? cat.name}
+              slug={cat.slug}
+              visible={live}
+              pending={pending}
+              onRename={(name) => {
+                startTransition(async () => {
+                  await renameCategoryAction({ categoryId: cat.id, name });
+                  refresh();
                 });
-                refresh();
-              });
-            }}
-          >
-            <p className="text-sm text-muted-foreground">
-              Variant axes: {template?.variants.join(" · ") ?? "—"}
-            </p>
-            {template ? (
-              <div className="flex flex-wrap gap-1.5">
-                {template.required.map((f) => (
-                  <Badge key={f} variant="secondary" className="font-normal">
-                    {f}
-                  </Badge>
-                ))}
-                {template.optional.map((f) => (
-                  <Badge key={f} variant="outline" className="font-normal">
-                    {f}
-                  </Badge>
-                ))}
-              </div>
-            ) : (
-              <p className="text-sm text-muted-foreground">No template mapped.</p>
-            )}
-            <p className="text-xs text-muted-foreground">
-              Spec values are edited per product. Masters (colours, sizes) live
-              under Masters.
-            </p>
-          </CategorySection>
-        );
-      })}
+              }}
+              onToggleVisible={() => {
+                startTransition(async () => {
+                  await setCategoryActiveAction({
+                    categoryId: cat.id,
+                    isActive: !cat.visible,
+                  });
+                  refresh();
+                });
+              }}
+            >
+              {config ? (
+                <>
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <p className="text-sm text-muted-foreground">
+                      {config.subtitle}
+                    </p>
+                    <div className="flex items-center gap-2">
+                      <Badge
+                        variant="secondary"
+                        className={
+                          live
+                            ? "bg-emerald-500/15 text-emerald-800 dark:text-emerald-300"
+                            : undefined
+                        }
+                      >
+                        {live ? "Live" : "Hidden"}
+                      </Badge>
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="outline"
+                        onClick={() => setConfigEdit(config)}
+                      >
+                        <Pencil className="size-3.5" />
+                        Manage options
+                      </Button>
+                    </div>
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    Variant axes: {config.variants.join(" · ")}
+                  </p>
+                  <div className="flex flex-wrap gap-1.5">
+                    {config.groups.map((g) => {
+                      const count =
+                        config.groupsWithOptions.find((x) => x.key === g.key)
+                          ?.options.length ?? 0;
+                      return (
+                        <Badge
+                          key={g.key}
+                          variant="secondary"
+                          className="font-normal"
+                        >
+                          {g.label} ({count})
+                        </Badge>
+                      );
+                    })}
+                  </div>
+                  {config.note ? (
+                    <p className="text-xs text-sky-800 dark:text-sky-300">
+                      {config.note}
+                    </p>
+                  ) : null}
+                </>
+              ) : (
+                <p className="text-sm text-muted-foreground">
+                  No editable config for this category yet.
+                </p>
+              )}
+            </CategorySection>
+          );
+        })}
 
       <BrandEditorSheet
         open={Boolean(editing)}
@@ -290,6 +340,51 @@ export function AdminCategoryTemplates({ data }: { data: CategoryTemplatesData }
                     }
                   : prev,
               );
+            }
+          });
+        }}
+      />
+
+      <CategoryConfigSheet
+        config={configEdit}
+        pending={pending}
+        onOpenChange={(open) => {
+          if (!open) setConfigEdit(null);
+        }}
+        onAddOption={(groupKey, label) => {
+          startTransition(async () => {
+            const res = await createCategoryConfigOptionAction({
+              groupKey,
+              label,
+            });
+            if (!res.ok) toast.error(res.error);
+            else {
+              toast.success("Option added");
+              refresh();
+            }
+          });
+        }}
+        onRenameOption={(id, label, isActive) => {
+          startTransition(async () => {
+            const res = await updateCategoryConfigOptionAction({
+              id,
+              label,
+              isActive,
+            });
+            if (!res.ok) toast.error(res.error);
+            else {
+              toast.success("Option updated");
+              refresh();
+            }
+          });
+        }}
+        onDeleteOption={(id) => {
+          startTransition(async () => {
+            const res = await deleteCategoryConfigOptionAction(id);
+            if (!res.ok) toast.error(res.error);
+            else {
+              toast.success("Option removed");
+              refresh();
             }
           });
         }}
@@ -641,5 +736,159 @@ function OptionGroupEditor({
         </Button>
       </div>
     </div>
+  );
+}
+
+function CategoryConfigSheet({
+  config,
+  pending,
+  onOpenChange,
+  onAddOption,
+  onRenameOption,
+  onDeleteOption,
+}: {
+  config: CategoryConfigAdmin | null;
+  pending: boolean;
+  onOpenChange: (open: boolean) => void;
+  onAddOption: (groupKey: string, label: string) => void;
+  onRenameOption: (id: string, label: string, isActive: boolean) => void;
+  onDeleteOption: (id: string) => void;
+}) {
+  const [newLabels, setNewLabels] = useState<Record<string, string>>({});
+  const [editLabels, setEditLabels] = useState<Record<string, string>>({});
+
+  useEffect(() => {
+    if (!config) return;
+    const next: Record<string, string> = {};
+    for (const g of config.groupsWithOptions) {
+      for (const o of g.options) next[o.id] = o.label;
+    }
+    setEditLabels(next);
+    setNewLabels({});
+  }, [config]);
+
+  return (
+    <Sheet open={Boolean(config)} onOpenChange={onOpenChange}>
+      <SheetContent
+        side="right"
+        className="w-full overflow-y-auto sm:max-w-lg"
+      >
+        <SheetHeader>
+          <SheetTitle>{config?.title ?? "Category"} options</SheetTitle>
+          <SheetDescription>
+            Add, rename, or remove values for each configuration field. Products
+            pick from these lists in the editor.
+          </SheetDescription>
+        </SheetHeader>
+
+        {config ? (
+          <div className="space-y-4 px-4 pb-4">
+            <p className="text-sm text-muted-foreground">
+              Variants: {config.variants.join(" · ")}
+              {config.note ? ` · ${config.note}` : ""}
+            </p>
+            {config.groupsWithOptions.map((g) => (
+              <div
+                key={g.key}
+                className="space-y-2 rounded-lg border border-border/70 p-3"
+              >
+                <p className="text-sm font-medium">{g.label}</p>
+                <div className="space-y-2">
+                  {g.options.map((o) => (
+                    <div
+                      key={o.id}
+                      className="flex flex-wrap items-center gap-2"
+                    >
+                      <Input
+                        value={editLabels[o.id] ?? o.label}
+                        onChange={(e) =>
+                          setEditLabels((prev) => ({
+                            ...prev,
+                            [o.id]: e.target.value,
+                          }))
+                        }
+                        className="min-w-[8rem] flex-1"
+                      />
+                      <Button
+                        type="button"
+                        size="icon-sm"
+                        variant="outline"
+                        disabled={pending}
+                        aria-label="Save option"
+                        onClick={() =>
+                          onRenameOption(
+                            o.id,
+                            editLabels[o.id] ?? o.label,
+                            o.isActive,
+                          )
+                        }
+                      >
+                        <Pencil className="size-3.5" />
+                      </Button>
+                      <Button
+                        type="button"
+                        size="icon-sm"
+                        variant="outline"
+                        className="text-destructive"
+                        disabled={pending}
+                        aria-label="Delete option"
+                        onClick={() => onDeleteOption(o.id)}
+                      >
+                        <Trash2 className="size-3.5" />
+                      </Button>
+                    </div>
+                  ))}
+                  {g.options.length === 0 ? (
+                    <p className="text-xs text-muted-foreground">
+                      No options yet — add one below.
+                    </p>
+                  ) : null}
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  <Input
+                    value={newLabels[g.key] ?? ""}
+                    onChange={(e) =>
+                      setNewLabels((prev) => ({
+                        ...prev,
+                        [g.key]: e.target.value,
+                      }))
+                    }
+                    placeholder={`Add ${g.label.toLowerCase()}…`}
+                    className="min-w-[10rem] flex-1"
+                  />
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    disabled={pending || !(newLabels[g.key] ?? "").trim()}
+                    onClick={() => {
+                      const label = (newLabels[g.key] ?? "").trim();
+                      if (!label) return;
+                      onAddOption(g.key, label);
+                      setNewLabels((prev) => ({ ...prev, [g.key]: "" }));
+                    }}
+                  >
+                    <Plus className="size-3.5" />
+                    Add
+                  </Button>
+                </div>
+              </div>
+            ))}
+            {config.textFields.length ? (
+              <div className="rounded-lg border border-dashed border-border p-3 text-xs text-muted-foreground">
+                Free-text fields on products:{" "}
+                {config.textFields.map((t) => t.label).join(" · ")}
+              </div>
+            ) : null}
+          </div>
+        ) : null}
+
+        <SheetFooter>
+          <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+            Done
+          </Button>
+        </SheetFooter>
+      </SheetContent>
+    </Sheet>
   );
 }

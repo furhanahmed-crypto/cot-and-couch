@@ -110,6 +110,10 @@ export const CATEGORY_PRODUCT_TEMPLATES: CategoryProductTemplate[] = [
 
 export function templateForCategorySlug(slug: string) {
   const key = slug.toLowerCase();
+  // DB uses "cots"; Figma / templates use "beds"
+  if (key === "cots") {
+    return CATEGORY_PRODUCT_TEMPLATES.find((t) => t.slug === "beds");
+  }
   return (
     CATEGORY_PRODUCT_TEMPLATES.find((t) => t.slug === key) ??
     CATEGORY_PRODUCT_TEMPLATES.find((t) => key.includes(t.slug.split("-")[0]!))

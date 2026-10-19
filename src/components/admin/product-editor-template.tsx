@@ -5,6 +5,7 @@ import { AppSelect } from "@/components/ui/app-select";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { categoryConfigForSlug } from "@/constants/category-config";
 import {
   templateFieldKey,
   type CategoryProductTemplate,
@@ -52,6 +53,7 @@ export function ProductEditorTemplate({
   }
 
   const isMattress = categorySlug === "mattresses";
+  const furniture = categoryConfigForSlug(categorySlug);
 
   const brandFilter = useMemo(() => {
     const ids = lookups.brandOptionIds[mattress.mattressBrandId];
@@ -62,19 +64,23 @@ export function ProductEditorTemplate({
   const filterOpts = <T extends { id: string }>(list: T[]) =>
     brandFilter ? list.filter((o) => brandFilter.has(o.id)) : list;
 
+  const title = furniture?.title ?? template.name;
+  const variants = furniture?.variants ?? template.variants;
+  const note = furniture?.note ?? template.note;
+
   return (
     <section className="min-w-0 space-y-4 rounded-xl border border-border bg-card p-4">
       <div className="flex flex-wrap items-start justify-between gap-2">
         <div className="min-w-0">
           <h2 className="font-heading text-lg break-words">
-            Category template: {template.name}
+            Category template: {title}
           </h2>
           <p className="text-sm text-muted-foreground break-words">
-            Variant axes: {template.variants.join(" · ")}
+            Variant axes: {variants.join(" · ")}
           </p>
-          {template.note ? (
+          {note ? (
             <p className="mt-1 text-xs text-muted-foreground break-words">
-              {template.note}
+              {note}
             </p>
           ) : null}
         </div>
@@ -179,6 +185,36 @@ export function ProductEditorTemplate({
               className="max-w-full"
             />
           </div>
+        </div>
+      ) : furniture ? (
+        <div className="grid min-w-0 gap-3 sm:grid-cols-2">
+          {furniture.groups.map((g) => (
+            <FieldSelect
+              key={g.key}
+              label={g.label}
+              value={attributes[g.key] ?? ""}
+              onChange={(v) => onAttributeChange(g.key, v)}
+              options={(lookups.furnitureOptionsByKey[g.key] ?? []).map(
+                (o) => ({ id: o.label, label: o.label }),
+              )}
+              allowEmpty
+            />
+          ))}
+          {furniture.textFields.map((t) => (
+            <div key={t.key} className="min-w-0 space-y-1">
+              <Label className="break-words">
+                {t.label}
+                {t.required ? (
+                  <span className="text-destructive"> *</span>
+                ) : null}
+              </Label>
+              <Input
+                value={attributes[t.key] ?? ""}
+                onChange={(e) => onAttributeChange(t.key, e.target.value)}
+                className="max-w-full"
+              />
+            </div>
+          ))}
         </div>
       ) : (
         <div className="grid min-w-0 gap-3 sm:grid-cols-2">

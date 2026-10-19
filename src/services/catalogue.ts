@@ -34,6 +34,7 @@ import {
   type OptionLookup,
 } from "@/services/catalogue-map";
 import { getCollectionBySlug as getOpsCollectionBySlug, getCollections, getStoreInfo } from "@/services/ops";
+import { allCategoryConfigGroupKeys } from "@/constants/category-config";
 import type { Product, ProductEditorLookups } from "@/types";
 
 export type { FilterState, SortKey } from "@/lib/catalogue-utils";
@@ -421,6 +422,15 @@ export async function getProductEditorLookups(): Promise<ProductEditorLookups> {
     brandOptionIds[link.brandId] = list;
   }
 
+  const furnitureOptionsByKey: Record<string, { id: string; label: string }[]> =
+    {};
+  for (const key of allCategoryConfigGroupKeys()) {
+    furnitureOptionsByKey[key] = opts(key).map(({ id, label }) => ({
+      id,
+      label,
+    }));
+  }
+
   return {
     brands: brandRows.filter((b) => b.isActive).map(mapBrand),
     brandOptionIds,
@@ -441,5 +451,6 @@ export async function getProductEditorLookups(): Promise<ProductEditorLookups> {
       lengthIn: d.lengthIn,
       widthIn: d.widthIn,
     })),
+    furnitureOptionsByKey,
   };
 }

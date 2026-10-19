@@ -154,6 +154,8 @@ export interface ProductEditorLookups {
     lengthIn: number;
     widthIn: number;
   }[];
+  /** Beds / sofas / desks — option masters keyed by option_groups.key */
+  furnitureOptionsByKey: Record<string, { id: string; label: string }[]>;
 }
 
 export interface GalleryItem {

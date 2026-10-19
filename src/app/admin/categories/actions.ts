@@ -149,3 +149,80 @@ export async function createBrandGroupOptionAction(input: {
   revalidateCategories();
   return { ok: true as const, optionId };
 }
+
+/** Add an option to a furniture category config group (beds/sofas/desks). */
+export async function createCategoryConfigOptionAction(input: {
+  groupKey: string;
+  label: string;
+}) {
+  await requireStaffProfile();
+  const label = input.label.trim();
+  const slug = slugify(label);
+  if (!slug) return { ok: false as const, error: "Label required" };
+
+  const [group] = await db
+    .select()
+    .from(optionGroups)
+    .where(eq(optionGroups.key, input.groupKey))
+    .limit(1);
+  if (!group) {
+    return {
+      ok: false as const,
+      error: "Config group missing — run docs/sql/category-config-options.sql",
+    };
+  }
+
+  const [dup] = await db
+    .select()
+    .from(options)
+    .where(and(eq(options.groupId, group.id), eq(options.slug, slug)))
+    .limit(1);
+  if (dup) return { ok: false as const, error: "Option already exists" };
+
+  const [row] = await db
+    .insert(options)
+    .values({
+      groupId: group.id,
+      label,
+      slug,
+      sortOrder: 50,
+      isActive: true,
+    })
+    .returning({ id: options.id });
+
+  revalidateCategories();
+  revalidatePath(ROUTES.admin.products);
+  return { ok: true as const, optionId: row.id };
+}
+
+export async function updateCategoryConfigOptionAction(input: {
+  id: string;
+  label: string;
+  isActive: boolean;
+}) {
+  await requireStaffProfile();
+  const label = input.label.trim();
+  if (!label) return { ok: false as const, error: "Label required" };
+  await db
+    .update(options)
+    .set({ label, isActive: input.isActive })
+    .where(eq(options.id, input.id));
+  revalidateCategories();
+  revalidatePath(ROUTES.admin.products);
+  return { ok: true as const };
+}
+
+export async function deleteCategoryConfigOptionAction(id: string) {
+  await requireStaffProfile();
+  try {
+    await db.delete(options).where(eq(options.id, id));
+  } catch {
+    return {
+      ok: false as const,
+      error: "Option is in use — deactivate instead",
+    };
+  }
+  revalidateCategories();
+  revalidatePath(ROUTES.admin.products);
+  return { ok: true as const };
+}
