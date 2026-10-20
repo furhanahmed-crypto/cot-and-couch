@@ -217,7 +217,7 @@ export function AdminProductsTable({
             {" / "}
             <span className="text-foreground">Products</span>
           </p>
-          <h1 className="mt-1 font-heading text-2xl tracking-tight text-ink md:text-3xl">
+          <h1 className="mt-1 font-heading text-xl tracking-tight text-ink sm:text-2xl md:text-3xl">
             Products
           </h1>
           <p className="mt-1 text-sm text-muted-foreground">
@@ -234,7 +234,8 @@ export function AdminProductsTable({
             onClick={() => setImportHint(true)}
           >
             <Upload className="size-3.5" />
-            Import CSV
+            <span className="hidden sm:inline">Import CSV</span>
+            <span className="sm:hidden">Import</span>
           </Button>
           <Button type="button" variant="outline" size="sm" onClick={exportCsv}>
             <Download className="size-3.5" />
@@ -294,8 +295,8 @@ export function AdminProductsTable({
             setQuery(e.target.value);
             setPage(1);
           }}
-          placeholder="Search name, SKU, collection…"
-          className="h-9 w-56 shrink-0 sm:w-64"
+          placeholder="Search name, SKU…"
+          className="h-9 w-[min(100%,14rem)] shrink-0 sm:w-64"
         />
         <AppSelect
           value={status}
@@ -364,7 +365,7 @@ export function AdminProductsTable({
         />
       </div>
 
-      <div className="min-w-0 rounded-xl border border-border bg-card">
+      <div className="min-w-0 overflow-x-auto rounded-xl border border-border bg-card">
         <Table className="min-w-[1100px]">
           <TableHeader>
             <TableRow>

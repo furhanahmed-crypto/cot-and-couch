@@ -32,8 +32,8 @@ export function LeadsManager({ leads }: { leads: AdminLead[] }) {
         Storefront customers (email / OTP login) appear here automatically as
         leads. Update intent and follow-up as you contact them.
       </p>
-      <div className="overflow-x-auto rounded-xl border border-border bg-card">
-        <Table className="min-w-[900px]">
+      <div className="-mx-1 overflow-x-auto rounded-xl border border-border bg-card sm:mx-0">
+        <Table className="min-w-[720px] sm:min-w-[900px]">
           <TableHeader>
             <TableRow>
               <TableHead>Name</TableHead>

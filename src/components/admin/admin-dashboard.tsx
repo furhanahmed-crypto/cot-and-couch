@@ -94,18 +94,20 @@ export function AdminDashboard({
     <div className="space-y-6">
       <div className="flex min-w-0 flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div className="min-w-0">
-          <h1 className="font-heading text-2xl tracking-tight text-ink md:text-3xl">
+          <h1 className="font-heading text-xl tracking-tight text-ink sm:text-2xl md:text-3xl">
             {greeting}
           </h1>
           <p className="mt-1 text-sm text-muted-foreground">{subtitle}</p>
         </div>
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto">
           <Button type="button" variant="outline" size="sm" className="gap-1.5" disabled>
             <CalendarDays className="size-3.5" />
-            Last 7 days
+            <span className="hidden sm:inline">Last 7 days</span>
+            <span className="sm:hidden">7 days</span>
           </Button>
           <Button
             size="sm"
+            className="flex-1 sm:flex-none"
             nativeButton={false}
             render={<Link href={ROUTES.admin.sales} />}
           >
@@ -177,14 +179,14 @@ export function AdminDashboard({
           </Card>
 
           <Card>
-            <CardHeader className="flex flex-row items-center justify-between gap-2 pb-3">
-              <CardTitle className="font-heading text-lg">
+            <CardHeader className="flex flex-col gap-2 pb-3 sm:flex-row sm:items-center sm:justify-between">
+              <CardTitle className="font-heading text-base sm:text-lg">
                 Top viewed products — last 7 days
               </CardTitle>
               <Button
                 size="sm"
                 variant="ghost"
-                className="text-muted-foreground"
+                className="self-start text-muted-foreground sm:self-auto"
                 nativeButton={false}
                 render={<Link href={ROUTES.admin.leads} />}
               >
@@ -192,7 +194,7 @@ export function AdminDashboard({
               </Button>
             </CardHeader>
             <CardContent className="-mx-2 overflow-x-auto px-2">
-              <Table>
+              <Table className="min-w-[640px]">
                 <TableHeader>
                   <TableRow>
                     <TableHead>Product</TableHead>

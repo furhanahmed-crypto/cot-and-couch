@@ -140,21 +140,24 @@ export function ProductEditorForm({
         <Button
           type="button"
           variant="outline"
+          size="sm"
           onClick={() => router.push(ROUTES.admin.products)}
         >
-          Back to products
+          <span className="hidden sm:inline">Back to products</span>
+          <span className="sm:hidden">Back</span>
         </Button>
         <Button
           type="button"
+          size="sm"
           disabled={pending}
           onClick={save}
-          className="sm:ml-auto"
+          className="ml-auto"
         >
           {pending ? "Saving…" : status === "published" ? "Save" : "Save draft"}
         </Button>
       </div>
 
-      <div className="grid min-w-0 gap-4 xl:grid-cols-[minmax(0,1fr)_minmax(0,280px)]">
+      <div className="grid min-w-0 gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,260px)] xl:grid-cols-[minmax(0,1fr)_minmax(0,280px)]">
         <div className="min-w-0 space-y-4">
           <section className="space-y-3 rounded-xl border border-border bg-card p-4">
             <h2 className="font-heading text-lg">Identity</h2>

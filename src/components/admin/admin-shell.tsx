@@ -52,7 +52,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
   return (
     <SidebarProvider defaultOpen>
       <AdminSidebar />
-      <SidebarInset className="min-w-0 bg-stone">
+      <SidebarInset className="min-w-0 overflow-x-hidden bg-stone">
         {ready ? (
           <AdminTopbar
             staffName={staffName ?? session?.user?.name ?? "Admin"}

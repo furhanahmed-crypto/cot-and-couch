@@ -207,12 +207,12 @@ export function SalesManager({
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-wrap items-center justify-between gap-2">
+      <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
         <p className="text-sm text-muted-foreground">
           {orders.length} sale{orders.length === 1 ? "" : "s"} · update delivery
           status as orders move
         </p>
-        <Button type="button" size="sm" onClick={openCreate}>
+        <Button type="button" size="sm" className="w-full sm:w-auto" onClick={openCreate}>
           <Plus className="size-3.5" />
           Record sale
         </Button>
