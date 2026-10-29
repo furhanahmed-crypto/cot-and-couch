@@ -1,22 +1,12 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { and, asc, eq, isNotNull } from "drizzle-orm";
+import { and, asc, eq, sql } from "drizzle-orm";
 import { db } from "@/db";
+import { bedRanges, optionGroups, options, products } from "@/db";
 import {
-  categories,
-  optionGroups,
-  options,
-  productVariants,
-  products,
-} from "@/db";
-import {
-  BED_CATEGORY_SLUG,
-  BED_RANGE_COUNT,
-  BED_RANGE_NAMES,
   BED_WIDTH_GROUP_KEY,
   bedCotTypeForRange,
-  bedRangeSlug,
 } from "@/constants/bed-model";
 import { revalidateShopCache } from "@/lib/cache-tags";
 import { requireStaffProfile } from "@/services/profile";
@@ -34,80 +24,6 @@ function revalidateBedAdmin() {
   revalidatePath(ROUTES.admin.categories);
   revalidatePath(ROUTES.admin.products);
   revalidateShopCache();
-}
-
-async function cotsCategoryId() {
-  const [cat] = await db
-    .select({ id: categories.id })
-    .from(categories)
-    .where(eq(categories.slug, BED_CATEGORY_SLUG))
-    .limit(1);
-  return cat?.id ?? null;
-}
-
-async function widthOptionsActive() {
-  const [group] = await db
-    .select({ id: optionGroups.id })
-    .from(optionGroups)
-    .where(eq(optionGroups.key, BED_WIDTH_GROUP_KEY))
-    .limit(1);
-  if (!group) return [];
-  return db
-    .select()
-    .from(options)
-    .where(and(eq(options.groupId, group.id), eq(options.isActive, true)))
-    .orderBy(asc(options.sortOrder));
-}
-
-async function rebuildVariantsForProduct(productId: string, rangeNumber: number) {
-  const widths = await widthOptionsActive();
-  if (!widths.length) return;
-
-  const colourGroup = await db
-    .select({ id: optionGroups.id })
-    .from(optionGroups)
-    .where(eq(optionGroups.key, "colour"))
-    .limit(1);
-  const colours = colourGroup[0]
-    ? await db
-        .select()
-        .from(options)
-        .where(
-          and(eq(options.groupId, colourGroup[0].id), eq(options.isActive, true)),
-        )
-    : [];
-
-  await db.delete(productVariants).where(eq(productVariants.productId, productId));
-
-  const prefix = `COT-R${rangeNumber}`;
-  if (colours.length) {
-    for (const w of widths) {
-      for (const colour of colours) {
-        await db.insert(productVariants).values({
-          productId,
-          sku: `${prefix}-${w.slug}-${colour.slug}`.slice(0, 80).toUpperCase(),
-          widthOptionId: w.id,
-          colourOptionId: colour.id,
-          mrp: "0",
-          price: "0",
-          stockQty: 0,
-          isActive: true,
-        });
-      }
-    }
-  } else {
-    for (const w of widths) {
-      await db.insert(productVariants).values({
-        productId,
-        sku: `${prefix}-${w.slug}`.slice(0, 80).toUpperCase(),
-        widthOptionId: w.id,
-        mrp: "0",
-        price: "0",
-        stockQty: 0,
-        isActive: true,
-      });
-    }
-  }
 }
 
 export async function createBedWidthOptionAction(input: {
@@ -174,49 +90,34 @@ export async function updateBedWidthOptionAction(input: {
 
 export async function createBedRangeAction(input: { name: string }) {
   await requireStaffProfile();
-  const categoryId = await cotsCategoryId();
-  if (!categoryId) return { ok: false as const, error: "Beds category missing" };
+  const name = input.name.trim();
+  if (!name) return { ok: false as const, error: "Name required" };
+  const slug = slugify(name);
+  if (!slug) return { ok: false as const, error: "Invalid name" };
 
-  const existing = await db
-    .select({ rangeNumber: products.rangeNumber })
-    .from(products)
-    .where(
-      and(
-        eq(products.categoryId, categoryId),
-        isNotNull(products.rangeNumber),
-        eq(products.status, "published"),
-      ),
-    );
+  const [dup] = await db
+    .select({ id: bedRanges.id })
+    .from(bedRanges)
+    .where(eq(bedRanges.slug, slug))
+    .limit(1);
+  if (dup) return { ok: false as const, error: "Range already exists" };
 
-  const used = new Set(existing.map((r) => r.rangeNumber).filter(Boolean) as number[]);
-  let slot: number | null = null;
-  for (let n = 1; n <= BED_RANGE_COUNT; n++) {
-    if (!used.has(n)) {
-      slot = n;
-      break;
-    }
-  }
-  if (slot == null) {
-    return { ok: false as const, error: "All 8 ranges already exist" };
-  }
-
-  const name = input.name.trim() || BED_RANGE_NAMES[slot] || `Range ${slot}`;
-  const slug = bedRangeSlug(slot);
+  const [{ max }] = await db
+    .select({ max: sql<number>`coalesce(max(${bedRanges.sortOrder}), 0)` })
+    .from(bedRanges);
+  const sortOrder = Number(max) + 1;
 
   const [row] = await db
-    .insert(products)
+    .insert(bedRanges)
     .values({
-      categoryId,
       name,
       slug,
-      rangeNumber: slot,
-      cotType: bedCotTypeForRange(slot),
-      status: "published",
-      sortOrder: slot,
+      sortOrder,
+      cotType: bedCotTypeForRange(sortOrder),
+      isActive: true,
     })
-    .returning({ id: products.id });
+    .returning({ id: bedRanges.id });
 
-  await rebuildVariantsForProduct(row.id, slot);
   revalidateBedAdmin();
   return { ok: true as const, id: row.id };
 }
@@ -226,16 +127,27 @@ export async function updateBedRangeAction(input: { id: string; name: string }) 
   const name = input.name.trim();
   if (!name) return { ok: false as const, error: "Name required" };
   await db
-    .update(products)
-    .set({ name, updatedAt: new Date() })
-    .where(eq(products.id, input.id));
+    .update(bedRanges)
+    .set({ name })
+    .where(eq(bedRanges.id, input.id));
   revalidateBedAdmin();
   return { ok: true as const };
 }
 
 export async function deleteBedRangeAction(id: string) {
   await requireStaffProfile();
-  await db.delete(products).where(eq(products.id, id));
+  const [linked] = await db
+    .select({ id: products.id })
+    .from(products)
+    .where(eq(products.bedRangeId, id))
+    .limit(1);
+  if (linked) {
+    return {
+      ok: false as const,
+      error: "Remove or reassign products in this range first",
+    };
+  }
+  await db.delete(bedRanges).where(eq(bedRanges.id, id));
   revalidateBedAdmin();
   return { ok: true as const };
 }

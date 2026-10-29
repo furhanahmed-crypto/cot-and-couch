@@ -21,7 +21,12 @@ export interface FilterState {
   materials?: string[];
   collections?: string[];
   availability?: StockStatus[];
-  extra?: Record<string, string[]>;
+  /** Bed range master ids */
+  bedRanges?: string[];
+  /** Bed width labels from variants */
+  widths?: string[];
+  /** Mattress / other attribute labels keyed by field (purpose, comfort, …) */
+  attrs?: Record<string, string[]>;
   q?: string;
 }
 
@@ -48,6 +53,14 @@ export function productColours(product: Product): Colour[] {
     });
   }
   return [...map.values()];
+}
+
+export function productWidthLabels(product: Product): string[] {
+  const set = new Set<string>();
+  for (const v of product.variants) {
+    if (v.sizeGroupLabel) set.add(v.sizeGroupLabel);
+  }
+  return [...set];
 }
 
 export function worstStock(product: Product): StockStatus {
@@ -84,7 +97,8 @@ export function filterProductList(
         .map((c) => c.name)
         .join(" ")
         .toLowerCase();
-      return [p.name, cat, p.material, cols, ...p.tags]
+      const range = (p.bedRangeName ?? "").toLowerCase();
+      return [p.name, cat, p.material, cols, range, ...p.tags]
         .join(" ")
         .toLowerCase()
         .includes(q);
@@ -123,8 +137,18 @@ export function filterProductList(
       p.variants.some((v) => filters.availability!.includes(v.stockStatus)),
     );
   }
-  if (filters.extra) {
-    for (const [key, values] of Object.entries(filters.extra)) {
+  if (filters.bedRanges?.length) {
+    result = result.filter(
+      (p) => p.bedRangeId && filters.bedRanges!.includes(p.bedRangeId),
+    );
+  }
+  if (filters.widths?.length) {
+    result = result.filter((p) =>
+      p.variants.some((v) => filters.widths!.includes(v.sizeGroupLabel)),
+    );
+  }
+  if (filters.attrs) {
+    for (const [key, values] of Object.entries(filters.attrs)) {
       if (!values.length) continue;
       result = result.filter((p) =>
         values.includes(String(p.specs[key] ?? "")),

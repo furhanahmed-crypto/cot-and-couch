@@ -8,11 +8,11 @@ import { eq } from "drizzle-orm";
 import * as schema from "./app-schema";
 import { categoryConfigSeedRows } from "@/constants/category-config";
 import {
-  BED_RANGE_COUNT,
-  BED_RANGE_NAMES,
+  BED_PRODUCT_STYLES,
+  BED_RANGE_SEEDS,
   BED_WIDTH_GROUP_KEY,
-  bedCotTypeForRange,
-  bedRangeSlug,
+  bedProductName,
+  bedProductSlug,
 } from "@/constants/bed-model";
 import {
   MATTRESS_BRANDS,
@@ -55,6 +55,7 @@ async function clearCatalogue() {
   await db.delete(schema.options);
   await db.delete(schema.optionGroups);
   await db.delete(schema.mattressBrands);
+  await db.delete(schema.bedRanges);
   await db.delete(schema.categories);
 }
 
@@ -401,7 +402,7 @@ async function seed() {
     }
   }
 
-  // —— Beds: 8 ranges × shared widths × colours ——
+  // —— Beds: range masters + 3 products each (width × colour) ——
   const widthOpts = widthGroup
     ? await db
         .select()
@@ -409,41 +410,60 @@ async function seed() {
         .where(eq(schema.options.groupId, widthGroup.id))
     : [];
 
-  for (let range = 1; range <= BED_RANGE_COUNT; range++) {
-    const [product] = await db
-      .insert(schema.products)
-      .values({
-        categoryId: catBySlug.cots.id,
-        mattressBrandId: null,
-        name: BED_RANGE_NAMES[range] ?? `Range ${range}`,
-        slug: bedRangeSlug(range),
-        description: `${BED_RANGE_NAMES[range] ?? `Range ${range}`} — house-made bed.`,
-        imageUrl: `/images/cots/range-${range}.jpg`,
-        rangeNumber: range,
-        cotType: bedCotTypeForRange(range),
-        status: "published",
-        isFeatured: range === 1,
-        sortOrder: range,
-      })
-      .returning();
+  const bedRangeRows = await db
+    .insert(schema.bedRanges)
+    .values(
+      BED_RANGE_SEEDS.map((r) => ({
+        name: r.name,
+        slug: r.slug,
+        sortOrder: r.sortOrder,
+        cotType: r.cotType,
+      })),
+    )
+    .returning();
+  const bedRangeBySlug = Object.fromEntries(bedRangeRows.map((r) => [r.slug, r]));
 
-    const bedBatch: VariantInsert[] = [];
-    for (const w of widthOpts) {
-      for (const colour of colours) {
-        bedBatch.push({
-          productId: product.id,
-          sku: `COT-R${range}-${w.slug}-${colour.slug}`.slice(0, 80).toUpperCase(),
-          widthOptionId: w.id,
-          colourOptionId: colour.id,
-          mrp: String(24999 + range * 2000),
-          price: String(19999 + range * 1500),
-          stockQty: 4 + range,
-          isActive: true,
-        });
+  for (const range of BED_RANGE_SEEDS) {
+    const rangeRow = bedRangeBySlug[range.slug]!;
+    for (let si = 0; si < BED_PRODUCT_STYLES.length; si++) {
+      const style = BED_PRODUCT_STYLES[si]!;
+      const name = bedProductName(range.name, style);
+      const slug = bedProductSlug(range.slug, style);
+      const [product] = await db
+        .insert(schema.products)
+        .values({
+          categoryId: catBySlug.cots.id,
+          bedRangeId: rangeRow.id,
+          name,
+          slug,
+          description: `${name} — house-made bed in the ${range.name}.`,
+          imageUrl: `/images/cots/${range.slug}-${style.toLowerCase()}.jpg`,
+          cotType: range.cotType,
+          status: "published",
+          isFeatured: range.sortOrder === 1 && si === 0,
+          sortOrder: range.sortOrder * 10 + si + 1,
+        })
+        .returning();
+
+      const bedBatch: VariantInsert[] = [];
+      const skuPrefix = `COT-${range.slug.slice(0, 8)}-${style.slice(0, 4)}`;
+      for (const w of widthOpts) {
+        for (const colour of colours) {
+          bedBatch.push({
+            productId: product.id,
+            sku: `${skuPrefix}-${w.slug}-${colour.slug}`.slice(0, 80).toUpperCase(),
+            widthOptionId: w.id,
+            colourOptionId: colour.id,
+            mrp: String(24999 + range.sortOrder * 2000 + si * 500),
+            price: String(19999 + range.sortOrder * 1500 + si * 400),
+            stockQty: 4 + range.sortOrder,
+            isActive: true,
+          });
+        }
       }
+      await insertVariants(bedBatch);
+      variantCount += bedBatch.length;
     }
-    await insertVariants(bedBatch);
-    variantCount += bedBatch.length;
   }
 
   const published = await db

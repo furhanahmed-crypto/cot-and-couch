@@ -1,20 +1,17 @@
-import { and, asc, eq, inArray, isNotNull, sql } from "drizzle-orm";
+import { asc, inArray, sql } from "drizzle-orm";
 import { connection } from "next/server";
 import {
   CATEGORY_CONFIGS,
   categoryConfigForSlug,
   type CategoryConfigDef,
 } from "@/constants/category-config";
-import { BED_CATEGORY_SLUG } from "@/constants/bed-model";
 import { db } from "@/db";
 import {
-  collections,
+  bedRanges,
   mattressBrandOptions,
   mattressBrands,
   optionGroups,
   options,
-  productCollections,
-  productVariants,
   products,
 } from "@/db";
 import { getCategories } from "@/services/catalogue";
@@ -33,10 +30,10 @@ export type AdminBedRange = {
   id: string;
   name: string;
   slug: string;
-  rangeNumber: number;
+  sortOrder: number;
   cotType: string;
-  variantCount: number;
-  collectionLabels: string[];
+  isActive: boolean;
+  productCount: number;
 };
 
 export type AdminMattressBrand = {
@@ -66,7 +63,6 @@ export type CategoryTemplatesData = {
     AdminOption[]
   >;
   furnitureConfigs: CategoryConfigAdmin[];
-  /** All furniture option groups keyed by group key */
   furnitureOptionsByKey: Record<string, AdminOption[]>;
 };
 
@@ -79,13 +75,14 @@ const MATTRESS_GROUPS = [
 
 export async function getCategoryTemplatesData(): Promise<CategoryTemplatesData> {
   await connection();
-  const [categories, brandRows, groupRows, optionRows, links] =
+  const [categories, brandRows, groupRows, optionRows, links, rangeRows] =
     await Promise.all([
       getCategories({ includeHidden: true }),
       db.select().from(mattressBrands).orderBy(asc(mattressBrands.sortOrder)),
       db.select().from(optionGroups),
       db.select().from(options).orderBy(asc(options.sortOrder)),
       db.select().from(mattressBrandOptions),
+      db.select().from(bedRanges).orderBy(asc(bedRanges.sortOrder)),
     ]);
 
   const groupKeyById = new Map(groupRows.map((g) => [g.id, g.key]));
@@ -136,65 +133,32 @@ export async function getCategoryTemplatesData(): Promise<CategoryTemplatesData>
     }),
   );
 
-  const bedsCat = categories.find((c) => c.slug === BED_CATEGORY_SLUG);
-  let bedRanges: AdminBedRange[] = [];
-  if (bedsCat) {
-    const rangeRows = await db
-      .select()
-      .from(products)
-      .where(
-        and(
-          eq(products.categoryId, bedsCat.id),
-          isNotNull(products.rangeNumber),
-          eq(products.status, "published"),
-        ),
-      )
-      .orderBy(asc(products.rangeNumber));
+  const rangeIds = rangeRows.map((r) => r.id);
+  const productCounts =
+    rangeIds.length === 0
+      ? []
+      : await db
+          .select({
+            bedRangeId: products.bedRangeId,
+            n: sql<number>`count(*)::int`,
+          })
+          .from(products)
+          .where(inArray(products.bedRangeId, rangeIds))
+          .groupBy(products.bedRangeId);
 
-    const ids = rangeRows.map((p) => p.id);
-    const variantCounts =
-      ids.length === 0
-        ? []
-        : await db
-            .select({
-              productId: productVariants.productId,
-              n: sql<number>`count(*)::int`,
-            })
-            .from(productVariants)
-            .where(inArray(productVariants.productId, ids))
-            .groupBy(productVariants.productId);
+  const countByRange = new Map(
+    productCounts.map((r) => [r.bedRangeId!, r.n]),
+  );
 
-    const countByProduct = new Map(variantCounts.map((v) => [v.productId, v.n]));
-
-    const collRows =
-      ids.length === 0
-        ? []
-        : await db
-            .select({
-              productId: productCollections.productId,
-              name: collections.name,
-            })
-            .from(productCollections)
-            .innerJoin(collections, eq(productCollections.collectionId, collections.id))
-            .where(inArray(productCollections.productId, ids));
-
-    const collByProduct = new Map<string, string[]>();
-    for (const row of collRows) {
-      const list = collByProduct.get(row.productId) ?? [];
-      list.push(row.name);
-      collByProduct.set(row.productId, list);
-    }
-
-    bedRanges = rangeRows.map((p) => ({
-      id: p.id,
-      name: p.name,
-      slug: p.slug,
-      rangeNumber: p.rangeNumber!,
-      cotType: p.cotType ?? "non_cushion",
-      variantCount: countByProduct.get(p.id) ?? 0,
-      collectionLabels: collByProduct.get(p.id) ?? [],
-    }));
-  }
+  const adminBedRanges: AdminBedRange[] = rangeRows.map((r) => ({
+    id: r.id,
+    name: r.name,
+    slug: r.slug,
+    sortOrder: r.sortOrder,
+    cotType: r.cotType,
+    isActive: r.isActive,
+    productCount: countByRange.get(r.id) ?? 0,
+  }));
 
   return {
     categories,
@@ -210,7 +174,7 @@ export async function getCategoryTemplatesData(): Promise<CategoryTemplatesData>
     optionsByGroup,
     furnitureConfigs,
     furnitureOptionsByKey,
-    bedRanges,
+    bedRanges: adminBedRanges,
   };
 }
 
@@ -225,4 +189,9 @@ export async function getFurnitureOptionsForCategory(slug: string) {
     );
   }
   return { def, optionsByKey };
+}
+
+export async function getBedRangesForAdmin() {
+  await connection();
+  return db.select().from(bedRanges).orderBy(asc(bedRanges.sortOrder));
 }

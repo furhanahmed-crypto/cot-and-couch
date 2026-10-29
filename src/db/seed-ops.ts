@@ -60,8 +60,8 @@ export async function seedOps(db: Db) {
   const productBySlug = Object.fromEntries(allProducts.map((p) => [p.slug, p]));
 
   const memberships: { productId: string; collectionId: string }[] = [];
-  const range8 = productBySlug["cot-range-8"];
-  const range7 = productBySlug["cot-range-7"];
+  const range8 = productBySlug["range-8-classic"];
+  const range7 = productBySlug["range-7-classic"];
   if (range8) {
     memberships.push({
       productId: range8.id,
@@ -164,8 +164,8 @@ export async function seedOps(db: Db) {
 
   const ortho = productBySlug["wake-fit-ortho-support"];
   const cloud = productBySlug["sleepwell-cloud-soft"];
-  const idealBed = productBySlug["cot-range-1"];
-  const premiumBed = productBySlug["cot-range-5"];
+  const idealBed = productBySlug["ideal-range-classic"];
+  const premiumBed = productBySlug["premium-range-classic"];
 
   const leadRows = [
     {

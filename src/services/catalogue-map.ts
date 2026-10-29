@@ -41,14 +41,6 @@ function subCategoriesFor(slug: string): SubCategory[] {
       { id: "sc-spring", name: "Spring", slug: "spring" },
     ];
   }
-  if (slug === "cots") {
-    return [
-      { id: "sc-single", name: "Single", slug: "single" },
-      { id: "sc-double", name: "Double / Diwan", slug: "double-diwan" },
-      { id: "sc-queen", name: "Queen", slug: "queen" },
-      { id: "sc-king", name: "King", slug: "king" },
-    ];
-  }
   return [];
 }
 
@@ -222,13 +214,19 @@ export function mapProduct(
         : "sc-queen",
     collectionId: collectionFor(categorySlug, row.isFeatured),
     mattressBrandId: row.mattressBrandId,
+    bedRangeId: row.bedRangeId ?? null,
+    bedRangeName: null,
     purposeOptionId: row.purposeOptionId ?? null,
     coverMaterialOptionId: row.coverMaterialOptionId ?? null,
     fillingOptionId: row.fillingOptionId ?? null,
     comfortOptionId: row.comfortOptionId ?? null,
     imageUrl: row.imageUrl,
     attributes,
-    highlights: highlights.length ? highlights : ["Showroom exclusive"],
+    highlights: highlights.length
+      ? highlights
+      : categorySlug === "cots"
+        ? []
+        : ["Showroom exclusive"],
     description: row.description ?? row.name,
     dimensions: { lIn: 78, wIn: 60, hIn: 6 },
     material: filling?.label ?? "House-made",

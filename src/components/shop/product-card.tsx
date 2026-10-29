@@ -83,6 +83,9 @@ export function ProductCard({
         >
           {product.name}
         </Link>
+        {product.bedRangeName ? (
+          <p className="text-xs text-muted-foreground">{product.bedRangeName}</p>
+        ) : null}
         <div className="flex flex-wrap items-baseline gap-2">
           <span className="text-base font-semibold">from {formatINR(price)}</span>
           <span className="text-sm text-muted-foreground line-through">

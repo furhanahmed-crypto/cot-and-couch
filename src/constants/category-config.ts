@@ -36,9 +36,9 @@ export const CATEGORY_CONFIGS: CategoryConfigDef[] = [
     slug: "cots",
     title: "Beds",
     subtitle:
-      "8 range products · shared widths on every range · colour on variants",
+      "Range masters · 2–3 products per range · shared widths · colour on variants",
     variants: ["Width", "Colour"],
-    note: "Tag Royal Range / Victoria collections on individual products.",
+    note: "Add products under Products and assign a bed range. Collections are optional tags.",
     groups: [
       {
         key: BED_WIDTH_GROUP_KEY,

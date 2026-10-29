@@ -1,49 +1,42 @@
 # Cot & Couch — docs
 
-Minimal engineering docs for this repo.
-
 | Doc | Purpose |
 |-----|---------|
 | [ARCHITECTURE.md](./ARCHITECTURE.md) | Stack, folders, database, auth, commands |
-| [RULES.md](./RULES.md) | Coding standards (read before large changes) |
+| [RULES.md](./RULES.md) | Coding standards |
 | [DESIGN.md](./DESIGN.md) | UI tokens and patterns |
-| [PRD.md](./PRD.md) | Product scope (original Phase 1 brief; app now has real DB + admin) |
-| [SECURITY.md](./SECURITY.md) | Auth and data handling notes |
-| [MEMORY.md](./MEMORY.md) | Short decisions log |
+| [PRD.md](./PRD.md) | Original Phase 1 brief |
+| [SECURITY.md](./SECURITY.md) | Auth notes |
+| [MEMORY.md](./MEMORY.md) | Decisions log |
 
-## Client-ready scope (live)
+## Live scope
 
 | Area | Status |
 |------|--------|
-| **Mattresses** | Live — brands, options, products, shop + admin |
-| **Beds** (`cots`) | Live — 8 ranges, shared widths (name + size), shop + admin |
-| **Sofas** | Deferred — category row kept inactive; no products/options |
-| **Computer tables** | Deferred — same as sofas |
+| **Mattresses** | Live — brands + products |
+| **Beds** (`cots`) | Live — **range masters** + products per range |
+| **Sofas / computer tables** | Deferred (inactive categories) |
 
-The app runs on **Neon Postgres** (`coc_*`), storefront + staff admin. Apply migrations with `bun run db:migrate` (`DATABASE_URL_UNPOOLED`).
+### Beds model
 
-| Migration | Purpose |
-|-----------|---------|
-| `0001`–`0005` | Foundation → catalogue → shop → CRM → commerce |
-| `0006` | Drop legacy pre-`coc_*` tables |
-| `0007` | Bed model cleanup (width-only axes) |
-| `0008` | Bed width `detail` + range name updates |
-| `0009` | Prune archived + sofa/table products; hide deferred categories |
+- Masters: `coc_bed_ranges` (Ideal … Range 8)
+- Products: each has `bed_range_id`; variants = shared widths × colours
+- Admin Categories: add/edit ranges (like mattress brands) + shared width sheet
+- Admin Products: filter by range; create requires a range for Beds
+- Shop: PLP filters from DB-backed product data (range, width, colour, …)
 
-**Beds normalisation** (optional after migrate): `bun run db:migrate-bed-ranges`.
+### Migrations
 
-**Seed** (dev): `bun run db:seed` — mattresses + 8 bed ranges only.
+`0001`–`0010` in `drizzle/`. Apply: `bun run db:migrate`.
 
-### Beds admin
-
-Categories → Beds: **Add range**, cards with edit/delete. **Edit** opens a sheet (range name + shared widths). Width add/edit uses name + size modal. Constants: `src/constants/bed-model.ts`.
+After migrate on an existing DB: `bun run db:seed-beds` to upsert ranges + 24 demo products.
 
 ### Commands
 
 ```bash
 bun run dev
 bun run db:migrate
-bun run db:seed
-bun run db:migrate-bed-ranges
+bun run db:seed          # full catalogue (mattresses + beds)
+bun run db:seed-beds     # beds only (safe for existing mattresses)
 bun run db:studio
 ```

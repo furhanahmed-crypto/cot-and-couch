@@ -15,6 +15,7 @@ import {
 import {
   categories as categoriesTable,
   collections as collectionsTable,
+  bedRanges as bedRangesTable,
   mattressBrandOptions,
   mattressBrands as brandsTable,
   optionGroups,
@@ -257,6 +258,18 @@ async function hydrateProducts(
       loadProductOptionMeta(ids),
     ]);
 
+  const rangeIds = [
+    ...new Set(rows.map((r) => r.bedRangeId).filter(Boolean)),
+  ] as string[];
+  const rangeNameById = new Map<string, string>();
+  if (rangeIds.length) {
+    const rangeRows = await db
+      .select({ id: bedRangesTable.id, name: bedRangesTable.name })
+      .from(bedRangesTable)
+      .where(inArray(bedRangesTable.id, rangeIds));
+    for (const r of rangeRows) rangeNameById.set(r.id, r.name);
+  }
+
   return rows.map((row) => {
     const meta = optionMeta.get(row.id);
     const enriched = {
@@ -276,6 +289,10 @@ async function hydrateProducts(
     );
     const collectionId = collectionByProduct.get(row.id);
     if (collectionId) product.collectionId = collectionId;
+    if (row.bedRangeId) {
+      product.bedRangeId = row.bedRangeId;
+      product.bedRangeName = rangeNameById.get(row.bedRangeId) ?? null;
+    }
     return product;
   });
 }
@@ -477,7 +494,7 @@ export async function searchProducts(q: string) {
 /** Admin product editor — brands + option groups (uncached). */
 export async function getProductEditorLookups(): Promise<ProductEditorLookups> {
   await connection();
-  const [brandRows, groupRows, optionRows, dimRows, brandLinks] =
+  const [brandRows, groupRows, optionRows, dimRows, brandLinks, bedRangeRows] =
     await Promise.all([
       db.select().from(brandsTable).orderBy(asc(brandsTable.sortOrder)),
       db.select().from(optionGroups).orderBy(asc(optionGroups.sortOrder)),
@@ -492,6 +509,11 @@ export async function getProductEditorLookups(): Promise<ProductEditorLookups> {
         .where(eq(sizeDimensions.isActive, true))
         .orderBy(asc(sizeDimensions.sortOrder)),
       db.select().from(mattressBrandOptions),
+      db
+        .select()
+        .from(bedRangesTable)
+        .where(eq(bedRangesTable.isActive, true))
+        .orderBy(asc(bedRangesTable.sortOrder)),
     ]);
 
   const groupIdByKey = new Map(groupRows.map((g) => [g.key, g.id]));
@@ -522,6 +544,11 @@ export async function getProductEditorLookups(): Promise<ProductEditorLookups> {
   return {
     brands: brandRows.filter((b) => b.isActive).map(mapBrand),
     brandOptionIds,
+    bedRanges: bedRangeRows.map((r) => ({
+      id: r.id,
+      name: r.name,
+      slug: r.slug,
+    })),
     purpose: opts("purpose").map(({ id, label }) => ({ id, label })),
     coverMaterial: opts("cover_material").map(({ id, label }) => ({
       id,

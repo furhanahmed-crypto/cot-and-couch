@@ -103,7 +103,7 @@ cot-and-couch/
 │   ├── data/catalogue/   # Seed masters (mattresses + beds)
 │   ├── services/         # DB-backed reads/writes
 │   ├── types/
-│   ├── db/               # schema, seed, migrate-bed-ranges
+│   ├── db/               # schema, seed, seed-bed-catalogue
 │   └── lib/
 ├── package.json
 └── tsconfig.json

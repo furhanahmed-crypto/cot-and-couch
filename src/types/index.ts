@@ -107,6 +107,8 @@ export interface Product {
   subCategoryId: string;
   collectionId: string | null;
   mattressBrandId: string | null;
+  bedRangeId: string | null;
+  bedRangeName?: string | null;
   purposeOptionId: string | null;
   coverMaterialOptionId: string | null;
   fillingOptionId: string | null;
@@ -140,6 +142,7 @@ export interface ProductEditorLookups {
   brands: Brand[];
   /** Brand id → linked option ids (empty = all options available). */
   brandOptionIds: Record<string, string[]>;
+  bedRanges: { id: string; name: string; slug: string }[];
   purpose: { id: string; label: string }[];
   coverMaterial: { id: string; label: string }[];
   filling: { id: string; label: string }[];
@@ -154,7 +157,7 @@ export interface ProductEditorLookups {
     lengthIn: number;
     widthIn: number;
   }[];
-  /** Beds / sofas / desks — option masters keyed by option_groups.key */
+  /** Beds — option masters keyed by option_groups.key */
   furnitureOptionsByKey: Record<string, { id: string; label: string }[]>;
 }
 

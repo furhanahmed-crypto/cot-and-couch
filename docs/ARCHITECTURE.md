@@ -9,58 +9,36 @@ Next.js App Router storefront + staff admin on Neon Postgres.
 | Framework | Next.js 16 (App Router) |
 | UI | React 19, Tailwind 4, shadcn/ui |
 | DB | Neon + Drizzle ORM |
-| Auth | Neon Auth → `coc_profiles` (`auth_user_id`) |
-
-Path alias: `@/*` → `src/*`.
+| Auth | Neon Auth → `coc_profiles` |
 
 ## Database
 
 | Piece | Location |
 |-------|----------|
-| Runtime schema | `src/db/app-schema.ts` (aliases to `coc_*`) |
-| Drizzle table defs | `schema-coc*.ts`, enums in `schema-enums.ts` |
-| Migrations | `drizzle/0001` … `0009` (see `docs/README.md`) |
-| Seed | `src/db/seed.ts` + `src/data/catalogue/seed-data.ts` |
+| Runtime schema | `src/db/app-schema.ts` |
+| Tables | `schema-coc*.ts` |
+| Migrations | `drizzle/0001` … `0010` |
+| Seed | `seed.ts`, `seed-bed-catalogue.ts` |
 
-**Commands:** `bun run db:migrate` · `bun run db:seed` · `bun run db:migrate-bed-ranges` · `bun run db:studio`
+**Commands:** `db:migrate` · `db:seed` · `db:seed-beds` · `db:studio`
 
-### Catalogue (live vs deferred)
+### Catalogue pattern
 
-| Category (slug) | Shop label | Status |
-|-----------------|------------|--------|
-| `mattresses` | Mattresses | Live — brand sheets on Categories |
-| `cots` | Beds | Live — range products + shared widths |
-| `sofas` | Sofas | Deferred — `is_active = false`, no products |
-| `computer-tables` | Computer tables | Deferred — same |
+| Category | Master | Product FK |
+|----------|--------|------------|
+| Mattresses | `coc_mattress_brands` | `mattress_brand_id` |
+| Beds (`cots`) | `coc_bed_ranges` | `bed_range_id` |
 
-Bed constants: `src/constants/bed-model.ts`. PLP filters: `src/constants/plp-filters.ts`.
-
-## Auth
-
-| Piece | Location |
-|-------|----------|
-| Server | `src/lib/auth/server.ts` |
-| Profile | `src/lib/auth/profile.ts` |
-| API | `src/app/api/auth/[...path]/route.ts` |
-| Guard | `src/proxy.ts` |
-
-Authorize by **`profile.id` and `role`**, not email alone.
+Categories admin edits masters. Products admin edits sellable SKUs. Shop filters use fields present on hydrated products/variants.
 
 ## App layout
 
 ```
 src/
-├── app/           # Routes (shop, auth, admin)
+├── app/           # shop, auth, admin
 ├── components/    # ui/, shop/, admin/
-├── services/      # DB reads/writes
-├── constants/     # routes, nav, bed-model, category-config, plp-filters
-├── data/catalogue # Seed masters (not mock UI data)
-├── types/
+├── services/
+├── constants/     # routes, bed-model, category-config
+├── data/catalogue # seed masters
 └── db/
 ```
-
-Admin dashboard: `src/services/admin-dashboard.ts`. Shop category labels: `src/lib/shop-category-label.ts`.
-
-## Admin IA
-
-Overview · Catalogue (products, categories, mattress brands) · Commerce (orders, leads) · Content (gallery, reels) · Settings (store, team).

@@ -130,6 +130,7 @@ export async function createProductAction(input: {
   slug: string;
   description?: string;
   mattressBrandId?: string | null;
+  bedRangeId?: string | null;
 }) {
   await requireStaffProfile();
   const name = input.name.trim();
@@ -141,6 +142,14 @@ export async function createProductAction(input: {
   if (!name || !slug || !input.categoryId) {
     return { ok: false as const, error: "Name, slug, category required" };
   }
+  const [cat] = await db
+    .select({ slug: categories.slug })
+    .from(categories)
+    .where(eq(categories.id, input.categoryId))
+    .limit(1);
+  if (cat?.slug === "cots" && !input.bedRangeId) {
+    return { ok: false as const, error: "Choose a bed range" };
+  }
   const [row] = await db
     .insert(products)
     .values({
@@ -149,6 +158,7 @@ export async function createProductAction(input: {
       slug,
       description: input.description?.trim() || null,
       mattressBrandId: input.mattressBrandId || null,
+      bedRangeId: input.bedRangeId || null,
       status: "draft",
     })
     .returning({ id: products.id });
@@ -165,6 +175,7 @@ export async function updateProductAction(input: {
   isFeatured?: boolean;
   imageUrl?: string | null;
   mattressBrandId?: string | null;
+  bedRangeId?: string | null;
   purposeOptionId?: string | null;
   coverMaterialOptionId?: string | null;
   fillingOptionId?: string | null;
@@ -184,6 +195,7 @@ export async function updateProductAction(input: {
       isFeatured: input.isFeatured ?? false,
       imageUrl: input.imageUrl?.trim() || null,
       mattressBrandId: input.mattressBrandId || null,
+      bedRangeId: input.bedRangeId || null,
       updatedAt: new Date(),
     })
     .where(eq(products.id, input.productId));
@@ -305,8 +317,7 @@ export async function generateProductVariantsAction(productId: string) {
         error: "Add bed widths under Categories → Beds → Manage options",
       };
     }
-    const range = product.rangeNumber ?? null;
-    const prefix = range ? `COT-R${range}` : slugBase.toUpperCase();
+    const prefix = slugBase.toUpperCase();
     if (colours.length) {
       for (const w of widths) {
         for (const colour of colours) {

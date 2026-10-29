@@ -6,7 +6,6 @@ import {
   CategoryPageSkeleton,
   ReelsStripSkeleton,
 } from "@/components/shop/shop-skeletons";
-import { attributeTemplates } from "@/constants/plp-filters";
 import {
   getMasters,
   getPublishedProductsByCategoryId,
@@ -31,7 +30,6 @@ async function CategoryContent({ slug }: { slug: string }) {
     getPublishedProductsByCategoryId(category.id),
     getMasters(),
   ]);
-  const template = attributeTemplates.find((t) => t.id === category.templateId);
 
   return (
     <>
@@ -40,7 +38,6 @@ async function CategoryContent({ slug }: { slug: string }) {
         products={products}
         colours={masters.colours}
         collections={masters.collections}
-        extraFields={template?.fields}
       />
       <div className="mx-auto max-w-7xl px-3 pb-8 sm:px-4 md:px-6">
         <Suspense fallback={<ReelsStripSkeleton />}>

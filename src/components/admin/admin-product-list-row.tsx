@@ -55,16 +55,18 @@ function specBarTone(filled: number, total: number) {
   return "bg-destructive";
 }
 
+/** Sticky actions cell: solid bg that tracks row hover / selected. */
+const STICKY_ACTIONS =
+  "sticky right-0 z-10 bg-card text-right transition-colors group-hover/row:bg-muted/50 group-data-[state=selected]/row:bg-muted";
+
 export function AdminProductListRow({
   product,
   categoryName,
-  collectionName,
   selected,
   onSelect,
 }: {
   product: Product;
   categoryName: string;
-  collectionName?: string;
   selected: boolean;
   onSelect: (checked: boolean) => void;
 }) {
@@ -87,9 +89,13 @@ export function AdminProductListRow({
   const specs = specCompleteness(product);
   const options = optionsSummary(product);
   const sku = productSkuPrefix(product);
+  const rangeTag = product.bedRangeName?.trim() || null;
   const sub =
-    product.highlights[0] ||
-    (typeof product.specs.purpose === "string" ? product.specs.purpose : null);
+    typeof product.specs.purpose === "string"
+      ? product.specs.purpose
+      : product.highlights[0] && product.highlights[0] !== "Showroom exclusive"
+        ? product.highlights[0]
+        : null;
 
   function archive() {
     startTransition(async () => {
@@ -108,7 +114,7 @@ export function AdminProductListRow({
 
   return (
     <>
-      <TableRow data-selected={selected || undefined}>
+      <TableRow data-state={selected ? "selected" : undefined}>
         <TableCell className="w-10">
           <Checkbox
             checked={selected}
@@ -131,12 +137,12 @@ export function AdminProductListRow({
                 >
                   {product.name}
                 </Link>
-                {collectionName ? (
+                {rangeTag ? (
                   <Badge
                     variant="secondary"
                     className="bg-amber-500/15 font-normal text-amber-900 dark:text-amber-200"
                   >
-                    {collectionName}
+                    {rangeTag}
                   </Badge>
                 ) : null}
               </div>
@@ -183,11 +189,11 @@ export function AdminProductListRow({
             {product.status === "archived" ? "Archived" : product.status}
           </Badge>
         </TableCell>
-        <TableCell className="sticky right-0 bg-card text-right">
+        <TableCell className={STICKY_ACTIONS}>
           <DropdownMenu>
             <DropdownMenuTrigger
               className={cn(
-                "inline-flex size-8 items-center justify-center rounded-lg border border-transparent hover:bg-muted",
+                "inline-flex size-8 items-center justify-center rounded-lg border border-transparent hover:bg-muted/80",
               )}
               aria-label="Row actions"
             >

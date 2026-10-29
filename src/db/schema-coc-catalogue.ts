@@ -73,6 +73,17 @@ export const cocMattressBrands = pgTable("coc_mattress_brands", {
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
 });
 
+/** Bed range masters — products belong to a range (like mattress brands). */
+export const cocBedRanges = pgTable("coc_bed_ranges", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  name: text("name").notNull(),
+  slug: text("slug").notNull().unique(),
+  sortOrder: integer("sort_order").notNull().default(0),
+  cotType: cocCotTypeEnum("cot_type").notNull().default("non_cushion"),
+  isActive: boolean("is_active").notNull().default(true),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+});
+
 export const cocBrandOptionLinks = pgTable(
   "coc_brand_option_links",
   {
@@ -114,11 +125,11 @@ export const cocProducts = pgTable("coc_products", {
     .notNull()
     .references(() => cocCategories.id),
   mattressBrandId: uuid("mattress_brand_id").references(() => cocMattressBrands.id),
+  bedRangeId: uuid("bed_range_id").references(() => cocBedRanges.id),
   name: text("name").notNull(),
   slug: text("slug").notNull().unique(),
   description: text("description"),
   imageUrl: text("image_url"),
-  rangeNumber: integer("range_number"),
   cotType: cocCotTypeEnum("cot_type"),
   status: productStatusEnum("status").notNull().default("draft"),
   isFeatured: boolean("is_featured").notNull().default(false),
@@ -202,6 +213,7 @@ export const cocProductCollections = pgTable(
 export type CocProduct = typeof cocProducts.$inferSelect;
 export type CocProductVariant = typeof cocProductVariants.$inferSelect;
 export type CocMattressBrand = typeof cocMattressBrands.$inferSelect;
+export type CocBedRange = typeof cocBedRanges.$inferSelect;
 export type CocOption = typeof cocOptions.$inferSelect;
 export type CocOptionGroup = typeof cocOptionGroups.$inferSelect;
 export type CocSizeDimension = typeof cocSizeDimensions.$inferSelect;

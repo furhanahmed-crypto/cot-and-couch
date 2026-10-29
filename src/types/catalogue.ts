@@ -62,6 +62,7 @@ export type ProductDto = {
   id: string;
   categoryId: string;
   mattressBrandId: string | null;
+  bedRangeId: string | null;
   name: string;
   slug: string;
   description: string | null;

@@ -268,9 +268,16 @@ export function PdpMain({
       <PdpGallery images={galleryImages} videos={variant.videos} alt={product.name} />
       <div className="space-y-5">
         <div className="flex items-start justify-between gap-3">
-          <h1 className="font-heading text-2xl leading-tight md:text-3xl">
-            {product.name}
-          </h1>
+          <div className="min-w-0 space-y-1.5">
+            <h1 className="font-heading text-2xl leading-tight md:text-3xl">
+              {product.name}
+            </h1>
+            {product.bedRangeName ? (
+              <Badge variant="secondary" className="font-normal">
+                {product.bedRangeName}
+              </Badge>
+            ) : null}
+          </div>
           <Button
             type="button"
             size="icon"

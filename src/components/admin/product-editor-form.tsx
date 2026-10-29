@@ -16,7 +16,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { templateForCategorySlug } from "@/constants/admin-product-templates";
-import { categoryConfigForSlug } from "@/constants/category-config";
 import { ROUTES } from "@/constants/routes";
 import type {
   Category,
@@ -57,9 +56,11 @@ export function ProductEditorForm({
     trialNights: product.attributes?.trialNights ?? "",
     idealFor: product.attributes?.idealFor ?? "",
   });
+  const [bedRangeId, setBedRangeId] = useState(product.bedRangeId ?? "");
 
   const template = templateForCategorySlug(category?.slug ?? "");
   const isMattress = category?.slug === "mattresses";
+  const isBeds = category?.slug === "cots";
 
   const checklist = useMemo(() => {
     const items: { label: string; ok: boolean }[] = [
@@ -86,19 +87,8 @@ export function ProductEditorForm({
           ok: Boolean(mattress.warrantyYears.trim()),
         },
       );
-    } else if (template) {
-      const furniture = categoryConfigForSlug(category?.slug ?? "");
-      const required = new Set(template.required);
-      if (furniture) {
-        for (const g of furniture.groups) {
-          const opts = lookups.furnitureOptionsByKey[g.key] ?? [];
-          if (!opts.length || !required.has(g.label)) continue;
-          items.push({
-            label: g.label,
-            ok: Boolean(attributes[g.key]?.trim()),
-          });
-        }
-      }
+    } else if (isBeds) {
+      items.push({ label: "Bed range", ok: Boolean(bedRangeId) });
     }
     return items;
   }, [
@@ -107,11 +97,9 @@ export function ProductEditorForm({
     imageUrl,
     product.variants.length,
     isMattress,
+    isBeds,
     mattress,
-    template,
-    category?.slug,
-    lookups.furnitureOptionsByKey,
-    attributes,
+    bedRangeId,
   ]);
 
   const readyCount = checklist.filter((c) => c.ok).length;
@@ -135,6 +123,7 @@ export function ProductEditorForm({
         isFeatured: product.featured,
         imageUrl,
         mattressBrandId: isMattress ? mattress.mattressBrandId || null : null,
+        bedRangeId: isBeds ? bedRangeId || null : null,
         purposeOptionId: isMattress ? mattress.purposeOptionId || null : null,
         comfortOptionId: isMattress ? mattress.comfortOptionId || null : null,
         fillingOptionId: isMattress ? mattress.fillingOptionId || null : null,
@@ -191,6 +180,22 @@ export function ProductEditorForm({
               <Label>Category</Label>
               <Input value={category?.name ?? "—"} disabled />
             </div>
+            {isBeds ? (
+              <div className="space-y-1">
+                <Label htmlFor="pe-range">Bed range</Label>
+                <AppSelect
+                  id="pe-range"
+                  value={bedRangeId}
+                  onValueChange={setBedRangeId}
+                  triggerClassName="w-full"
+                  items={lookups.bedRanges.map((r) => ({
+                    value: r.id,
+                    label: r.name,
+                  }))}
+                  placeholder="Select range"
+                />
+              </div>
+            ) : null}
             <div className="space-y-1">
               <Label htmlFor="pe-desc">Description</Label>
               <Textarea

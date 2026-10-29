@@ -5,12 +5,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
 import type { FilterState } from "@/lib/catalogue-utils";
-import type {
-  AttributeField,
-  Collection,
-  Colour,
-  StockStatus,
-} from "@/types";
+import type { Collection, Colour, StockStatus } from "@/types";
 
 const AVAIL: { id: StockStatus; label: string }[] = [
   { id: "in_stock", label: "In stock" },
@@ -18,42 +13,29 @@ const AVAIL: { id: StockStatus; label: string }[] = [
   { id: "low_stock", label: "Low stock" },
 ];
 
-/** Keys already rendered as common filters — never repeat from attribute templates. */
-const COMMON_FILTER_KEYS = new Set([
-  "colour",
-  "color",
-  "colour_finish",
-  "finish",
-  "collection",
-  "collections",
-  "availability",
-  "price",
-  "discount",
-]);
+export type PlpFacetOption = { id: string; label: string };
 
 export function FilterPanel({
   filters,
   onChange,
   colours,
   collections,
-  extraFields = [],
+  bedRanges = [],
+  widths = [],
+  attrFacets = [],
   onClear,
 }: {
   filters: FilterState;
   onChange: (next: FilterState) => void;
   colours: Colour[];
   collections: Collection[];
-  extraFields?: AttributeField[];
+  bedRanges?: PlpFacetOption[];
+  widths?: string[];
+  /** Mattress attrs derived from product.specs (purpose, comfort, …) */
+  attrFacets?: { key: string; label: string; options: string[] }[];
   onClear: () => void;
 }) {
   const price = [filters.priceMin ?? 0, filters.priceMax ?? 100000];
-  const categoryFields = extraFields.filter(
-    (f) =>
-      f.filterable &&
-      f.options &&
-      !COMMON_FILTER_KEYS.has(f.key.toLowerCase()) &&
-      !/colour|color|finish/i.test(f.label),
-  );
 
   function toggleArr(key: keyof FilterState, value: string) {
     const current = (filters[key] as string[] | undefined) ?? [];
@@ -61,6 +43,17 @@ export function FilterPanel({
       ? current.filter((v) => v !== value)
       : [...current, value];
     onChange({ ...filters, [key]: next });
+  }
+
+  function toggleAttr(key: string, value: string) {
+    const cur = filters.attrs?.[key] ?? [];
+    const next = cur.includes(value)
+      ? cur.filter((x) => x !== value)
+      : [...cur, value];
+    onChange({
+      ...filters,
+      attrs: { ...filters.attrs, [key]: next },
+    });
   }
 
   return (
@@ -71,6 +64,51 @@ export function FilterPanel({
           Clear all
         </Button>
       </div>
+
+      {bedRanges.length > 0 ? (
+        <div className="space-y-2">
+          <Label>Range</Label>
+          {bedRanges.map((r) => (
+            <label key={r.id} className="flex items-center gap-2">
+              <Checkbox
+                checked={filters.bedRanges?.includes(r.id)}
+                onCheckedChange={() => toggleArr("bedRanges", r.id)}
+              />
+              {r.label}
+            </label>
+          ))}
+        </div>
+      ) : null}
+
+      {widths.length > 0 ? (
+        <div className="space-y-2">
+          <Label>Width</Label>
+          {widths.map((w) => (
+            <label key={w} className="flex items-center gap-2">
+              <Checkbox
+                checked={filters.widths?.includes(w)}
+                onCheckedChange={() => toggleArr("widths", w)}
+              />
+              {w}
+            </label>
+          ))}
+        </div>
+      ) : null}
+
+      {attrFacets.map((facet) => (
+        <div key={facet.key} className="space-y-2">
+          <Label>{facet.label}</Label>
+          {facet.options.map((opt) => (
+            <label key={opt} className="flex items-center gap-2">
+              <Checkbox
+                checked={filters.attrs?.[facet.key]?.includes(opt)}
+                onCheckedChange={() => toggleAttr(facet.key, opt)}
+              />
+              {opt}
+            </label>
+          ))}
+        </div>
+      ))}
 
       <div className="space-y-3">
         <Label>Price range</Label>
@@ -108,35 +146,39 @@ export function FilterPanel({
         ))}
       </div>
 
-      <div className="space-y-2">
-        <Label>Colour / finish</Label>
-        {colours.map((c) => (
-          <label key={c.id} className="flex items-center gap-2">
-            <Checkbox
-              checked={filters.colours?.includes(c.id)}
-              onCheckedChange={() => toggleArr("colours", c.id)}
-            />
-            <span
-              className="size-3 rounded-full ring-1 ring-border"
-              style={{ background: c.hex }}
-            />
-            {c.name}
-          </label>
-        ))}
-      </div>
+      {colours.length > 0 ? (
+        <div className="space-y-2">
+          <Label>Colour / finish</Label>
+          {colours.map((c) => (
+            <label key={c.id} className="flex items-center gap-2">
+              <Checkbox
+                checked={filters.colours?.includes(c.id)}
+                onCheckedChange={() => toggleArr("colours", c.id)}
+              />
+              <span
+                className="size-3 rounded-full ring-1 ring-border"
+                style={{ background: c.hex }}
+              />
+              {c.name}
+            </label>
+          ))}
+        </div>
+      ) : null}
 
-      <div className="space-y-2">
-        <Label>Collection</Label>
-        {collections.map((c) => (
-          <label key={c.id} className="flex items-center gap-2">
-            <Checkbox
-              checked={filters.collections?.includes(c.id)}
-              onCheckedChange={() => toggleArr("collections", c.id)}
-            />
-            {c.name}
-          </label>
-        ))}
-      </div>
+      {collections.length > 0 ? (
+        <div className="space-y-2">
+          <Label>Collection</Label>
+          {collections.map((c) => (
+            <label key={c.id} className="flex items-center gap-2">
+              <Checkbox
+                checked={filters.collections?.includes(c.id)}
+                onCheckedChange={() => toggleArr("collections", c.id)}
+              />
+              {c.name}
+            </label>
+          ))}
+        </div>
+      ) : null}
 
       <div className="space-y-2">
         <Label>Availability</Label>
@@ -150,30 +192,6 @@ export function FilterPanel({
           </label>
         ))}
       </div>
-
-      {categoryFields.map((f) => (
-        <div key={f.key} className="space-y-2">
-          <Label>{f.label}</Label>
-          {f.options!.map((opt) => (
-            <label key={opt} className="flex items-center gap-2">
-              <Checkbox
-                checked={filters.extra?.[f.key]?.includes(opt)}
-                onCheckedChange={() => {
-                  const cur = filters.extra?.[f.key] ?? [];
-                  const next = cur.includes(opt)
-                    ? cur.filter((x) => x !== opt)
-                    : [...cur, opt];
-                  onChange({
-                    ...filters,
-                    extra: { ...filters.extra, [f.key]: next },
-                  });
-                }}
-              />
-              {opt}
-            </label>
-          ))}
-        </div>
-      ))}
     </div>
   );
 }

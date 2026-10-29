@@ -10,7 +10,7 @@
     "db:push": "drizzle-kit push --force",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
-    "db:migrate-bed-ranges": "tsx src/db/migrate-bed-ranges.ts",
+    "db:seed-beds": "tsx src/db/seed-bed-catalogue.ts",
     "db:seed": "tsx src/db/seed.ts",
     "db:studio": "drizzle-kit studio"
   },

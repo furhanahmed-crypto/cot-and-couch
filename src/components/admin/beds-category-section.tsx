@@ -79,8 +79,9 @@ export function BedsCategorySection({
       </div>
 
       <p className="text-sm text-muted-foreground">
-        Bed ranges and the shared widths each range uses. Edit a range to rename
-        it and manage width options.
+        Bed ranges are masters (like mattress brands). Add products under each
+        range on the Products page. Edit a range to rename it and manage shared
+        widths.
       </p>
 
       <form
@@ -105,6 +106,7 @@ export function BedsCategorySection({
             value={rangeName}
             onChange={(e) => setRangeName(e.target.value)}
             placeholder="e.g. Ideal Range"
+            required
           />
         </div>
         <Button type="submit" size="sm" disabled={pending}>
@@ -122,10 +124,8 @@ export function BedsCategorySection({
             <div className="min-w-0">
               <p className="truncate font-medium">{range.name}</p>
               <p className="text-xs text-muted-foreground">
-                {widthOptions.length} widths shared
-                {range.collectionLabels.length
-                  ? ` · ${range.collectionLabels.join(", ")}`
-                  : ""}
+                {range.productCount} products
+                {!range.isActive ? " · inactive" : ""}
               </p>
             </div>
             <div className="flex shrink-0 gap-1">
@@ -146,9 +146,12 @@ export function BedsCategorySection({
                 disabled={pending}
                 onClick={() => {
                   startTransition(async () => {
-                    await deleteBedRangeAction(range.id);
-                    toast.success("Range removed");
-                    refresh();
+                    const res = await deleteBedRangeAction(range.id);
+                    if (!res.ok) toast.error(res.error);
+                    else {
+                      toast.success("Range removed");
+                      refresh();
+                    }
                   });
                 }}
               >

@@ -28,8 +28,6 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 import type { AdminBedRange } from "@/services/admin-categories";
-import { ROUTES } from "@/constants/routes";
-import Link from "next/link";
 
 type WidthOption = {
   id: string;
@@ -129,8 +127,8 @@ export function BedRangeEditorSheet({
           <SheetHeader>
             <SheetTitle>{range?.name ?? "Range"} options</SheetTitle>
             <SheetDescription>
-              Rename this range, then manage shared bed widths. Widths apply to
-              every range product.
+              Rename this range. Shared bed widths apply to every product in
+              every range.
             </SheetDescription>
           </SheetHeader>
 
@@ -144,17 +142,7 @@ export function BedRangeEditorSheet({
                   onChange={(e) => setName(e.target.value)}
                 />
                 <p className="text-xs text-muted-foreground">
-                  Range {range.rangeNumber}
-                  {range.collectionLabels.length
-                    ? ` · ${range.collectionLabels.join(", ")}`
-                    : ""}
-                  {" · "}
-                  <Link
-                    href={ROUTES.admin.productEdit(range.id)}
-                    className="text-primary hover:underline"
-                  >
-                    Open product editor
-                  </Link>
+                  {range.productCount} products · sort {range.sortOrder}
                 </p>
               </div>
 

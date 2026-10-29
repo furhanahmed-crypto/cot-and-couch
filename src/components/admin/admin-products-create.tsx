@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState, useTransition } from "react";
+import { useMemo, useState, useTransition } from "react";
 import { Plus } from "lucide-react";
 import { createProductAction } from "@/app/admin/catalogue/product-actions";
 import { AppSelect } from "@/components/ui/app-select";
@@ -18,19 +18,39 @@ import {
 import { ROUTES } from "@/constants/routes";
 import type { Category } from "@/types";
 
-export function AdminProductsCreate({ categories }: { categories: Category[] }) {
+type BedRangeOption = { id: string; name: string };
+
+export function AdminProductsCreate({
+  categories,
+  bedRanges = [],
+}: {
+  categories: Category[];
+  bedRanges?: BedRangeOption[];
+}) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [pending, startTransition] = useTransition();
   const [name, setName] = useState("");
   const [slug, setSlug] = useState("");
   const [categoryId, setCategoryId] = useState(categories[0]?.id ?? "");
+  const [bedRangeId, setBedRangeId] = useState(bedRanges[0]?.id ?? "");
   const [error, setError] = useState<string | null>(null);
+
+  const selectedCat = useMemo(
+    () => categories.find((c) => c.id === categoryId),
+    [categories, categoryId],
+  );
+  const isBeds = selectedCat?.slug === "cots";
 
   function submit() {
     setError(null);
     startTransition(async () => {
-      const res = await createProductAction({ categoryId, name, slug });
+      const res = await createProductAction({
+        categoryId,
+        name,
+        slug,
+        bedRangeId: isBeds ? bedRangeId || null : null,
+      });
       if (!res.ok) {
         setError(res.error);
         return;
@@ -88,6 +108,22 @@ export function AdminProductsCreate({ categories }: { categories: Category[] }) 
                 }))}
               />
             </div>
+            {isBeds ? (
+              <div className="space-y-1">
+                <Label htmlFor="np-range">Bed range</Label>
+                <AppSelect
+                  id="np-range"
+                  value={bedRangeId}
+                  onValueChange={setBedRangeId}
+                  triggerClassName="w-full"
+                  items={bedRanges.map((r) => ({
+                    value: r.id,
+                    label: r.name,
+                  }))}
+                  placeholder="Select range"
+                />
+              </div>
+            ) : null}
           </div>
           <DialogFooter>
             <Button type="button" variant="outline" onClick={() => setOpen(false)}>

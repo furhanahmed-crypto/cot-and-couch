@@ -40,13 +40,16 @@ export function AdminProductsTable({
   products,
   categories,
   collections,
+  bedRanges = [],
 }: {
   products: Product[];
   categories: Category[];
   collections: Collection[];
+  bedRanges?: { id: string; name: string }[];
 }) {
   const [query, setQuery] = useState("");
   const [categoryId, setCategoryId] = useState<string>("all");
+  const [bedRangeId, setBedRangeId] = useState<string>("all");
   const [status, setStatus] = useState<StatusFilter>("all");
   const [collectionId, setCollectionId] = useState<string>("all");
   const [stock, setStock] = useState<StockFilter>("all");
@@ -55,6 +58,13 @@ export function AdminProductsTable({
   const [page, setPage] = useState(1);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [importHint, setImportHint] = useState(false);
+
+  const bedsCategoryId = useMemo(
+    () => categories.find((c) => c.slug === "cots")?.id,
+    [categories],
+  );
+  const showRangeFilter =
+    categoryId === "all" || categoryId === bedsCategoryId;
 
   const byCat = useMemo(
     () => new Map(categories.map((c) => [c.id, c])),
@@ -80,6 +90,7 @@ export function AdminProductsTable({
     const q = query.trim().toLowerCase();
     let list = products.filter((p) => {
       if (categoryId !== "all" && p.categoryId !== categoryId) return false;
+      if (bedRangeId !== "all" && p.bedRangeId !== bedRangeId) return false;
       if (status !== "all" && p.status !== status) return false;
       if (collectionId !== "all" && p.collectionId !== collectionId) return false;
 
@@ -101,11 +112,13 @@ export function AdminProductsTable({
       if (!q) return true;
       const cat = byCat.get(p.categoryId)?.name ?? "";
       const col = p.collectionId ? byCol.get(p.collectionId)?.name ?? "" : "";
+      const range = p.bedRangeName ?? "";
       const skus = p.variants.map((v) => v.sku).join(" ");
       return (
         p.name.toLowerCase().includes(q) ||
         cat.toLowerCase().includes(q) ||
         col.toLowerCase().includes(q) ||
+        range.toLowerCase().includes(q) ||
         skus.toLowerCase().includes(q)
       );
     });
@@ -128,6 +141,7 @@ export function AdminProductsTable({
     products,
     query,
     categoryId,
+    bedRangeId,
     status,
     collectionId,
     stock,
@@ -246,7 +260,7 @@ export function AdminProductsTable({
             <Download className="size-3.5" />
             Export
           </Button>
-          <AdminProductsCreate categories={categories} />
+          <AdminProductsCreate categories={categories} bedRanges={bedRanges} />
         </div>
       </div>
 
@@ -280,6 +294,7 @@ export function AdminProductsTable({
             active={categoryId === c.id}
             onClick={() => {
               setCategoryId(c.id);
+              setBedRangeId("all");
               setPage(1);
             }}
             label={`${c.name} (${categoryCounts.get(c.id) ?? 0})`}
@@ -292,6 +307,31 @@ export function AdminProductsTable({
           + New category
         </Link>
       </div>
+
+      {showRangeFilter && bedRanges.length > 0 ? (
+        <div className="flex min-w-0 items-center gap-1 overflow-x-auto border-b border-border pb-px">
+          <CategoryTab
+            active={bedRangeId === "all"}
+            onClick={() => {
+              setBedRangeId("all");
+              setPage(1);
+            }}
+            label="All ranges"
+          />
+          {bedRanges.map((r) => (
+            <CategoryTab
+              key={r.id}
+              active={bedRangeId === r.id}
+              onClick={() => {
+                setBedRangeId(r.id);
+                if (bedsCategoryId) setCategoryId(bedsCategoryId);
+                setPage(1);
+              }}
+              label={r.name}
+            />
+          ))}
+        </div>
+      ) : null}
 
       <div className="-mx-1 flex min-w-0 items-center gap-2 overflow-x-auto px-1 pb-0.5">
         <Input
@@ -390,7 +430,7 @@ export function AdminProductsTable({
               <TableHead className="whitespace-nowrap">Stock</TableHead>
               <TableHead className="whitespace-nowrap">Specs</TableHead>
               <TableHead className="whitespace-nowrap">Status</TableHead>
-              <TableHead className="sticky right-0 bg-card w-12" />
+              <TableHead className="sticky right-0 z-10 w-12 bg-card" />
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -399,9 +439,6 @@ export function AdminProductsTable({
                 key={p.id}
                 product={p}
                 categoryName={byCat.get(p.categoryId)?.name ?? "—"}
-                collectionName={
-                  p.collectionId ? byCol.get(p.collectionId)?.name : undefined
-                }
                 selected={selected.has(p.id)}
                 onSelect={(checked) => {
                   setSelected((prev) => {

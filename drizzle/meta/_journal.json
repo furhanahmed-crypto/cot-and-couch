@@ -50,6 +50,13 @@
       "when": 1761748800000,
       "tag": "0009_prune_deferred_catalogue",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1761752400000,
+      "tag": "0010_bed_ranges_as_masters",
+      "breakpoints": true
     }
   ]
 }
