@@ -150,7 +150,7 @@ export async function createBrandGroupOptionAction(input: {
   return { ok: true as const, optionId };
 }
 
-/** Add an option to a furniture category config group (beds/sofas/desks). */
+/** Add an option to a furniture category config group. */
 export async function createCategoryConfigOptionAction(input: {
   groupKey: string;
   label: string;

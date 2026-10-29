@@ -11,55 +11,39 @@ Minimal engineering docs for this repo.
 | [SECURITY.md](./SECURITY.md) | Auth and data handling notes |
 | [MEMORY.md](./MEMORY.md) | Short decisions log |
 
-## Current platform (2026)
+## Client-ready scope (live)
 
-The app runs on **Neon Postgres** with **`coc_*` tables**, a **storefront**, and a **staff admin**. Legacy pre-revamp tables were removed in migration `0006_drop_legacy.sql`.
+| Area | Status |
+|------|--------|
+| **Mattresses** | Live — brands, options, products, shop + admin |
+| **Beds** (`cots`) | Live — 8 ranges, shared widths (name + size), shop + admin |
+| **Sofas** | Deferred — category row kept inactive; no products/options |
+| **Computer tables** | Deferred — same as sofas |
 
-| Area | Summary |
-|------|---------|
-| **Migrations** | Versioned SQL in `drizzle/` — apply with `bun run db:migrate` (`DATABASE_URL_UNPOOLED`) |
-| **Seed** | `bun run db:seed` — demo catalogue and ops (dev) |
-| **Runtime schema** | `src/db/app-schema.ts` aliases only (no legacy table names in app code) |
-| **Admin** | Dashboard with live metrics, catalogue (products, categories, mattress brands), orders, leads, gallery/reels, settings |
-| **Shop labels** | DB slug `cots` displays as **Beds** on the storefront (`src/lib/shop-category-label.ts`) |
+The app runs on **Neon Postgres** (`coc_*`), storefront + staff admin. Apply migrations with `bun run db:migrate` (`DATABASE_URL_UNPOOLED`).
 
-### Database migrations (order)
+| Migration | Purpose |
+|-----------|---------|
+| `0001`–`0005` | Foundation → catalogue → shop → CRM → commerce |
+| `0006` | Drop legacy pre-`coc_*` tables |
+| `0007` | Bed model cleanup (width-only axes) |
+| `0008` | Bed width `detail` + range name updates |
+| `0009` | Prune archived + sofa/table products; hide deferred categories |
 
-| File | Purpose |
-|------|---------|
-| `0001_coc_foundation` | Profiles, categories, store settings |
-| `0002_coc_catalogue` | Option groups, products, variants, collections |
-| `0003_coc_shop` | Favourites, cart |
-| `0004_coc_crm` | Leads and lead events |
-| `0005_coc_commerce` | Orders, gallery, reels, seed hooks |
-| `0006_drop_legacy` | Drop old `products` / `profiles` / … tables |
-| `0007_bed_model_cleanup` | Beds: drop obsolete cot option groups; width-only variant axis |
-| `0008_bed_width_detail` | `coc_options.detail` for width dimensions; rename ranges 1–6 |
+**Beds normalisation** (optional after migrate): `bun run db:migrate-bed-ranges`.
 
-**Beds data normalisation** (after migrations): `bun run db:migrate-bed-ranges` — ensures 8 published range products, 4 shared widths, variants (width × colour), Royal Range / Victoria collection tags on ranges 8 and 7. Script: `src/db/migrate-bed-ranges.ts`.
+**Seed** (dev): `bun run db:seed` — mattresses + 8 bed ranges only.
 
-**One-time legacy copy** (only if migrating an old DB before Phase 8): `src/db/migrate-legacy-to-coc.ts` + `schema-legacy.ts` — not needed on fresh environments.
+### Beds admin
 
-### Catalogue model (admin + shop)
+Categories → Beds: **Add range**, cards with edit/delete. **Edit** opens a sheet (range name + shared widths). Width add/edit uses name + size modal. Constants: `src/constants/bed-model.ts`.
 
-**Mattresses** — Category slug `mattresses`. Brands are managed on **Admin → Categories** (add brand, per-brand option sheet for types / firmness / layers / covers). Brand master list also under **Mattress brands**.
-
-**Beds** — Category slug `cots` (shop: **Beds**). Not configured like sofa option groups:
-
-- **8 range products** (`cot-range-1` … `cot-range-8`), each a product with its own pricing in the product editor.
-- Default names: ranges **1–6** Ideal / Optimum / Essential / Prime / Premium / Royal Range; **7–8** stay **Range 7** / **Range 8**.
-- **4 shared width options** (`cot_width`): name in `label`, dimensions in `detail` (e.g. Queen Size + `5 ft × 6 ft`). Managed inside the range edit sheet (add/edit via name + size modal).
-- **Ranges UI** mirrors mattresses: **Add range**, cards with edit/delete; **Edit** opens a sheet (range name + widths).
-- Collections: tag **Royal Range** and **Victoria** on products (typically range 8 and 7) under product editor.
-
-Constants and seeds: `src/constants/bed-model.ts`. Server actions: `src/app/admin/categories/bed-actions.ts`. UI: `src/components/admin/beds-category-section.tsx`, `bed-range-editor-sheet.tsx` (edit opens sheet: range name + shared widths).
-
-### Commands (quick reference)
+### Commands
 
 ```bash
 bun run dev
 bun run db:migrate
-bun run db:seed          # dev demo data
+bun run db:seed
 bun run db:migrate-bed-ranges
 bun run db:studio
 ```

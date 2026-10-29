@@ -44,23 +44,12 @@ function subCategoriesFor(slug: string): SubCategory[] {
   if (slug === "cots") {
     return [
       { id: "sc-single", name: "Single", slug: "single" },
+      { id: "sc-double", name: "Double / Diwan", slug: "double-diwan" },
       { id: "sc-queen", name: "Queen", slug: "queen" },
       { id: "sc-king", name: "King", slug: "king" },
-      { id: "sc-storage", name: "Storage", slug: "storage" },
     ];
   }
-  if (slug === "sofas") {
-    return [
-      { id: "sc-2s", name: "2-Seater", slug: "2-seater" },
-      { id: "sc-3s", name: "3-Seater", slug: "3-seater" },
-      { id: "sc-l", name: "L-Shape", slug: "l-shape" },
-    ];
-  }
-  return [
-    { id: "sc-ct", name: "Computer", slug: "computer" },
-    { id: "sc-study", name: "Study", slug: "study" },
-    { id: "sc-ldesk", name: "L-Desk", slug: "l-desk" },
-  ];
+  return [];
 }
 
 export function mapCategory(row: DbCategory): Category {
@@ -163,7 +152,7 @@ function mattressSubCategory(purposeSlug: string | undefined): string {
 
 /** Fallback only — real collection UUID hydrated from product_collections. */
 function collectionFor(categorySlug: string, featured: boolean): string {
-  if (featured && (categorySlug === "cots" || categorySlug === "sofas")) {
+  if (featured && categorySlug === "cots") {
     return "royal-range";
   }
   return "";

@@ -6,17 +6,17 @@ import {
   CategoryPageSkeleton,
   ReelsStripSkeleton,
 } from "@/components/shop/shop-skeletons";
-import { attributeTemplates } from "@/data/mock/categories";
+import { attributeTemplates } from "@/constants/plp-filters";
 import {
-  getCategories,
   getMasters,
   getPublishedProductsByCategoryId,
+  getShopCategories,
   getShopCategoryBySlug,
 } from "@/services/catalogue";
 
 export async function generateStaticParams() {
   try {
-    const cats = await getCategories();
+    const cats = await getShopCategories();
     return cats.map((c) => ({ slug: c.slug }));
   } catch {
     return [];

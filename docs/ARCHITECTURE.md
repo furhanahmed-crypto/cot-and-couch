@@ -18,39 +18,29 @@ Path alias: `@/*` → `src/*`.
 | Piece | Location |
 |-------|----------|
 | Runtime schema | `src/db/app-schema.ts` (aliases to `coc_*`) |
-| Drizzle table defs | `schema-coc*.ts`, shared enums in `schema-enums.ts` |
-| Migrations | `drizzle/0001` … `0008` (see `docs/README.md`) |
-| Legacy (migrate-only) | `schema-legacy.ts`, `migrate-legacy-to-coc.ts` |
+| Drizzle table defs | `schema-coc*.ts`, enums in `schema-enums.ts` |
+| Migrations | `drizzle/0001` … `0009` (see `docs/README.md`) |
+| Seed | `src/db/seed.ts` + `src/data/catalogue/seed-data.ts` |
 
-**Commands**
+**Commands:** `bun run db:migrate` · `bun run db:seed` · `bun run db:migrate-bed-ranges` · `bun run db:studio`
 
-| Command | Use |
-|---------|-----|
-| `bun run db:migrate` | Apply all SQL migrations (unpooled URL in drizzle config) |
-| `bun run db:seed` | Demo catalogue + ops into `coc_*` (dev) |
-| `bun run db:migrate-bed-ranges` | Normalise 8 bed ranges, widths, variants, collection tags |
-| `bun run db:studio` | Drizzle Studio |
+### Catalogue (live vs deferred)
 
-Migration `0006_drop_legacy.sql` removes pre-revamp tables. `0007` / `0008` specialise the bed catalogue (width-only axes, `options.detail` for dimensions).
+| Category (slug) | Shop label | Status |
+|-----------------|------------|--------|
+| `mattresses` | Mattresses | Live — brand sheets on Categories |
+| `cots` | Beds | Live — range products + shared widths |
+| `sofas` | Sofas | Deferred — `is_active = false`, no products |
+| `computer-tables` | Computer tables | Deferred — same |
 
-### Catalogue highlights
-
-| Category (slug) | Shop label | Admin pattern |
-|-----------------|------------|---------------|
-| `mattresses` | Mattresses | Brands grid + per-brand option sheet |
-| `cots` | Beds | Range cards; Edit sheet = name + shared widths (name + size) |
-| Other furniture | Per category | Category config sheet (option groups from `category-config`) |
-
-Product variants for beds: **width** (`cot_width`, label + detail) × **colour** when colour group is linked. Mapping for PDP/PLP: `src/services/catalogue-map.ts`.
-
-Bed constants: `src/constants/bed-model.ts`. Category admin data: `src/services/admin-categories.ts`.
+Bed constants: `src/constants/bed-model.ts`. PLP filters: `src/constants/plp-filters.ts`.
 
 ## Auth
 
 | Piece | Location |
 |-------|----------|
 | Server | `src/lib/auth/server.ts` |
-| Profile load/create | `src/lib/auth/profile.ts` |
+| Profile | `src/lib/auth/profile.ts` |
 | API | `src/app/api/auth/[...path]/route.ts` |
 | Guard | `src/proxy.ts` |
 
@@ -62,18 +52,15 @@ Authorize by **`profile.id` and `role`**, not email alone.
 src/
 ├── app/           # Routes (shop, auth, admin)
 ├── components/    # ui/, shop/, admin/
-├── services/      # DB reads/writes for pages
-├── constants/     # routes, nav, config, bed-model
+├── services/      # DB reads/writes
+├── constants/     # routes, nav, bed-model, category-config, plp-filters
+├── data/catalogue # Seed masters (not mock UI data)
 ├── types/
-└── db/            # schema, migrate-bed-ranges, seed
+└── db/
 ```
 
-Admin dashboard metrics: `src/services/admin-dashboard.ts` (lead events, orders, catalogue health).
-
-Shop category display names: `src/lib/shop-category-label.ts` and category fetch helpers in services.
+Admin dashboard: `src/services/admin-dashboard.ts`. Shop category labels: `src/lib/shop-category-label.ts`.
 
 ## Admin IA
 
 Overview · Catalogue (products, categories, mattress brands) · Commerce (orders, leads) · Content (gallery, reels) · Settings (store, team).
-
-Old URLs redirect to the routes in `src/constants/routes.ts`.

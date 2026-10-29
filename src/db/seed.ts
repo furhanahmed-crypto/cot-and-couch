@@ -1,6 +1,5 @@
 /**
- * Seed catalogue from src/data/catalogue/seed-data.ts
- * Run: npm run db:seed
+ * Seed catalogue (mattresses + beds). Run: bun run db:seed
  */
 import "dotenv/config";
 import { neon } from "@neondatabase/serverless";
@@ -9,25 +8,24 @@ import { eq } from "drizzle-orm";
 import * as schema from "./app-schema";
 import { categoryConfigSeedRows } from "@/constants/category-config";
 import {
+  BED_RANGE_COUNT,
+  BED_RANGE_NAMES,
+  BED_WIDTH_GROUP_KEY,
+  bedCotTypeForRange,
+  bedRangeSlug,
+} from "@/constants/bed-model";
+import {
   MATTRESS_BRANDS,
   CATEGORIES,
   COLOURS,
   COMFORTS,
-  COT_MODELS,
-  COT_VARIANT_PLANS,
   COVER_MATERIALS,
   FILLINGS,
   MATTRESS_MODELS,
   PURPOSES,
   SIZE_DIMENSIONS,
   SIZE_GROUPS,
-  SOFA_MODELS,
-  SOFA_VARIANT_PRICE,
-  TABLE_MODELS,
-  TABLE_VARIANT_PRICE,
   THICKNESSES,
-  houseImagePath,
-  houseProductSlug,
   mattressImagePath,
   mattressPrice,
   MATTRESS_SIZE_SKUS,
@@ -62,7 +60,12 @@ async function clearCatalogue() {
 
 async function addOptions(
   groupId: string,
-  items: readonly { label: string; slug: string; hex?: string }[],
+  items: readonly {
+    label: string;
+    slug: string;
+    hex?: string;
+    detail?: string;
+  }[],
 ) {
   return db
     .insert(schema.options)
@@ -71,6 +74,7 @@ async function addOptions(
         groupId,
         label: item.label,
         slug: item.slug,
+        detail: "detail" in item ? (item.detail ?? null) : null,
         hex: "hex" in item ? (item.hex ?? null) : null,
         sortOrder: i + 1,
       })),
@@ -142,7 +146,7 @@ async function seed() {
   const comforts = await addOptions(g.comfort.id, COMFORTS);
   const colours = await addOptions(g.colour.id, COLOURS);
 
-  // Beds / Sofas / Computer tables — Figma category config masters
+  // Beds — shared width masters
   const furnitureSeed = categoryConfigSeedRows();
   const furnitureGroups = await db
     .insert(schema.optionGroups)
@@ -153,14 +157,34 @@ async function seed() {
   );
   for (const [groupKey, rows] of Object.entries(
     furnitureSeed.opts.reduce<
-      Record<string, { label: string; slug: string }[]>
+      Record<string, { label: string; slug: string; detail?: string }[]>
     >((acc, o) => {
-      (acc[o.groupKey] ??= []).push({ label: o.label, slug: o.slug });
+      (acc[o.groupKey] ??= []).push({
+        label: o.label,
+        slug: o.slug,
+        detail: o.detail,
+      });
       return acc;
     }, {}),
   )) {
     const group = furnitureGroupByKey[groupKey];
     if (group) await addOptions(group.id, rows);
+  }
+
+  const widthGroup = furnitureGroupByKey[BED_WIDTH_GROUP_KEY];
+  if (widthGroup && catBySlug.cots) {
+    await db.insert(schema.categoryOptionGroups).values({
+      categoryId: catBySlug.cots.id,
+      optionGroupId: widthGroup.id,
+      required: true,
+      sortOrder: 0,
+    });
+    await db.insert(schema.categoryOptionGroups).values({
+      categoryId: catBySlug.cots.id,
+      optionGroupId: g.colour.id,
+      required: false,
+      sortOrder: 1,
+    });
   }
 
   const bySlug = (rows: { slug: string; id: string }[]) =>
@@ -172,8 +196,6 @@ async function seed() {
   const coverBy = bySlug(covers);
   const fillingBy = bySlug(fillings);
   const comfortBy = bySlug(comforts);
-  const colourBy = bySlug(colours);
-
   // Extra brand-specific mattress types / materials
   const extraPurposes = await addOptions(g.purpose.id, [
     { label: "Cooling", slug: "cooling" },
@@ -379,133 +401,49 @@ async function seed() {
     }
   }
 
-  // —— Cots (house-made, brand null) ——
-  for (let m = 0; m < COT_MODELS.length; m++) {
-    const model = COT_MODELS[m];
-    const slug = houseProductSlug("cots", model.key);
+  // —— Beds: 8 ranges × shared widths × colours ——
+  const widthOpts = widthGroup
+    ? await db
+        .select()
+        .from(schema.options)
+        .where(eq(schema.options.groupId, widthGroup.id))
+    : [];
 
+  for (let range = 1; range <= BED_RANGE_COUNT; range++) {
     const [product] = await db
       .insert(schema.products)
       .values({
         categoryId: catBySlug.cots.id,
         mattressBrandId: null,
-        name: model.name,
-        slug,
-        description: model.description,
-        imageUrl: houseImagePath("cots", model.key),
+        name: BED_RANGE_NAMES[range] ?? `Range ${range}`,
+        slug: bedRangeSlug(range),
+        description: `${BED_RANGE_NAMES[range] ?? `Range ${range}`} — house-made bed.`,
+        imageUrl: `/images/cots/range-${range}.jpg`,
+        rangeNumber: range,
+        cotType: bedCotTypeForRange(range),
         status: "published",
-        isFeatured: m === 0,
-        sortOrder: m + 1,
+        isFeatured: range === 1,
+        sortOrder: range,
       })
       .returning();
 
-    const cotBatch: VariantInsert[] = [];
-    for (const plan of COT_VARIANT_PLANS) {
-      const isCustom = plan.size === "custom";
-      const dim =
-        !isCustom && plan.lengthIn && plan.widthIn
-          ? findDim(plan.size, plan.lengthIn, plan.widthIn)
-          : null;
-
-      for (const colour of COLOURS) {
-        const skuParts = [
-          "cot",
-          model.key.slice(0, 12),
-          plan.size,
-          isCustom ? "custom" : `${plan.lengthIn}x${plan.widthIn}`,
-          colour.slug,
-        ];
-        cotBatch.push({
+    const bedBatch: VariantInsert[] = [];
+    for (const w of widthOpts) {
+      for (const colour of colours) {
+        bedBatch.push({
           productId: product.id,
-          sku: skuParts.join("-").slice(0, 80),
-          sizeGroupOptionId: sizeBy[plan.size].id,
-          sizeDimensionId: dim?.id ?? null,
-          isCustomSize: isCustom,
-          thicknessOptionId: null,
-          colourOptionId: colourBy[colour.slug].id,
-          mrp: String(plan.mrp),
-          price: String(plan.price),
-          stockQty: isCustom ? 0 : 4 + m,
+          sku: `COT-R${range}-${w.slug}-${colour.slug}`.slice(0, 80).toUpperCase(),
+          widthOptionId: w.id,
+          colourOptionId: colour.id,
+          mrp: String(24999 + range * 2000),
+          price: String(19999 + range * 1500),
+          stockQty: 4 + range,
           isActive: true,
         });
       }
     }
-    await insertVariants(cotBatch);
-    variantCount += cotBatch.length;
-  }
-
-  // —— Sofas (house-made; colour SKUs on custom size) ——
-  for (let m = 0; m < SOFA_MODELS.length; m++) {
-    const model = SOFA_MODELS[m];
-    const slug = houseProductSlug("sofas", model.key);
-
-    const [product] = await db
-      .insert(schema.products)
-      .values({
-        categoryId: catBySlug.sofas.id,
-        mattressBrandId: null,
-        name: model.name,
-        slug,
-        description: model.description,
-        imageUrl: houseImagePath("sofas", model.key),
-        status: "published",
-        isFeatured: m === 0,
-        sortOrder: m + 1,
-      })
-      .returning();
-
-    const sofaBatch: VariantInsert[] = COLOURS.map((colour, vi) => ({
-      productId: product.id,
-      sku: `sofa-${model.key.slice(0, 14)}-${colour.slug}`.slice(0, 80),
-      sizeGroupOptionId: sizeBy.custom.id,
-      sizeDimensionId: null,
-      isCustomSize: true,
-      thicknessOptionId: null,
-      colourOptionId: colourBy[colour.slug].id,
-      mrp: String(SOFA_VARIANT_PRICE.mrp + m * 500),
-      price: String(SOFA_VARIANT_PRICE.price + m * 400),
-      stockQty: 3 + vi,
-      isActive: true,
-    }));
-    await insertVariants(sofaBatch);
-    variantCount += sofaBatch.length;
-  }
-
-  // —— Computer tables (house-made; colour SKUs on custom size) ——
-  for (let m = 0; m < TABLE_MODELS.length; m++) {
-    const model = TABLE_MODELS[m];
-    const slug = houseProductSlug("computer-tables", model.key);
-
-    const [product] = await db
-      .insert(schema.products)
-      .values({
-        categoryId: catBySlug["computer-tables"].id,
-        mattressBrandId: null,
-        name: model.name,
-        slug,
-        description: model.description,
-        imageUrl: houseImagePath("computer-tables", model.key),
-        status: "published",
-        isFeatured: m === 0,
-        sortOrder: m + 1,
-      })
-      .returning();
-
-    const tableBatch: VariantInsert[] = COLOURS.map((colour, vi) => ({
-      productId: product.id,
-      sku: `table-${model.key.slice(0, 14)}-${colour.slug}`.slice(0, 80),
-      sizeGroupOptionId: sizeBy.custom.id,
-      sizeDimensionId: null,
-      isCustomSize: true,
-      thicknessOptionId: null,
-      colourOptionId: colourBy[colour.slug].id,
-      mrp: String(TABLE_VARIANT_PRICE.mrp + m * 300),
-      price: String(TABLE_VARIANT_PRICE.price + m * 250),
-      stockQty: 5 + vi,
-      isActive: true,
-    }));
-    await insertVariants(tableBatch);
-    variantCount += tableBatch.length;
+    await insertVariants(bedBatch);
+    variantCount += bedBatch.length;
   }
 
   const published = await db

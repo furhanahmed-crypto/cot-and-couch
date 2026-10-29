@@ -141,11 +141,10 @@ async function ensureRangeProducts(categoryId: string) {
   return rangeProducts;
 }
 
-async function archiveLegacyBeds(categoryId: string, rangeIds: string[]) {
+async function deleteLegacyBeds(categoryId: string, rangeIds: string[]) {
   if (rangeIds.length === 0) return;
   await db
-    .update(cocProducts)
-    .set({ status: "archived", updatedAt: new Date() })
+    .delete(cocProducts)
     .where(
       and(
         eq(cocProducts.categoryId, categoryId),
@@ -249,7 +248,7 @@ async function main() {
   const rangeProducts = await ensureRangeProducts(cat.id);
   const rangeIds = rangeProducts.map((p) => p.id);
 
-  await archiveLegacyBeds(cat.id, rangeIds);
+  await deleteLegacyBeds(cat.id, rangeIds);
   await rebuildVariants(rangeProducts, widthOptions);
   await assignCollections(rangeProducts);
 

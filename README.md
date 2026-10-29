@@ -91,33 +91,25 @@ Progress and architecture: [docs/README.md](./docs/README.md).
 
 ## Folder structure
 
-Current scaffold plus planned layout (some paths are **in progress**):
-
 ```
 cot-and-couch/
-├── docs/                 # PRD, architecture, design, tasks, security
+├── docs/                 # Architecture, rules, design, PRD, security
+├── drizzle/              # Versioned SQL migrations
 ├── public/               # Static assets
 ├── src/
-│   ├── app/
-│   │   ├── layout.tsx    # Root layout
-│   │   ├── globals.css   # Theme tokens
-│   │   ├── page.tsx
-│   │   ├── (shop)/       # Customer routes (planned)
-│   │   ├── (auth)/       # Login / OTP (planned)
-│   │   └── admin/        # Staff console (planned)
-│   ├── components/
-│   │   └── ui/           # shadcn primitives
-│   ├── constants/        # Routes, storage keys (planned)
-│   ├── hooks/            # Shortlist, session, etc. (planned)
-│   ├── services/         # Mock data layer (planned)
-│   ├── types/            # Domain types (planned)
-│   ├── data/mock/        # Seed catalogue (planned)
-│   └── lib/utils.ts      # Shared utilities
+│   ├── app/              # (shop), (auth), admin routes
+│   ├── components/       # ui/, shop/, admin/
+│   ├── constants/        # routes, nav, bed-model, category-config
+│   ├── data/catalogue/   # Seed masters (mattresses + beds)
+│   ├── services/         # DB-backed reads/writes
+│   ├── types/
+│   ├── db/               # schema, seed, migrate-bed-ranges
+│   └── lib/
 ├── package.json
 └── tsconfig.json
 ```
 
-Implementation details: [ARCHITECTURE.md](./docs/ARCHITECTURE.md).
+Live catalogue: **mattresses** + **beds**. Sofas / computer tables are deferred. Details: [docs/ARCHITECTURE.md](./docs/ARCHITECTURE.md).
 
 ---
 

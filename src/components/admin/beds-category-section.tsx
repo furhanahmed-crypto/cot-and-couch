@@ -147,7 +147,7 @@ export function BedsCategorySection({
                 onClick={() => {
                   startTransition(async () => {
                     await deleteBedRangeAction(range.id);
-                    toast.success("Range archived");
+                    toast.success("Range removed");
                     refresh();
                   });
                 }}

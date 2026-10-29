@@ -43,6 +43,13 @@
       "when": 1761745200000,
       "tag": "0008_bed_width_detail",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1761748800000,
+      "tag": "0009_prune_deferred_catalogue",
+      "breakpoints": true
     }
   ]
 }

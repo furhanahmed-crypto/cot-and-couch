@@ -235,10 +235,7 @@ export async function updateBedRangeAction(input: { id: string; name: string }) 
 
 export async function deleteBedRangeAction(id: string) {
   await requireStaffProfile();
-  await db
-    .update(products)
-    .set({ status: "archived", updatedAt: new Date() })
-    .where(eq(products.id, id));
+  await db.delete(products).where(eq(products.id, id));
   revalidateBedAdmin();
   return { ok: true as const };
 }

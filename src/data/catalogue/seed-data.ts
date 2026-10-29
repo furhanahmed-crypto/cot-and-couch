@@ -1,17 +1,20 @@
 /**
- * Single source of truth for catalogue masters + product models.
- * Used by DB seed and mock shop data.
+ * Catalogue masters + product models for DB seed.
+ * Live scope: mattresses + beds (`cots`). Sofas / tables ship later.
  */
 
 export const CATEGORIES = [
-  { name: "Mattresses", slug: "mattresses", sortOrder: 1, coverImage: "/images/mattresses/cover.jpg" },
-  { name: "Cots", slug: "cots", sortOrder: 2, coverImage: "/images/cots/cover.jpg" },
-  { name: "Sofas", slug: "sofas", sortOrder: 3, coverImage: "/images/sofas/cover.jpg" },
   {
-    name: "Computer Tables",
-    slug: "computer-tables",
-    sortOrder: 4,
-    coverImage: "/images/computer-tables/cover.jpg",
+    name: "Mattresses",
+    slug: "mattresses",
+    sortOrder: 1,
+    coverImage: "/images/mattresses/cover.jpg",
+  },
+  {
+    name: "Beds",
+    slug: "cots",
+    sortOrder: 2,
+    coverImage: "/images/cots/cover.jpg",
   },
 ] as const;
 
@@ -207,207 +210,3 @@ export function mattressPrice(
   return { mrp: sizePlan.mrp + add, price: sizePlan.price + add };
 }
 
-/** House-made product (mattress_brand_id null). */
-export type HouseModelSeed = {
-  key: string;
-  name: string;
-  description: string;
-  /** Free-form specs for shop mock (not separate option groups yet). */
-  specs: Record<string, string>;
-};
-
-/** Cots — size + colour SKUs; no mattress attrs / no thickness. */
-export const COT_MODELS: HouseModelSeed[] = [
-  {
-    key: "amber-teak",
-    name: "Amber Teak Cot",
-    description: "Solid teak cot with clean lines — house-made at Cot & Couch.",
-    specs: { storage: "none", headboard: "wooden" },
-  },
-  {
-    key: "nara-platform",
-    name: "Nara Platform Cot",
-    description: "Low platform cot for compact bedrooms.",
-    specs: { storage: "none", headboard: "wooden" },
-  },
-  {
-    key: "loft-storage",
-    name: "Loft Storage Cot",
-    description: "Drawer storage under the frame for everyday clutter.",
-    specs: { storage: "drawer", headboard: "wooden" },
-  },
-  {
-    key: "cedar-box",
-    name: "Cedar Box Cot",
-    description: "Full box storage cot with soft upholstered headboard.",
-    specs: { storage: "box", headboard: "upholstered" },
-  },
-  {
-    key: "pulse-hydraulic",
-    name: "Pulse Hydraulic Cot",
-    description: "Hydraulic lift storage — sit-test the gas springs in-store.",
-    specs: { storage: "hydraulic", headboard: "wooden" },
-  },
-  {
-    key: "ivory-softback",
-    name: "Ivory Softback Cot",
-    description: "Upholstered softback cot for a calmer bedroom look.",
-    specs: { storage: "none", headboard: "upholstered" },
-  },
-  {
-    key: "regal-carved",
-    name: "Regal Carved Cot",
-    description: "Carved teak statement cot from the Royal Range.",
-    specs: { storage: "none", headboard: "carved" },
-  },
-  {
-    key: "willow-single",
-    name: "Willow Single Cot",
-    description: "Compact single cot for guest rooms and kids.",
-    specs: { storage: "none", headboard: "wooden" },
-  },
-];
-
-/** Cot size SKUs — seed expands every colour at the same price. */
-export const COT_VARIANT_PLANS = [
-  {
-    size: "single",
-    lengthIn: 72,
-    widthIn: 36,
-    mrp: 28999,
-    price: 23999,
-  },
-  {
-    size: "queen",
-    lengthIn: 78,
-    widthIn: 60,
-    mrp: 54999,
-    price: 44999,
-  },
-  {
-    size: "king",
-    lengthIn: 78,
-    widthIn: 72,
-    mrp: 68999,
-    price: 56999,
-  },
-  {
-    size: "custom",
-    lengthIn: null as number | null,
-    widthIn: null as number | null,
-    mrp: 64999,
-    price: 52999,
-  },
-] as const;
-
-/** Sofas — colour SKUs on custom size group (seating in product specs). */
-export const SOFA_MODELS: HouseModelSeed[] = [
-  {
-    key: "noir-3-seater",
-    name: "Noir 3-Seater Sofa",
-    description: "Deep walnut-tone 3-seater — fabric feel checked in the showroom.",
-    specs: { seating: "3", upholstery: "fabric", frame: "teak" },
-  },
-  {
-    key: "pearl-2-seater",
-    name: "Pearl 2-Seater Sofa",
-    description: "Compact 2-seater for apartments and reading nooks.",
-    specs: { seating: "2", upholstery: "fabric", frame: "engineered" },
-  },
-  {
-    key: "cascade-l-shape",
-    name: "Cascade L-Shape Sofa",
-    description: "Corner L-shape for family living rooms.",
-    specs: { seating: "L-shape", upholstery: "velvet", frame: "teak" },
-  },
-  {
-    key: "foldaway-cum-bed",
-    name: "FoldAway Sofa-Cum-Bed",
-    description: "Day sofa that opens into a guest bed.",
-    specs: { seating: "3", upholstery: "fabric", frame: "engineered" },
-  },
-  {
-    key: "lounge-recliner",
-    name: "Lounge Recliner",
-    description: "Single recliner with soft leatherette wrap.",
-    specs: { seating: "recliner", upholstery: "leatherette", frame: "engineered" },
-  },
-  {
-    key: "linen-3-seater",
-    name: "Linen Soft 3-Seater",
-    description: "Breathable linen-look fabric on a sheesham frame.",
-    specs: { seating: "3", upholstery: "fabric", frame: "sheesham" },
-  },
-  {
-    key: "horizon-l-shape",
-    name: "Horizon L-Shape Sofa",
-    description: "Low-profile L-shape with firm seat foam.",
-    specs: { seating: "L-shape", upholstery: "fabric", frame: "engineered" },
-  },
-  {
-    key: "velvet-haven",
-    name: "Velvet Haven 3-Seater",
-    description: "Plush velvet 3-seater for the Royal Range look.",
-    specs: { seating: "3", upholstery: "velvet", frame: "teak" },
-  },
-];
-
-/** One price per sofa model; seed expands every colour at this price. */
-export const SOFA_VARIANT_PRICE = { mrp: 52999, price: 42999 } as const;
-
-/** Computer tables — colour SKUs on custom size group (shape in product specs). */
-export const TABLE_MODELS: HouseModelSeed[] = [
-  {
-    key: "pixel-straight",
-    name: "Pixel Straight Desk",
-    description: "Straight computer table with clean cable drop.",
-    specs: { shape: "straight", widthBand: "100–120", keyboardTray: "yes" },
-  },
-  {
-    key: "focus-study",
-    name: "Focus Study Desk",
-    description: "Compact study desk for kids and WFH corners.",
-    specs: { shape: "straight", widthBand: "under 100", keyboardTray: "yes" },
-  },
-  {
-    key: "corner-pro-l",
-    name: "Corner Pro L-Desk",
-    description: "L-shape workstation with CPU bay.",
-    specs: { shape: "L", widthBand: "120+", keyboardTray: "yes" },
-  },
-  {
-    key: "cable-smart",
-    name: "CableSmart Computer Desk",
-    description: "Built-in cable tray and grommets for tidy setups.",
-    specs: { shape: "straight", widthBand: "100–120", keyboardTray: "yes" },
-  },
-  {
-    key: "wing-l",
-    name: "Wing L-Shape Desk",
-    description: "Wide L-desk for dual monitors.",
-    specs: { shape: "L", widthBand: "120+", keyboardTray: "yes" },
-  },
-  {
-    key: "metro-computer",
-    name: "Metro Computer Desk",
-    description: "Slim straight desk for small rooms.",
-    specs: { shape: "straight", widthBand: "under 100", keyboardTray: "yes" },
-  },
-];
-
-/** One price per table model; seed expands every colour at this price. */
-export const TABLE_VARIANT_PRICE = { mrp: 16999, price: 13999 } as const;
-
-export function houseImagePath(
-  categorySlug: "cots" | "sofas" | "computer-tables",
-  modelKey: string,
-) {
-  return `/images/${categorySlug}/${modelKey}.jpg`;
-}
-
-export function houseProductSlug(
-  categorySlug: "cots" | "sofas" | "computer-tables",
-  modelKey: string,
-) {
-  return `${categorySlug}-${modelKey}`;
-}

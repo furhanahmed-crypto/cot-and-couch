@@ -155,7 +155,8 @@ export async function getShopCategories() {
 
 export async function getShopCategoryBySlug(slug: string) {
   const category = await getCategoryBySlug(slug);
-  return category ? categoryForShop(category) : undefined;
+  if (!category?.visible) return undefined;
+  return categoryForShop(category);
 }
 
 async function loadCollectionIdByProduct(

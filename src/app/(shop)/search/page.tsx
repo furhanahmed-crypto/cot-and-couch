@@ -32,7 +32,7 @@ export default function SearchPage() {
     <div className="mx-auto max-w-7xl px-4 py-6 md:px-6 md:py-8">
       <h1 className="font-heading mb-2 text-3xl">Search</h1>
       <p className="mb-6 text-sm text-muted-foreground">
-        Find beds, sofas, mattresses, and more across the catalogue.
+        Find mattresses and beds across the catalogue.
       </p>
 
       <div className="relative mb-8 max-w-xl">
@@ -40,7 +40,7 @@ export default function SearchPage() {
         <Input
           value={q}
           onChange={(e) => setQ(e.target.value)}
-          placeholder="Try teak, hydraulic, sage sofa…"
+          placeholder="Try Wake Fit, Ideal Range, Queen…"
           className="pl-9"
           autoFocus
         />

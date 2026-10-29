@@ -248,7 +248,12 @@ export function AdminCategoryTemplates({ data }: { data: CategoryTemplatesData }
       ) : null}
 
       {data.categories
-        .filter((c) => c.slug !== "mattresses" && c.slug !== "cots")
+        .filter(
+          (c) =>
+            c.visible &&
+            c.slug !== "mattresses" &&
+            c.slug !== "cots",
+        )
         .map((cat) => {
           const config = configBySlug.get(cat.slug);
           const live = cat.visible;

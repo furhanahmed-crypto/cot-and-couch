@@ -60,29 +60,19 @@ export async function seedOps(db: Db) {
   const productBySlug = Object.fromEntries(allProducts.map((p) => [p.slug, p]));
 
   const memberships: { productId: string; collectionId: string }[] = [];
-  for (const p of allProducts) {
-    // Royal Range: featured house-made cots/sofas
-    if (
-      p.isFeatured &&
-      (p.slug.startsWith("cots-") || p.slug.startsWith("sofas-"))
-    ) {
-      memberships.push({
-        productId: p.id,
-        collectionId: colBySlug["royal-range"].id,
-      });
-      continue;
-    }
-    // Victoria: carved / regal pieces
-    if (
-      p.slug.includes("carved") ||
-      p.slug.includes("regal") ||
-      p.slug.includes("victoria")
-    ) {
-      memberships.push({
-        productId: p.id,
-        collectionId: colBySlug.victoria.id,
-      });
-    }
+  const range8 = productBySlug["cot-range-8"];
+  const range7 = productBySlug["cot-range-7"];
+  if (range8) {
+    memberships.push({
+      productId: range8.id,
+      collectionId: colBySlug["royal-range"].id,
+    });
+  }
+  if (range7) {
+    memberships.push({
+      productId: range7.id,
+      collectionId: colBySlug.victoria.id,
+    });
   }
   if (memberships.length) {
     await db.insert(schema.productCollections).values(memberships);
@@ -164,18 +154,18 @@ export async function seedOps(db: Db) {
     },
     {
       title: "Showroom walkthrough",
-      coverUrl: "/images/sofas/cover.jpg",
+      coverUrl: "/images/cots/cover.jpg",
       videoUrl: "https://www.w3schools.com/html/movie.mp4",
       instagramUrl: "https://www.instagram.com/",
-      tags: ["home"],
+      tags: ["home", "cots"],
       sortOrder: 4,
     },
   ]);
 
   const ortho = productBySlug["wake-fit-ortho-support"];
   const cloud = productBySlug["sleepwell-cloud-soft"];
-  const sofa = allProducts.find((p) => p.slug.startsWith("sofas-"));
-  const table = allProducts.find((p) => p.slug.startsWith("computer-tables-"));
+  const idealBed = productBySlug["cot-range-1"];
+  const premiumBed = productBySlug["cot-range-5"];
 
   const leadRows = [
     {
@@ -214,13 +204,13 @@ export async function seedOps(db: Db) {
       intent: "warm" as const,
       whatsappOffers: false,
       followUpDone: true,
-      events: sofa
+      events: idealBed
         ? [
-            { type: "view" as const, productId: sofa.id, at: new Date("2026-10-11") },
-            { type: "shortlist" as const, productId: sofa.id, at: new Date("2026-10-12") },
+            { type: "view" as const, productId: idealBed.id, at: new Date("2026-10-11") },
+            { type: "shortlist" as const, productId: idealBed.id, at: new Date("2026-10-12") },
             {
               type: "cta" as const,
-              productId: sofa.id,
+              productId: idealBed.id,
               at: new Date("2026-10-12T16:00:00Z"),
               payload: { type: "call" },
             },
@@ -236,8 +226,8 @@ export async function seedOps(db: Db) {
       intent: "cold" as const,
       whatsappOffers: true,
       followUpDone: false,
-      events: table
-        ? [{ type: "view" as const, productId: table.id, at: new Date("2026-10-10") }]
+      events: premiumBed
+        ? [{ type: "view" as const, productId: premiumBed.id, at: new Date("2026-10-10") }]
         : [],
     },
   ];

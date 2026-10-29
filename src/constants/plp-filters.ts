@@ -1,5 +1,4 @@
 import type { AttributeTemplate } from "@/types";
-import { dtoCategories } from "./catalogue-from-dto";
 import {
   COMFORTS,
   COVER_MATERIALS,
@@ -8,10 +7,9 @@ import {
   SIZE_GROUPS,
   THICKNESSES,
 } from "@/data/catalogue/seed-data";
+import { BED_WIDTH_OPTIONS } from "@/constants/bed-model";
 
-export const categories = dtoCategories;
-
-/** Filter fields for PLP — aligned with option_groups in DB. */
+/** PLP filter field templates for live categories only. */
 export const attributeTemplates: AttributeTemplate[] = [
   {
     id: "tpl-mattresses",
@@ -65,43 +63,14 @@ export const attributeTemplates: AttributeTemplate[] = [
   {
     id: "tpl-cots",
     categoryId: "cat-cots",
-    name: "Cots filters",
+    name: "Beds filters",
     fields: [
       {
-        key: "size",
-        label: "Size",
+        key: "width",
+        label: "Width",
         type: "dropdown",
         filterable: true,
-        options: SIZE_GROUPS.map((s) => s.label),
-      },
-      // Colour/finish comes from FilterPanel colour master — do not duplicate here.
-    ],
-  },
-  {
-    id: "tpl-sofas",
-    categoryId: "cat-sofas",
-    name: "Sofas filters",
-    fields: [
-      {
-        key: "seating",
-        label: "Seating",
-        type: "dropdown",
-        filterable: true,
-        options: ["2", "3", "L-shape", "recliner"],
-      },
-    ],
-  },
-  {
-    id: "tpl-computer-tables",
-    categoryId: "cat-computer-tables",
-    name: "Computer tables filters",
-    fields: [
-      {
-        key: "shape",
-        label: "Shape",
-        type: "dropdown",
-        filterable: true,
-        options: ["straight", "L"],
+        options: BED_WIDTH_OPTIONS.map((w) => w.label),
       },
     ],
   },
