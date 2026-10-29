@@ -1,6 +1,6 @@
 import { and, desc, eq } from "drizzle-orm";
 import { db } from "@/db";
-import { profileFavourites } from "@/db/schema";
+import { profileFavourites } from "@/db";
 import { getCurrentProfile } from "@/lib/auth/profile";
 import { getProductsByIds } from "@/services/catalogue";
 

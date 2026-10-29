@@ -3,7 +3,6 @@ import {
   integer,
   jsonb,
   numeric,
-  pgEnum,
   pgTable,
   primaryKey,
   text,
@@ -11,26 +10,18 @@ import {
   unique,
   uuid,
 } from "drizzle-orm/pg-core";
-
-/** App roles — enforced in server code, not only in UI. */
-export const userRoleEnum = pgEnum("user_role", ["admin", "team", "customer"]);
-
-export const productStatusEnum = pgEnum("product_status", [
-  "draft",
-  "published",
-  "archived",
-]);
-
-export const intentScoreEnum = pgEnum("intent_score", ["hot", "warm", "cold"]);
-
-export const orderStatusEnum = pgEnum("order_status", [
-  "confirmed",
-  "in_production",
-  "out_for_delivery",
-  "delivered",
-  "closed",
-  "issue",
-]);
+import {
+  intentScoreEnum,
+  orderStatusEnum,
+  productStatusEnum,
+  userRoleEnum,
+} from "./schema-enums";
+export {
+  intentScoreEnum,
+  orderStatusEnum,
+  productStatusEnum,
+  userRoleEnum,
+} from "./schema-enums";
 
 /**
  * App identity row (1:1 with Neon Auth user).

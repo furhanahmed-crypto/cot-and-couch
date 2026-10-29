@@ -1,15 +1,14 @@
 "use client";
 
+import Link from "next/link";
 import { useMemo } from "react";
 import { AppSelect } from "@/components/ui/app-select";
-import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { categoryConfigForSlug } from "@/constants/category-config";
-import {
-  templateFieldKey,
-  type CategoryProductTemplate,
-} from "@/constants/admin-product-templates";
+import { BED_VARIANT_ONLY_GROUP_KEYS } from "@/constants/bed-model";
+import type { CategoryProductTemplate } from "@/constants/admin-product-templates";
+import { ROUTES } from "@/constants/routes";
 import type { ProductEditorLookups } from "@/types";
 
 export type MattressSpecState = {
@@ -44,16 +43,12 @@ export function ProductEditorTemplate({
   attributes,
   onAttributeChange,
 }: Props) {
-  if (!template) {
-    return (
-      <section className="rounded-xl border border-dashed border-border bg-card p-4 text-sm text-muted-foreground">
-        No category template mapped yet for this product.
-      </section>
-    );
-  }
-
   const isMattress = categorySlug === "mattresses";
   const furniture = categoryConfigForSlug(categorySlug);
+  const requiredLabels = useMemo(
+    () => new Set(template?.required ?? []),
+    [template?.required],
+  );
 
   const brandFilter = useMemo(() => {
     const ids = lookups.brandOptionIds[mattress.mattressBrandId];
@@ -64,32 +59,41 @@ export function ProductEditorTemplate({
   const filterOpts = <T extends { id: string }>(list: T[]) =>
     brandFilter ? list.filter((o) => brandFilter.has(o.id)) : list;
 
+  const furnitureGroups = useMemo(() => {
+    if (!furniture) return [];
+    return furniture.groups
+      .filter((g) => !BED_VARIANT_ONLY_GROUP_KEYS.has(g.key))
+      .map((g) => ({
+        ...g,
+        options: (lookups.furnitureOptionsByKey[g.key] ?? []).filter(
+          (o) => o.label.trim().length > 0,
+        ),
+      }))
+      .filter((g) => g.options.length > 0);
+  }, [furniture, lookups.furnitureOptionsByKey]);
+
+  if (!template) {
+    return (
+      <section className="rounded-xl border border-dashed border-border bg-card p-4 text-sm text-muted-foreground">
+        No category template mapped yet for this product.
+      </section>
+    );
+  }
+
   const title = furniture?.title ?? template.name;
   const variants = furniture?.variants ?? template.variants;
   const note = furniture?.note ?? template.note;
 
   return (
     <section className="min-w-0 space-y-4 rounded-xl border border-border bg-card p-4">
-      <div className="flex flex-wrap items-start justify-between gap-2">
-        <div className="min-w-0">
-          <h2 className="font-heading text-lg break-words">
-            Category template: {title}
-          </h2>
-          <p className="text-sm text-muted-foreground break-words">
-            Variant axes: {variants.join(" · ")}
-          </p>
-          {note ? (
-            <p className="mt-1 text-xs text-muted-foreground break-words">
-              {note}
-            </p>
-          ) : null}
-        </div>
-        <Badge
-          variant="secondary"
-          className="shrink-0 bg-emerald-500/15 text-emerald-800 dark:text-emerald-300"
-        >
-          Neon-backed
-        </Badge>
+      <div className="min-w-0">
+        <h2 className="font-heading text-lg break-words">Specifications</h2>
+        <p className="text-sm text-muted-foreground break-words">
+          {title} · Variant axes: {variants.join(" · ")}
+        </p>
+        {note ? (
+          <p className="mt-1 text-xs text-muted-foreground break-words">{note}</p>
+        ) : null}
       </div>
 
       {isMattress ? (
@@ -98,37 +102,63 @@ export function ProductEditorTemplate({
             label="Brand"
             required
             value={mattress.mattressBrandId}
-            onChange={(v) => onMattressChange({ mattressBrandId: v })}
+            onChange={(v) =>
+              onMattressChange({
+                mattressBrandId: v,
+                purposeOptionId: "",
+                comfortOptionId: "",
+                fillingOptionId: "",
+                coverMaterialOptionId: "",
+              })
+            }
             options={lookups.brands.map((b) => ({ id: b.id, label: b.name }))}
           />
-          <FieldSelect
-            label="Mattress type"
-            required
-            value={mattress.purposeOptionId}
-            onChange={(v) => onMattressChange({ purposeOptionId: v })}
-            options={filterOpts(lookups.purpose)}
-          />
-          <FieldSelect
-            label="Firmness"
-            required
-            value={mattress.comfortOptionId}
-            onChange={(v) => onMattressChange({ comfortOptionId: v })}
-            options={filterOpts(lookups.comfort)}
-          />
-          <FieldSelect
-            label="Layer construction"
-            required
-            value={mattress.fillingOptionId}
-            onChange={(v) => onMattressChange({ fillingOptionId: v })}
-            options={filterOpts(lookups.filling)}
-          />
-          <FieldSelect
-            label="Cover fabric"
-            required
-            value={mattress.coverMaterialOptionId}
-            onChange={(v) => onMattressChange({ coverMaterialOptionId: v })}
-            options={filterOpts(lookups.coverMaterial)}
-          />
+          {!mattress.mattressBrandId ? (
+            <p className="text-sm text-muted-foreground sm:col-span-2">
+              Choose a brand to see its mattress types, firmness, layers, and
+              cover options.
+            </p>
+          ) : null}
+          {filterOpts(lookups.purpose).length > 0 ? (
+            <FieldSelect
+              label="Mattress type"
+              required
+              value={mattress.purposeOptionId}
+              onChange={(v) => onMattressChange({ purposeOptionId: v })}
+              options={filterOpts(lookups.purpose)}
+              disabled={!mattress.mattressBrandId}
+            />
+          ) : null}
+          {filterOpts(lookups.comfort).length > 0 ? (
+            <FieldSelect
+              label="Firmness"
+              required
+              value={mattress.comfortOptionId}
+              onChange={(v) => onMattressChange({ comfortOptionId: v })}
+              options={filterOpts(lookups.comfort)}
+              disabled={!mattress.mattressBrandId}
+            />
+          ) : null}
+          {filterOpts(lookups.filling).length > 0 ? (
+            <FieldSelect
+              label="Layer construction"
+              required
+              value={mattress.fillingOptionId}
+              onChange={(v) => onMattressChange({ fillingOptionId: v })}
+              options={filterOpts(lookups.filling)}
+              disabled={!mattress.mattressBrandId}
+            />
+          ) : null}
+          {filterOpts(lookups.coverMaterial).length > 0 ? (
+            <FieldSelect
+              label="Cover fabric"
+              required
+              value={mattress.coverMaterialOptionId}
+              onChange={(v) => onMattressChange({ coverMaterialOptionId: v })}
+              options={filterOpts(lookups.coverMaterial)}
+              disabled={!mattress.mattressBrandId}
+            />
+          ) : null}
           <div className="min-w-0 space-y-1">
             <Label>
               Brand warranty (years) <span className="text-destructive">*</span>
@@ -186,59 +216,35 @@ export function ProductEditorTemplate({
             />
           </div>
         </div>
-      ) : furniture ? (
+      ) : furnitureGroups.length ? (
         <div className="grid min-w-0 gap-3 sm:grid-cols-2">
-          {furniture.groups.map((g) => (
+          {furnitureGroups.map((g) => (
             <FieldSelect
               key={g.key}
               label={g.label}
+              required={requiredLabels.has(g.label)}
               value={attributes[g.key] ?? ""}
               onChange={(v) => onAttributeChange(g.key, v)}
-              options={(lookups.furnitureOptionsByKey[g.key] ?? []).map(
-                (o) => ({ id: o.label, label: o.label }),
-              )}
-              allowEmpty
+              options={g.options.map((o) => ({
+                id: o.label,
+                label: o.label,
+              }))}
+              allowEmpty={!requiredLabels.has(g.label)}
             />
-          ))}
-          {furniture.textFields.map((t) => (
-            <div key={t.key} className="min-w-0 space-y-1">
-              <Label className="break-words">
-                {t.label}
-                {t.required ? (
-                  <span className="text-destructive"> *</span>
-                ) : null}
-              </Label>
-              <Input
-                value={attributes[t.key] ?? ""}
-                onChange={(e) => onAttributeChange(t.key, e.target.value)}
-                className="max-w-full"
-              />
-            </div>
           ))}
         </div>
       ) : (
-        <div className="grid min-w-0 gap-3 sm:grid-cols-2">
-          {[...template.required, ...template.optional].map((name) => {
-            const key = templateFieldKey(name);
-            const required = template.required.includes(name);
-            return (
-              <div key={key} className="min-w-0 space-y-1">
-                <Label className="break-words">
-                  {name}
-                  {required ? (
-                    <span className="text-destructive"> *</span>
-                  ) : null}
-                </Label>
-                <Input
-                  value={attributes[key] ?? ""}
-                  onChange={(e) => onAttributeChange(key, e.target.value)}
-                  placeholder={required ? "Required" : "Optional"}
-                  className="max-w-full"
-                />
-              </div>
-            );
-          })}
-        </div>
+        <p className="text-sm text-muted-foreground">
+          No configuration options are set up for this category yet. Add them
+          under{" "}
+          <Link
+            href={ROUTES.admin.categories}
+            className="font-medium text-foreground underline underline-offset-2"
+          >
+            Categories &amp; templates
+          </Link>
+          .
+        </p>
       )}
     </section>
   );
@@ -251,6 +257,7 @@ function FieldSelect({
   options,
   required,
   allowEmpty,
+  disabled,
 }: {
   label: string;
   value: string;
@@ -258,6 +265,7 @@ function FieldSelect({
   options: { id: string; label: string }[];
   required?: boolean;
   allowEmpty?: boolean;
+  disabled?: boolean;
 }) {
   const items = [
     ...(allowEmpty || !required
@@ -277,6 +285,7 @@ function FieldSelect({
         items={items}
         placeholder="Select…"
         triggerClassName="w-full"
+        disabled={disabled}
       />
     </div>
   );

@@ -1,7 +1,7 @@
 "use server";
 
 import { getCurrentProfile } from "@/lib/auth/profile";
-import type { Profile } from "@/db/schema";
+import type { Profile } from "@/db";
 
 /** Profile for the signed-in user, or null. */
 export async function getMyProfile(): Promise<Profile | null> {

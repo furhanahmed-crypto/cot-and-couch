@@ -15,7 +15,7 @@ import {
 import { ROUTES } from "@/constants/routes";
 import { SHOP_CACHE_TAG } from "@/lib/cache-tags";
 import {
-  getCategories,
+  getShopCategories,
   getFeaturedProducts,
   getProductsByIds,
   getRoyalRangeProducts,
@@ -27,7 +27,7 @@ async function HomeContent() {
   cacheLife("hours");
   cacheTag(SHOP_CACHE_TAG);
   const [cats, featured, royal, gallery] = await Promise.all([
-    getCategories(),
+    getShopCategories(),
     getFeaturedProducts(),
     getRoyalRangeProducts(),
     getGallery(),

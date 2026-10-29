@@ -13,7 +13,7 @@ export default async function SettingsPage() {
       <div className="space-y-6">
         <PageHeader
           title="Store settings"
-          description="Edit store_settings in Neon."
+          description="Contact details and showroom information shown on the storefront."
         />
         <SettingsForm store={store} />
       </div>

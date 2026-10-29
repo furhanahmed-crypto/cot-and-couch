@@ -20,11 +20,12 @@ import {
   optionGroups,
   options,
   productCollections,
+  productOptionValues,
   productVariants,
   products as productsTable,
   sizeDimensions,
   type ProductVariant,
-} from "@/db/schema";
+} from "@/db";
 import {
   mapBrand,
   mapCategory,
@@ -35,6 +36,10 @@ import {
 } from "@/services/catalogue-map";
 import { getCollectionBySlug as getOpsCollectionBySlug, getCollections, getStoreInfo } from "@/services/ops";
 import { allCategoryConfigGroupKeys } from "@/constants/category-config";
+import {
+  categoriesForShop,
+  categoryForShop,
+} from "@/lib/shop-category-label";
 import type { Product, ProductEditorLookups } from "@/types";
 
 export type { FilterState, SortKey } from "@/lib/catalogue-utils";
@@ -87,7 +92,7 @@ async function loadVariantsByProductIds(
         stock_qty AS "stockQty",
         is_active AS "isActive",
         created_at AS "createdAt"
-      FROM product_variants
+      FROM coc_product_variants
       WHERE is_active = true
         AND product_id IN (${sql.join(
           productIds.map((id) => sql`${id}::uuid`),
@@ -143,6 +148,16 @@ export async function getCategoryBySlug(slug: string) {
   return rows[0] ? mapCategory(rows[0]) : undefined;
 }
 
+/** Storefront categories — e.g. slug `cots` displays as “Beds”. */
+export async function getShopCategories() {
+  return categoriesForShop(await getCategories());
+}
+
+export async function getShopCategoryBySlug(slug: string) {
+  const category = await getCategoryBySlug(slug);
+  return category ? categoryForShop(category) : undefined;
+}
+
 async function loadCollectionIdByProduct(
   productIds: string[],
 ): Promise<Map<string, string>> {
@@ -163,24 +178,96 @@ const loadDimLabels = cache(async (): Promise<Map<string, string>> => {
   return new Map(rows.map((d) => [d.id, d.label]));
 });
 
+const MATTRESS_OPTION_KEYS = [
+  "purpose",
+  "cover_material",
+  "filling",
+  "comfort",
+] as const;
+
+type ProductOptionMeta = {
+  purposeOptionId: string | null;
+  coverMaterialOptionId: string | null;
+  fillingOptionId: string | null;
+  comfortOptionId: string | null;
+  attributes: Record<string, string>;
+};
+
+async function loadProductOptionMeta(
+  productIds: string[],
+): Promise<Map<string, ProductOptionMeta>> {
+  const empty = (): ProductOptionMeta => ({
+    purposeOptionId: null,
+    coverMaterialOptionId: null,
+    fillingOptionId: null,
+    comfortOptionId: null,
+    attributes: {},
+  });
+  if (!productIds.length) return new Map();
+
+  const rows = await db
+    .select({
+      productId: productOptionValues.productId,
+      groupKey: optionGroups.key,
+      optionId: productOptionValues.optionId,
+      textValue: productOptionValues.textValue,
+    })
+    .from(productOptionValues)
+    .innerJoin(optionGroups, eq(optionGroups.id, productOptionValues.optionGroupId))
+    .where(inArray(productOptionValues.productId, productIds));
+
+  const map = new Map<string, ProductOptionMeta>();
+  for (const id of productIds) map.set(id, empty());
+
+  for (const row of rows) {
+    const meta = map.get(row.productId) ?? empty();
+    const key = row.groupKey;
+    if (
+      row.optionId &&
+      (MATTRESS_OPTION_KEYS as readonly string[]).includes(key)
+    ) {
+      if (key === "purpose") meta.purposeOptionId = row.optionId;
+      if (key === "cover_material") meta.coverMaterialOptionId = row.optionId;
+      if (key === "filling") meta.fillingOptionId = row.optionId;
+      if (key === "comfort") meta.comfortOptionId = row.optionId;
+    } else if (row.textValue?.trim()) {
+      meta.attributes[key] = row.textValue.trim();
+    } else if (row.optionId) {
+      meta.attributes[key] = row.optionId;
+    }
+    map.set(row.productId, meta);
+  }
+  return map;
+}
+
 async function hydrateProducts(
   rows: (typeof productsTable.$inferSelect)[],
   mode: VariantMode,
 ): Promise<Product[]> {
   if (!rows.length) return [];
   const ids = rows.map((r) => r.id);
-  const [opts, catSlugs, variantsByProduct, collectionByProduct, dimLabels] =
+  const [opts, catSlugs, variantsByProduct, collectionByProduct, dimLabels, optionMeta] =
     await Promise.all([
       loadOptionsById(),
       loadCategorySlugById(),
       loadVariantsByProductIds(ids, mode),
       loadCollectionIdByProduct(ids),
       loadDimLabels(),
+      loadProductOptionMeta(ids),
     ]);
 
   return rows.map((row) => {
+    const meta = optionMeta.get(row.id);
+    const enriched = {
+      ...row,
+      purposeOptionId: meta?.purposeOptionId ?? null,
+      coverMaterialOptionId: meta?.coverMaterialOptionId ?? null,
+      fillingOptionId: meta?.fillingOptionId ?? null,
+      comfortOptionId: meta?.comfortOptionId ?? null,
+      attributes: meta?.attributes ?? {},
+    };
     const product = mapProduct(
-      row,
+      enriched,
       variantsByProduct.get(row.id) ?? [],
       opts,
       catSlugs.get(row.categoryId) ?? "mattresses",

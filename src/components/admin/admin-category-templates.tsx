@@ -48,6 +48,8 @@ import type {
   CategoryConfigAdmin,
   CategoryTemplatesData,
 } from "@/services/admin-categories";
+import { BedsCategorySection } from "@/components/admin/beds-category-section";
+import { BED_WIDTH_GROUP_KEY } from "@/constants/bed-model";
 import { cn } from "@/lib/utils";
 
 const GROUP_META: {
@@ -85,6 +87,14 @@ export function AdminCategoryTemplates({ data }: { data: CategoryTemplatesData }
   const [configEdit, setConfigEdit] = useState<CategoryConfigAdmin | null>(null);
 
   const mattressCategory = data.categories.find((c) => c.slug === "mattresses");
+  const bedsCategory = data.categories.find((c) => c.slug === "cots");
+  const widthOptions =
+    data.furnitureOptionsByKey[BED_WIDTH_GROUP_KEY]?.map((o) => ({
+      id: o.id,
+      label: o.label,
+      detail: o.detail,
+      isActive: o.isActive,
+    })) ?? [];
   const configBySlug = new Map(
     data.furnitureConfigs.map((c) => [c.slug, c]),
   );
@@ -211,8 +221,34 @@ export function AdminCategoryTemplates({ data }: { data: CategoryTemplatesData }
         </CategorySection>
       ) : null}
 
+      {bedsCategory ? (
+        <BedsCategorySection
+          categoryId={bedsCategory.id}
+          categoryName={bedsCategory.name}
+          visible={bedsCategory.visible}
+          pending={pending}
+          bedRanges={data.bedRanges}
+          widthOptions={widthOptions}
+          onRenameCategory={(name) => {
+            startTransition(async () => {
+              await renameCategoryAction({ categoryId: bedsCategory.id, name });
+              refresh();
+            });
+          }}
+          onToggleVisible={() => {
+            startTransition(async () => {
+              await setCategoryActiveAction({
+                categoryId: bedsCategory.id,
+                isActive: !bedsCategory.visible,
+              });
+              refresh();
+            });
+          }}
+        />
+      ) : null}
+
       {data.categories
-        .filter((c) => c.slug !== "mattresses")
+        .filter((c) => c.slug !== "mattresses" && c.slug !== "cots")
         .map((cat) => {
           const config = configBySlug.get(cat.slug);
           const live = cat.visible;
@@ -776,8 +812,9 @@ function CategoryConfigSheet({
         <SheetHeader>
           <SheetTitle>{config?.title ?? "Category"} options</SheetTitle>
           <SheetDescription>
-            Add, rename, or remove values for each configuration field. Products
-            pick from these lists in the editor.
+            {config?.slug === "cots"
+              ? "Shared bed widths apply to all 8 range products. Set prices per variant in each Range product."
+              : "Add, rename, or remove values for each configuration field. Products pick from these lists in the editor."}
           </SheetDescription>
         </SheetHeader>
 

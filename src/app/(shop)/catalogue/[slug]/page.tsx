@@ -9,9 +9,9 @@ import {
 import { attributeTemplates } from "@/data/mock/categories";
 import {
   getCategories,
-  getCategoryBySlug,
   getMasters,
   getPublishedProductsByCategoryId,
+  getShopCategoryBySlug,
 } from "@/services/catalogue";
 
 export async function generateStaticParams() {
@@ -24,7 +24,7 @@ export async function generateStaticParams() {
 }
 
 async function CategoryContent({ slug }: { slug: string }) {
-  const category = await getCategoryBySlug(slug);
+  const category = await getShopCategoryBySlug(slug);
   if (!category) notFound();
 
   const [products, masters] = await Promise.all([

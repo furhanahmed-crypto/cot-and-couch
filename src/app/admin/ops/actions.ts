@@ -8,9 +8,8 @@ import {
   galleryItems,
   leads,
   reels,
-  segments,
   storeSettings,
-} from "@/db/schema";
+} from "@/db";
 import { requireStaffProfile } from "@/services/profile";
 import { ROUTES } from "@/constants/routes";
 
@@ -170,28 +169,6 @@ export async function updateLeadAction(input: {
 export async function deleteLeadAction(id: string) {
   await requireStaffProfile();
   await db.delete(leads).where(eq(leads.id, id));
-  revalidatePath(ROUTES.admin.leads);
-  return { ok: true as const };
-}
-
-export async function createSegmentAction(input: {
-  name: string;
-  description: string;
-  count: number;
-}) {
-  await requireStaffProfile();
-  await db.insert(segments).values({
-    name: input.name.trim(),
-    description: input.description.trim() || null,
-    count: input.count,
-  });
-  revalidatePath(ROUTES.admin.leads);
-  return { ok: true as const };
-}
-
-export async function deleteSegmentAction(id: string) {
-  await requireStaffProfile();
-  await db.delete(segments).where(eq(segments.id, id));
   revalidatePath(ROUTES.admin.leads);
   return { ok: true as const };
 }

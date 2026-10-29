@@ -85,7 +85,7 @@ Sessions are **Neon Auth cookies** (not localStorage). Shortlist / recently view
 - Real SMS/WhatsApp OTP, Supabase, or any production API
 - Inventory/ERP sync, CRM integration, DPDP-compliant production data handling
 
-Progress tracking: [TASKS.md](./docs/TASKS.md).
+Progress and architecture: [docs/README.md](./docs/README.md).
 
 ---
 

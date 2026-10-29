@@ -5,10 +5,10 @@ import { useRouter } from "next/navigation";
 import { Pencil, Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import {
-  createSaleAction,
-  deleteSaleAction,
-  updateSaleAction,
-} from "@/app/admin/sales/actions";
+  createOrderAction,
+  deleteOrderAction,
+  updateOrderAction,
+} from "@/app/admin/orders/actions";
 import { AppSelect } from "@/components/ui/app-select";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -35,7 +35,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { formatINR } from "@/lib/format";
 import type { OrderStatus, SaleOrder } from "@/types";
 
-export type SaleProductOption = {
+export type OrderProductOption = {
   id: string;
   name: string;
   variants: { id: string; label: string }[];
@@ -117,17 +117,19 @@ function formFromOrder(o: SaleOrder): FormState {
   };
 }
 
-export function SalesManager({
+export function OrdersManager({
   orders,
   products,
   productNames,
 }: {
   orders: SaleOrder[];
-  products: SaleProductOption[];
+  products: OrderProductOption[];
   productNames: Record<string, string>;
 }) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
+  const [query, setQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState<string>("all");
   const [sheetOpen, setSheetOpen] = useState(false);
   const [editing, setEditing] = useState<SaleOrder | null>(null);
   const [form, setForm] = useState<FormState>(emptyForm);
@@ -146,6 +148,20 @@ export function SalesManager({
       ...(product?.variants.map((v) => ({ value: v.id, label: v.label })) ?? []),
     ];
   }, [products, form.productId]);
+
+  const filtered = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    return orders.filter((o) => {
+      if (statusFilter !== "all" && o.status !== statusFilter) return false;
+      if (!q) return true;
+      const product = o.productId ? productNames[o.productId] ?? "" : "";
+      return (
+        o.customerName.toLowerCase().includes(q) ||
+        o.customerMobile.includes(q) ||
+        product.toLowerCase().includes(q)
+      );
+    });
+  }, [orders, query, statusFilter, productNames]);
 
   function openCreate() {
     setEditing(null);
@@ -181,14 +197,14 @@ export function SalesManager({
       };
 
       const res = editing
-        ? await updateSaleAction({ id: editing.id, ...payload })
-        : await createSaleAction(payload);
+        ? await updateOrderAction({ id: editing.id, ...payload })
+        : await createOrderAction(payload);
 
       if (!res.ok) {
         toast.error(res.error);
         return;
       }
-      toast.success(editing ? "Sale updated" : "Sale recorded");
+      toast.success(editing ? "Order updated" : "Order recorded");
       setSheetOpen(false);
       setEditing(null);
       router.refresh();
@@ -198,9 +214,9 @@ export function SalesManager({
   function confirmDelete() {
     if (!deleteId) return;
     startTransition(async () => {
-      await deleteSaleAction(deleteId);
+      await deleteOrderAction(deleteId);
       setDeleteId(null);
-      toast.success("Sale removed");
+      toast.success("Order removed");
       router.refresh();
     });
   }
@@ -209,17 +225,34 @@ export function SalesManager({
     <div className="space-y-4">
       <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
         <p className="text-sm text-muted-foreground">
-          {orders.length} sale{orders.length === 1 ? "" : "s"} · update delivery
-          status as orders move
+          {filtered.length} of {orders.length} orders
         </p>
         <Button type="button" size="sm" className="w-full sm:w-auto" onClick={openCreate}>
           <Plus className="size-3.5" />
-          Record sale
+          Record order
         </Button>
       </div>
 
+      <div className="flex flex-wrap items-center gap-2">
+        <Input
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          placeholder="Search customer or product…"
+          className="h-9 w-full min-w-0 sm:max-w-xs"
+        />
+        <AppSelect
+          value={statusFilter}
+          onValueChange={setStatusFilter}
+          triggerClassName="h-9 w-[10rem]"
+          items={[
+            { value: "all", label: "Status: All" },
+            ...STATUS_ITEMS.map((s) => ({ value: s.value, label: s.label })),
+          ]}
+        />
+      </div>
+
       <div className="min-w-0 overflow-x-auto rounded-xl border border-border bg-card">
-        <Table className="min-w-[900px]">
+        <Table>
           <TableHeader>
             <TableRow>
               <TableHead>Customer</TableHead>
@@ -232,7 +265,7 @@ export function SalesManager({
             </TableRow>
           </TableHeader>
           <TableBody>
-            {orders.map((o) => (
+            {filtered.map((o) => (
               <TableRow key={o.id}>
                 <TableCell>
                   <div className="font-medium">{o.customerName}</div>
@@ -289,13 +322,15 @@ export function SalesManager({
                 </TableCell>
               </TableRow>
             ))}
-            {orders.length === 0 ? (
+            {filtered.length === 0 ? (
               <TableRow>
                 <TableCell
                   colSpan={7}
                   className="py-10 text-center text-sm text-muted-foreground"
                 >
-                  No sales yet — record the first one.
+                  {orders.length === 0
+                    ? "No orders yet — record the first one."
+                    : "No orders match these filters."}
                 </TableCell>
               </TableRow>
             ) : null}
@@ -315,9 +350,9 @@ export function SalesManager({
           className="w-full overflow-y-auto sm:max-w-lg"
         >
           <SheetHeader>
-            <SheetTitle>{editing ? "Edit sale" : "Record sale"}</SheetTitle>
+            <SheetTitle>{editing ? "Edit order" : "Record order"}</SheetTitle>
             <SheetDescription>
-              Capture showroom sales and update delivery status (on the way,
+              Capture showroom orders and update delivery status (on the way,
               delivered, etc.).
             </SheetDescription>
           </SheetHeader>
@@ -434,7 +469,7 @@ export function SalesManager({
               Cancel
             </Button>
             <Button type="button" disabled={pending} onClick={save}>
-              {pending ? "Saving…" : editing ? "Save changes" : "Record sale"}
+              {pending ? "Saving…" : editing ? "Save changes" : "Record order"}
             </Button>
           </SheetFooter>
         </SheetContent>
@@ -445,7 +480,7 @@ export function SalesManager({
         onOpenChange={(open) => {
           if (!open) setDeleteId(null);
         }}
-        title="Remove this sale?"
+        title="Remove this order?"
         description="The order and its status history will be permanently deleted."
         confirmLabel="Remove"
         pending={pending}

@@ -1,165 +1,79 @@
-# Architecture — Cot & Couch Digital Window
+# Architecture — Cot & Couch
 
-Next.js App Router app. **Auth + `profiles` use Neon** (Managed Better Auth + Postgres). **Catalogue / admin CRUD remain mock** until the next DB phase.
-
-### Auth (live)
-
-| Piece | Location |
-|-------|----------|
-| Env | Root `.env` — `DATABASE_URL`, `NEON_AUTH_BASE_URL`, `NEON_AUTH_COOKIE_SECRET` |
-| Server auth | `src/lib/auth/server.ts` (`createNeonAuth`) |
-| Browser auth | `src/lib/auth/client.ts` |
-| API proxy | `src/app/api/auth/[...path]/route.ts` |
-| Route guard | `src/proxy.ts` → redirects guests to `/login` |
-| App identity | `profiles` table (`src/db/schema.ts`) keyed by `auth_user_id` |
-| Ensure/load profile | `src/lib/auth/profile.ts` |
-
-Authorize by **`profile.id` + `role`**, never by email string checks. Phone OTP columns exist on `profiles` for a later provider.
-
----
+Next.js App Router storefront + staff admin on Neon Postgres.
 
 ## Stack
 
 | Layer | Choice |
 |-------|--------|
 | Framework | Next.js 16 (App Router) |
-| UI | React 19, Tailwind CSS 4, shadcn/ui (Radix/Base UI primitives) |
-| Language | TypeScript (`strict: true`) |
-| Theming | `next-themes` (class-based light/dark) |
-| Icons | `lucide-react` |
-| Toasts | `sonner` |
-| Path alias | `@/*` → `src/*` |
+| UI | React 19, Tailwind 4, shadcn/ui |
+| DB | Neon + Drizzle ORM |
+| Auth | Neon Auth → `coc_profiles` (`auth_user_id`) |
 
----
+Path alias: `@/*` → `src/*`.
 
-## Directory layout (target)
+## Database
+
+| Piece | Location |
+|-------|----------|
+| Runtime schema | `src/db/app-schema.ts` (aliases to `coc_*`) |
+| Drizzle table defs | `schema-coc*.ts`, shared enums in `schema-enums.ts` |
+| Migrations | `drizzle/0001` … `0008` (see `docs/README.md`) |
+| Legacy (migrate-only) | `schema-legacy.ts`, `migrate-legacy-to-coc.ts` |
+
+**Commands**
+
+| Command | Use |
+|---------|-----|
+| `bun run db:migrate` | Apply all SQL migrations (unpooled URL in drizzle config) |
+| `bun run db:seed` | Demo catalogue + ops into `coc_*` (dev) |
+| `bun run db:migrate-bed-ranges` | Normalise 8 bed ranges, widths, variants, collection tags |
+| `bun run db:studio` | Drizzle Studio |
+
+Migration `0006_drop_legacy.sql` removes pre-revamp tables. `0007` / `0008` specialise the bed catalogue (width-only axes, `options.detail` for dimensions).
+
+### Catalogue highlights
+
+| Category (slug) | Shop label | Admin pattern |
+|-----------------|------------|---------------|
+| `mattresses` | Mattresses | Brands grid + per-brand option sheet |
+| `cots` | Beds | Range products grid + shared width sheet (name + size) |
+| Other furniture | Per category | Category config sheet (option groups from `category-config`) |
+
+Product variants for beds: **width** (`cot_width`, label + detail) × **colour** when colour group is linked. Mapping for PDP/PLP: `src/services/catalogue-map.ts`.
+
+Bed constants: `src/constants/bed-model.ts`. Category admin data: `src/services/admin-categories.ts`.
+
+## Auth
+
+| Piece | Location |
+|-------|----------|
+| Server | `src/lib/auth/server.ts` |
+| Profile load/create | `src/lib/auth/profile.ts` |
+| API | `src/app/api/auth/[...path]/route.ts` |
+| Guard | `src/proxy.ts` |
+
+Authorize by **`profile.id` and `role`**, not email alone.
+
+## App layout
 
 ```
-cot-and-couch/
-├── docs/                    # Product & engineering docs (this folder)
-├── public/                  # Static assets (logo, favicons)
-└── src/
-    ├── app/
-    │   ├── layout.tsx       # Root layout, fonts, theme provider
-    │   ├── globals.css      # Design tokens (brand colours)
-    │   ├── page.tsx         # Marketing entry (may redirect to shop)
-    │   ├── (shop)/          # Customer-facing routes (shared shop chrome)
-    │   │   ├── layout.tsx
-    │   │   ├── page.tsx     # CF-01 homepage
-    │   │   ├── catalogue/
-    │   │   ├── product/[slug]/
-    │   │   ├── collections/[slug]/
-    │   │   ├── shortlist/
-    │   │   └── search/
-    │   ├── (auth)/          # Customer OTP flows
-    │   │   ├── login/
-    │   │   └── verify/
-    │   └── admin/           # Staff console (separate layout)
-    │       ├── layout.tsx
-    │       ├── login/
-    │       ├── page.tsx     # AD-02 dashboard
-    │       ├── products/
-    │       ├── categories/
-    │       ├── collections/
-    │       ├── enquiries/
-    │       └── settings/
-    ├── components/
-    │   ├── ui/              # shadcn primitives (do not bloated-edit)
-    │   ├── shop/            # PLP, PDP, header, footer
-    │   ├── admin/           # Tables, forms, sidebar
-    │   └── shared/          # Theme toggle, logos, empty states
-    ├── constants/           # Routes, storage keys, brand copy
-    ├── hooks/               # useShortlist, useRecentlyViewed, useMockSession
-    ├── services/            # Mock “API” modules (async, in-memory)
-    ├── types/               # Product, Category, Enquiry, User roles
-    ├── data/
-    │   └── mock/            # Seed JSON/TS (products, categories, enquiries)
-    └── lib/
-        └── utils.ts         # cn(), formatters
+src/
+├── app/           # Routes (shop, auth, admin)
+├── components/    # ui/, shop/, admin/
+├── services/      # DB reads/writes for pages
+├── constants/     # routes, nav, config, bed-model
+├── types/
+└── db/            # schema, migrate-bed-ranges, seed
 ```
 
-Route groups `(shop)` and `(auth)` do not affect URLs; `admin` is a real URL segment.
+Admin dashboard metrics: `src/services/admin-dashboard.ts` (lead events, orders, catalogue health).
 
-**Current scaffold:** `src/app`, `src/components/ui`, and `src/lib` exist; shop/auth/admin routes and mock layers are added incrementally per `TASKS.md`.
+Shop category display names: `src/lib/shop-category-label.ts` and category fetch helpers in services.
 
----
+## Admin IA
 
-## Rendering model
+Overview · Catalogue (products, categories, mattress brands) · Commerce (orders, leads) · Content (gallery, reels) · Settings (store, team).
 
-| Surface | Default | Notes |
-|---------|---------|--------|
-| Marketing / PLP / PDP | Server Components where possible | Pass mock data as props from services imported on server, or static seed |
-| Filters, shortlist, auth forms | Client Components | `"use client"`; hooks and browser storage |
-| Admin tables/forms | Client Components | In-memory edits need client state |
-
-Avoid Route Handlers for catalogue in Phase 1 — keeps the “no backend” story clear. If a server-only helper is needed, import mock data directly in Server Components.
-
----
-
-## Mock service pattern
-
-Each domain gets a module under `src/services/`:
-
-```typescript
-// Illustrative pattern — not necessarily committed yet
-export async function listProducts(filters?: ProductFilters): Promise<Product[]> {
-  await delay(150); // simulate network
-  return applyFilters(mockProducts, filters);
-}
-```
-
-- **Seed source:** `src/data/mock/*.ts` (or JSON imported as modules).
-- **Mutations:** module-level `let` arrays or a tiny in-memory store; admin edits survive navigation within the SPA but **reset on hard reload** unless persisted to `localStorage` deliberately (catalogue default: memory only).
-- **Enquiries:** append from CF-10; admin reads same store.
-
-Services are **never** called from a real external API in Phase 1.
-
----
-
-## Browser persistence (`localStorage`)
-
-| Key (constant in `constants/storage.ts`) | Purpose |
-|------------------------------------------|---------|
-| Session / mock token | Customer logged-in flag + mobile |
-| Shortlist | Product IDs (CF-06, PB-02) |
-| Recently viewed | Ordered product IDs, cap N (CF-07, PB-01) |
-| Theme | Optional; prefer `next-themes` default |
-| Admin session | Mock admin logged-in flag (separate from customer) |
-
-Always guard reads/writes with `typeof window !== "undefined"`. Never store real secrets.
-
----
-
-## Auth flows (mock)
-
-**Customer:** mobile (10 digits) → OTP screen → set mock session → optional profile shell.  
-**Admin:** `/admin/login` → password check against constant → admin session flag.
-
-No middleware enforcement in early prototype; layout components redirect if session missing (client-side). Production would use server sessions — out of scope.
-
----
-
-## Component conventions
-
-- **Shop chrome:** header with search, shortlist count, cart count, theme toggle, auth avatar.
-- **Client shop state:** Zustand stores in `src/stores/` (`cart-store`, `wishlist-store`); DB remains source of truth via server actions.
-- **Admin chrome:** sidebar navigation mapped to AD-xx modules, role badge for Team vs Admin demo.
-- **Forms:** shadcn `Input`, `Label`, `Select` (not native `<select>`), `Textarea`, `Button`.
-- **Data display:** `Table` for admin lists; cards for PLP.
-
----
-
-## Styling
-
-Brand tokens live in `globals.css` (`:root` / `.dark`). See `DESIGN.md` for colour and typography targets. Tailwind v4 `@theme inline` maps CSS variables to utilities.
-
----
-
-## What we are not building
-
-- No ORM, migrations, or Supabase client in Phase 1.
-- No `fetch('/api/...')` for catalogue CRUD.
-- No edge middleware for auth secrets.
-- No checkout or payment SDKs (cart save + WhatsApp enquire only).
-
-Future backend can replace `services/*.ts` implementations while keeping component contracts stable; types in `src/types/` should mirror intended API shapes early.
+Old URLs redirect to the routes in `src/constants/routes.ts`.

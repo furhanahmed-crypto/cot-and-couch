@@ -1,29 +1,27 @@
 /**
- * Ops / CRM reads from Neon (gallery, reels, store, leads, orders, …).
+ * Ops / CRM reads from Neon (`coc_*`).
  */
 import { cache } from "react";
-import { asc, desc, eq } from "drizzle-orm";
+import { asc, desc, eq, inArray } from "drizzle-orm";
 import { db } from "@/db";
 import { tagShopCache } from "@/lib/cache-tags";
 import {
-  auditLogs,
   collections,
   galleryItems,
+  leadEvents,
   leads,
+  orderLines,
   orderStatusHistory,
   orders,
   reels,
-  segments,
   storeSettings,
-} from "@/db/schema";
+} from "@/db";
 import type {
-  AuditLog,
   GalleryItem,
   Lead,
   OrderStatus,
   Reel,
   SaleOrder,
-  Segment,
   StoreInfo,
   Collection,
 } from "@/types";
@@ -128,26 +126,71 @@ export async function getReels(opts?: { includeHidden?: boolean }): Promise<Reel
 
 export const getLeads = cache(async (): Promise<Lead[]> => {
   const rows = await db.select().from(leads).orderBy(desc(leads.lastSeenAt));
-  return rows.map((l) => ({
-    id: l.id,
-    mobile: l.mobile,
-    name: l.name,
-    area: l.area ?? undefined,
-    firstSeen: l.firstSeenAt.toISOString().slice(0, 10),
-    lastSeen: l.lastSeenAt.toISOString().slice(0, 10),
-    intent: l.intent,
-    assignedTo: l.assignedToProfileId ?? undefined,
-    whatsappOffers: l.whatsappOffers,
-    viewedProductIds: l.viewedProductIds ?? [],
-    shortlistedIds: l.shortlistedIds ?? [],
-    ctaTaps: l.ctaTaps ?? [],
-    followUpDone: l.followUpDone,
-  }));
+  const leadIds = rows.map((l) => l.id);
+  const events =
+    leadIds.length === 0
+      ? []
+      : await db
+          .select()
+          .from(leadEvents)
+          .where(inArray(leadEvents.leadId, leadIds));
+
+  const byLead = new Map<string, typeof events>();
+  for (const e of events) {
+    const list = byLead.get(e.leadId) ?? [];
+    list.push(e);
+    byLead.set(e.leadId, list);
+  }
+
+  return rows.map((l) => {
+    const ev = byLead.get(l.id) ?? [];
+    const viewedProductIds = ev
+      .filter((e) => e.eventType === "view" && e.productId)
+      .map((e) => e.productId!);
+    const shortlistedIds = ev
+      .filter((e) => e.eventType === "shortlist" && e.productId)
+      .map((e) => e.productId!);
+    const ctaTaps = ev
+      .filter((e) => e.eventType === "cta")
+      .map((e) => ({
+        type: e.payload?.type ?? "cta",
+        productId: e.productId ?? undefined,
+        at: e.occurredAt.toISOString(),
+      }));
+
+    return {
+      id: l.id,
+      mobile: l.mobile,
+      name: l.name,
+      area: l.area ?? undefined,
+      firstSeen: l.firstSeenAt.toISOString().slice(0, 10),
+      lastSeen: l.lastSeenAt.toISOString().slice(0, 10),
+      intent: l.intent,
+      assignedTo: l.assignedToProfileId ?? undefined,
+      whatsappOffers: l.whatsappOffers,
+      viewedProductIds,
+      shortlistedIds,
+      ctaTaps,
+      followUpDone: l.followUpDone,
+    };
+  });
 });
 
 export const getOrders = cache(async (): Promise<SaleOrder[]> => {
   const rows = await db.select().from(orders).orderBy(desc(orders.createdAt));
-  const histories = await db.select().from(orderStatusHistory);
+  const orderIds = rows.map((o) => o.id);
+  const [lines, histories] = await Promise.all([
+    orderIds.length
+      ? db.select().from(orderLines).where(inArray(orderLines.orderId, orderIds))
+      : Promise.resolve([]),
+    db.select().from(orderStatusHistory),
+  ]);
+
+  const lineByOrder = new Map<string, (typeof lines)[0]>();
+  for (const line of lines) {
+    if (!lineByOrder.has(line.orderId)) lineByOrder.set(line.orderId, line);
+  }
+
   const historyByOrder = new Map<string, typeof histories>();
   for (const h of histories) {
     const list = historyByOrder.get(h.orderId) ?? [];
@@ -155,55 +198,31 @@ export const getOrders = cache(async (): Promise<SaleOrder[]> => {
     historyByOrder.set(h.orderId, list);
   }
 
-  return rows.map((o) => ({
-    id: o.id,
-    customerMobile: o.customerMobile,
-    customerName: o.customerName,
-    address: o.address,
-    productId: o.productId ?? "",
-    variantId: o.variantId ?? "",
-    quantity: o.quantity,
-    agreedPrice: Number(o.agreedPrice),
-    advancePaid: Number(o.advancePaid),
-    expectedDelivery: o.expectedDelivery ?? "",
-    salesperson: o.salespersonName ?? "",
-    status: o.status as OrderStatus,
-    history: (historyByOrder.get(o.id) ?? [])
-      .sort((a, b) => a.at.getTime() - b.at.getTime())
-      .map((h) => ({
-        status: h.status as OrderStatus,
-        at: h.at.toISOString(),
-        by: h.byName ?? "",
-        note: h.note ?? undefined,
-      })),
-    deliveryPhoto: o.deliveryPhotoUrl ?? undefined,
-    notificationFailed: o.notificationFailed,
-  }));
-});
-
-export const getAuditLogs = cache(async (): Promise<AuditLog[]> => {
-  const rows = await db
-    .select()
-    .from(auditLogs)
-    .orderBy(desc(auditLogs.at));
-  return rows.map((a) => ({
-    id: a.id,
-    at: a.at.toISOString(),
-    user: a.actorName,
-    action: a.action,
-    detail: a.detail,
-  }));
-});
-
-export const getSegments = cache(async (): Promise<Segment[]> => {
-  const rows = await db
-    .select()
-    .from(segments)
-    .where(eq(segments.isActive, true));
-  return rows.map((s) => ({
-    id: s.id,
-    name: s.name,
-    description: s.description ?? "",
-    count: s.count,
-  }));
+  return rows.map((o) => {
+    const line = lineByOrder.get(o.id);
+    return {
+      id: o.id,
+      customerMobile: o.customerMobile,
+      customerName: o.customerName,
+      address: o.address,
+      productId: line?.productId ?? "",
+      variantId: line?.variantId ?? "",
+      quantity: line?.quantity ?? 1,
+      agreedPrice: Number(line?.lineTotal ?? o.subtotal),
+      advancePaid: Number(o.advancePaid),
+      expectedDelivery: o.expectedDelivery ?? "",
+      salesperson: "",
+      status: o.status as OrderStatus,
+      history: (historyByOrder.get(o.id) ?? [])
+        .sort((a, b) => a.at.getTime() - b.at.getTime())
+        .map((h) => ({
+          status: h.status as OrderStatus,
+          at: h.at.toISOString(),
+          by: h.byName ?? "",
+          note: h.note ?? undefined,
+        })),
+      deliveryPhoto: o.deliveryPhotoUrl ?? undefined,
+      notificationFailed: false,
+    };
+  });
 });

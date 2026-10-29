@@ -1,0 +1,48 @@
+{
+  "version": "7",
+  "dialect": "postgresql",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "7",
+      "when": 1761720000000,
+      "tag": "0001_coc_foundation",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1761723600000,
+      "tag": "0002_coc_catalogue",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1761727200000,
+      "tag": "0003_coc_shop",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1761730800000,
+      "tag": "0004_coc_crm",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1761734400000,
+      "tag": "0005_coc_commerce",
+      "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1761745200000,
+      "tag": "0008_bed_width_detail",
+      "breakpoints": true
+    }
+  ]
+}

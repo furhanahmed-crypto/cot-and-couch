@@ -16,6 +16,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { templateForCategorySlug } from "@/constants/admin-product-templates";
+import { categoryConfigForSlug } from "@/constants/category-config";
 import { ROUTES } from "@/constants/routes";
 import type {
   Category,
@@ -85,6 +86,19 @@ export function ProductEditorForm({
           ok: Boolean(mattress.warrantyYears.trim()),
         },
       );
+    } else if (template) {
+      const furniture = categoryConfigForSlug(category?.slug ?? "");
+      const required = new Set(template.required);
+      if (furniture) {
+        for (const g of furniture.groups) {
+          const opts = lookups.furnitureOptionsByKey[g.key] ?? [];
+          if (!opts.length || !required.has(g.label)) continue;
+          items.push({
+            label: g.label,
+            ok: Boolean(attributes[g.key]?.trim()),
+          });
+        }
+      }
     }
     return items;
   }, [
@@ -94,6 +108,10 @@ export function ProductEditorForm({
     product.variants.length,
     isMattress,
     mattress,
+    template,
+    category?.slug,
+    lookups.furnitureOptionsByKey,
+    attributes,
   ]);
 
   const readyCount = checklist.filter((c) => c.ok).length;

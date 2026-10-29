@@ -1,16 +1,17 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { db } from "@/db";
 import {
   categories,
   optionGroups,
   options,
+  productOptionValues,
   productVariants,
   products,
   sizeDimensions,
-} from "@/db/schema";
+} from "@/db";
 import {
   MATTRESS_SIZE_SKUS,
   MATTRESS_THICKNESS_SKUS,
@@ -19,11 +20,98 @@ import {
 import { revalidateShopCache } from "@/lib/cache-tags";
 import { requireStaffProfile } from "@/services/profile";
 import { ROUTES } from "@/constants/routes";
+import { BED_WIDTH_GROUP_KEY } from "@/constants/bed-model";
 
 function revalidateProduct(productId: string) {
   revalidatePath(ROUTES.admin.products);
   revalidatePath(ROUTES.admin.productEdit(productId));
   revalidateShopCache();
+}
+
+async function upsertProductOption(
+  productId: string,
+  groupKey: string,
+  optionId: string | null | undefined,
+) {
+  const [group] = await db
+    .select({ id: optionGroups.id })
+    .from(optionGroups)
+    .where(eq(optionGroups.key, groupKey))
+    .limit(1);
+  if (!group) return;
+
+  await db
+    .delete(productOptionValues)
+    .where(
+      and(
+        eq(productOptionValues.productId, productId),
+        eq(productOptionValues.optionGroupId, group.id),
+      ),
+    );
+
+  if (optionId) {
+    await db.insert(productOptionValues).values({
+      productId,
+      optionGroupId: group.id,
+      optionId,
+      textValue: null,
+    });
+  }
+}
+
+async function upsertProductTextOption(
+  productId: string,
+  groupKey: string,
+  textValue: string,
+) {
+  const [group] = await db
+    .select({ id: optionGroups.id })
+    .from(optionGroups)
+    .where(eq(optionGroups.key, groupKey))
+    .limit(1);
+  if (!group) return;
+
+  await db
+    .delete(productOptionValues)
+    .where(
+      and(
+        eq(productOptionValues.productId, productId),
+        eq(productOptionValues.optionGroupId, group.id),
+      ),
+    );
+
+  const trimmed = textValue.trim();
+  if (trimmed) {
+    await db.insert(productOptionValues).values({
+      productId,
+      optionGroupId: group.id,
+      optionId: null,
+      textValue: trimmed,
+    });
+  }
+}
+
+async function syncProductSpecs(
+  productId: string,
+  input: {
+    purposeOptionId?: string | null;
+    coverMaterialOptionId?: string | null;
+    fillingOptionId?: string | null;
+    comfortOptionId?: string | null;
+    attributes?: Record<string, string>;
+  },
+) {
+  await upsertProductOption(productId, "purpose", input.purposeOptionId);
+  await upsertProductOption(productId, "cover_material", input.coverMaterialOptionId);
+  await upsertProductOption(productId, "filling", input.fillingOptionId);
+  await upsertProductOption(productId, "comfort", input.comfortOptionId);
+
+  for (const [key, value] of Object.entries(input.attributes ?? {})) {
+    if (["purpose", "cover_material", "filling", "comfort"].includes(key)) {
+      continue;
+    }
+    await upsertProductTextOption(productId, key, String(value ?? ""));
+  }
 }
 
 export async function archiveProductAction(productId: string) {
@@ -62,7 +150,6 @@ export async function createProductAction(input: {
       description: input.description?.trim() || null,
       mattressBrandId: input.mattressBrandId || null,
       status: "draft",
-      attributes: {},
     })
     .returning({ id: products.id });
   revalidatePath(ROUTES.admin.products);
@@ -88,13 +175,6 @@ export async function updateProductAction(input: {
   const name = input.name.trim();
   if (!name) return { ok: false as const, error: "Name required" };
 
-  const attrs = Object.fromEntries(
-    Object.entries(input.attributes ?? {}).map(([k, v]) => [
-      k,
-      String(v ?? "").trim(),
-    ]),
-  );
-
   await db
     .update(products)
     .set({
@@ -104,14 +184,11 @@ export async function updateProductAction(input: {
       isFeatured: input.isFeatured ?? false,
       imageUrl: input.imageUrl?.trim() || null,
       mattressBrandId: input.mattressBrandId || null,
-      purposeOptionId: input.purposeOptionId || null,
-      coverMaterialOptionId: input.coverMaterialOptionId || null,
-      fillingOptionId: input.fillingOptionId || null,
-      comfortOptionId: input.comfortOptionId || null,
-      attributes: attrs,
       updatedAt: new Date(),
     })
     .where(eq(products.id, input.productId));
+
+  await syncProductSpecs(input.productId, input);
 
   revalidateProduct(input.productId);
   return { ok: true as const };
@@ -221,25 +298,39 @@ export async function generateProductVariantsAction(productId: string) {
       }
     }
   } else if (category.slug === "cots") {
-    if (!colours.length) {
-      return { ok: false as const, error: "No colour options in masters" };
+    const widths = byGroup(BED_WIDTH_GROUP_KEY);
+    if (!widths.length) {
+      return {
+        ok: false as const,
+        error: "Add bed widths under Categories → Beds → Manage options",
+      };
     }
-    for (const sizePlan of MATTRESS_SIZE_SKUS) {
-      const size = sizeBySlug[sizePlan.size];
-      const dim = findDim(sizePlan.size, sizePlan.lengthIn, sizePlan.widthIn);
-      if (!size || !dim) continue;
-      for (const colour of colours) {
+    const range = product.rangeNumber ?? null;
+    const prefix = range ? `COT-R${range}` : slugBase.toUpperCase();
+    if (colours.length) {
+      for (const w of widths) {
+        for (const colour of colours) {
+          batch.push({
+            productId,
+            sku: `${prefix}-${w.slug}-${colour.slug}`.slice(0, 80).toUpperCase(),
+            widthOptionId: w.id,
+            colourOptionId: colour.id,
+            mrp: "0",
+            price: "0",
+            stockQty: 0,
+            isActive: true,
+          });
+        }
+      }
+    } else {
+      for (const w of widths) {
         batch.push({
           productId,
-          sku: [slugBase, sizePlan.size, colour.slug].join("-").slice(0, 80),
-          sizeGroupOptionId: size.id,
-          sizeDimensionId: dim.id,
-          isCustomSize: false,
-          thicknessOptionId: null,
-          colourOptionId: colour.id,
-          mrp: "28999",
-          price: "23999",
-          stockQty: 3,
+          sku: `${prefix}-${w.slug}`.slice(0, 80).toUpperCase(),
+          widthOptionId: w.id,
+          mrp: "0",
+          price: "0",
+          stockQty: 0,
           isActive: true,
         });
       }

@@ -8,7 +8,7 @@ import {
   mattressBrands,
   optionGroups,
   options,
-} from "@/db/schema";
+} from "@/db";
 import { revalidateShopCache } from "@/lib/cache-tags";
 import { requireStaffProfile } from "@/services/profile";
 import { ROUTES } from "@/constants/routes";
@@ -23,7 +23,7 @@ function slugify(input: string) {
 
 function revalidateCategories() {
   revalidatePath(ROUTES.admin.categories);
-  revalidatePath(ROUTES.admin.masters);
+  revalidatePath(ROUTES.admin.brands);
   revalidatePath(ROUTES.admin.products);
   revalidateShopCache();
 }
@@ -168,7 +168,7 @@ export async function createCategoryConfigOptionAction(input: {
   if (!group) {
     return {
       ok: false as const,
-      error: "Config group missing — run docs/sql/category-config-options.sql",
+      error: "Config group missing — run bun run db:migrate and bun run db:seed",
     };
   }
 

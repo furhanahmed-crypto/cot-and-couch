@@ -19,7 +19,7 @@ export default function AdminLoginPage() {
           <BrandMark href={ROUTES.admin.login} className="[&_img]:h-10 md:[&_img]:h-12" />
           <h1 className="font-heading text-3xl text-ink">Team console</h1>
           <p className="text-sm text-muted-foreground">
-            Sign in with your staff email (Neon Auth)
+            Sign in with your staff email and password.
           </p>
         </div>
 
@@ -59,11 +59,7 @@ export default function AdminLoginPage() {
         </form>
 
         <p className="text-center text-xs text-muted-foreground">
-          First staff user: register on the storefront, then in Neon SQL run
-          <br />
-          <code className="text-[11px]">
-            update profiles set role = &apos;admin&apos; where email = &apos;you@…&apos;;
-          </code>
+          Need access? Contact your store administrator.
           <br />
           <Link href={ROUTES.home} className="underline underline-offset-2">
             Back to storefront

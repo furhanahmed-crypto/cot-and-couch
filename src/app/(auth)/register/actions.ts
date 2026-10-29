@@ -13,7 +13,6 @@ export async function signUpWithEmail(
   const email = String(formData.get("email") ?? "").trim();
   const password = String(formData.get("password") ?? "");
   const privacy = formData.get("privacy") === "on";
-  const whatsappOffers = formData.get("whatsappOffers") === "on";
   const area = String(formData.get("area") ?? "").trim();
 
   if (!name || name.length < 2) {
@@ -43,9 +42,7 @@ export async function signUpWithEmail(
     authUserId: session.user.id,
     email: session.user.email,
     name,
-    privacyConsent: true,
-    whatsappOffers,
-    area: area || null,
+    address: area || null,
   });
 
   redirect(ROUTES.home);

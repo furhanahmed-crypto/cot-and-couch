@@ -1,8 +1,12 @@
 /**
  * Admin-editable option groups per furniture category (Figma category templates).
  * Keys live in `option_groups.key`; values in `options`.
- * DB category slug `cots` = Beds in the design.
+ * DB category slug `cots` = Beds in the shop UI.
  */
+import {
+  BED_WIDTH_GROUP_KEY,
+  BED_WIDTH_OPTIONS,
+} from "@/constants/bed-model";
 
 export type CategoryConfigGroup = {
   key: string;
@@ -30,50 +34,20 @@ export const CATEGORY_CONFIGS: CategoryConfigDef[] = [
   {
     slug: "cots",
     title: "Beds",
-    subtitle: "King · Queen · Single · Diwan · Storage · Hydraulic · Poster",
-    variants: ["Size", "Finish"],
+    subtitle:
+      "8 range products (Range 1–8) · same 4 widths on every range · colour on variants",
+    variants: ["Width", "Colour"],
+    note: "Tag at most one bed with Royal Range and one with Victoria under Products → collections.",
     groups: [
       {
-        key: "cot_storage_type",
-        label: "Storage type",
-        seed: ["None", "Drawer", "Box", "Hydraulic"],
-      },
-      {
-        key: "cot_headboard",
-        label: "Headboard",
-        seed: ["Wooden", "Upholstered", "Carved", "Softback", "None"],
-      },
-      {
-        key: "cot_wood_type",
-        label: "Wood type",
-        seed: ["Teak", "Sheesham", "Engineered wood", "Solid wood mix"],
-      },
-      {
-        key: "cot_polish_type",
-        label: "Polish type",
-        seed: ["Natural", "Melamine", "PU", "Wax"],
-      },
-      {
-        key: "cot_mattress_size",
-        label: "Recommended mattress size",
-        seed: ["Single", "Diwan", "Queen", "King"],
-      },
-      {
-        key: "cot_wood_grade",
-        label: "Wood grade",
-        seed: ["Standard", "Grade A", "Premium"],
+        key: BED_WIDTH_GROUP_KEY,
+        label: "Bed width (shared)",
+        seed: BED_WIDTH_OPTIONS.map((w) => w.label),
       },
     ],
-    textFields: [
-      { key: "storage_capacity_l", label: "Storage capacity (L)" },
-      { key: "headboard_height_in", label: "Headboard height (in)" },
-      { key: "under_bed_clearance_in", label: "Under-bed clearance (in)" },
-    ],
+    textFields: [],
     siteFilters: [
-      "Size",
-      "Storage type",
-      "Headboard",
-      "Wood type",
+      "Width",
       "Price",
       "Discount",
       "Colour",

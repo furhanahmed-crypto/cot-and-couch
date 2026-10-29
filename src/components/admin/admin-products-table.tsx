@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   ChevronLeft,
   ChevronRight,
@@ -139,6 +139,11 @@ export function AdminProductsTable({
 
   const pageCount = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
   const safePage = Math.min(page, pageCount);
+
+  useEffect(() => {
+    if (page > pageCount) setPage(pageCount);
+  }, [page, pageCount]);
+
   const pageRows = filtered.slice(
     (safePage - 1) * PAGE_SIZE,
     safePage * PAGE_SIZE,
@@ -354,7 +359,10 @@ export function AdminProductsTable({
         />
         <AppSelect
           value={sort}
-          onValueChange={(v) => setSort(v as SortKey)}
+          onValueChange={(v) => {
+            setSort(v as SortKey);
+            setPage(1);
+          }}
           triggerClassName="ml-auto h-9 w-[10.75rem] shrink-0"
           items={[
             { value: "updated", label: "Sort: Last updated" },
@@ -408,7 +416,7 @@ export function AdminProductsTable({
           </TableBody>
         </Table>
         {pageRows.length === 0 ? (
-          <p className="px-4 py-10 text-center text-sm text-muted-foreground">
+          <p className="border-t border-border px-4 py-10 text-center text-sm text-muted-foreground">
             No products match these filters.
           </p>
         ) : null}

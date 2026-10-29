@@ -1,6 +1,6 @@
 import { and, eq } from "drizzle-orm";
 import { db } from "@/db";
-import { carts } from "@/db/schema";
+import { carts } from "@/db";
 import {
   findMatchingCartLine,
   requireCartProfile,

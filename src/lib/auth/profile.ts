@@ -2,7 +2,7 @@ import { cache } from "react";
 import { connection } from "next/server";
 import { eq } from "drizzle-orm";
 import { db } from "@/db";
-import { profiles, type Profile } from "@/db/schema";
+import { profiles, type Profile } from "@/db";
 import { auth } from "@/lib/auth/server";
 import { ensureLeadForProfile } from "@/services/leads";
 
@@ -11,9 +11,7 @@ export async function ensureProfile(input: {
   authUserId: string;
   email: string;
   name?: string | null;
-  privacyConsent?: boolean;
-  whatsappOffers?: boolean;
-  area?: string | null;
+  address?: string | null;
 }): Promise<Profile> {
   const existing = await db
     .select()
@@ -22,7 +20,6 @@ export async function ensureProfile(input: {
     .limit(1);
 
   if (existing[0]) {
-    // Returning storefront login — create lead if missing, bump last seen.
     if (existing[0].role === "customer") {
       await ensureLeadForProfile(existing[0], { touchLastSeen: true });
     }
@@ -36,9 +33,7 @@ export async function ensureProfile(input: {
       email: input.email,
       name: input.name ?? null,
       role: "customer",
-      privacyConsentAt: input.privacyConsent ? new Date() : null,
-      whatsappOffers: input.whatsappOffers ?? false,
-      area: input.area ?? null,
+      address: input.address?.trim() || null,
     })
     .returning();
 
@@ -47,11 +42,6 @@ export async function ensureProfile(input: {
   return profile;
 }
 
-/**
- * Current Neon Auth user + app profile, or null.
- * `connection()` marks this as request-time so Cache Components
- * does not try to prerender session / Date values.
- */
 export const getCurrentProfile = cache(async (): Promise<Profile | null> => {
   await connection();
   const { data: session } = await auth.getSession();

@@ -18,62 +18,23 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import type { AdminDashboardProps } from "@/components/admin/dashboard/dashboard-types";
 import { ROUTES } from "@/constants/routes";
 import { cn } from "@/lib/utils";
 
-export type DashboardKpi = {
-  label: string;
-  value: string;
-  hint: string;
-  /** Optional third line (e.g. trend) */
-  trend?: string;
-  trendTone?: "up" | "warn" | "muted";
-};
+export type {
+  AdminDashboardProps,
+  AttentionItem,
+  CategoryInterest,
+  DashboardKpi,
+  DeliveryRow,
+  TopProductRow,
+} from "@/components/admin/dashboard/dashboard-types";
 
-export type AttentionItem = {
-  text: string;
-  href: string;
-  action: string;
-};
-
-export type TopProductRow = {
-  id: string;
-  name: string;
-  category: string;
-  image?: string;
-  views: number;
-  shortlists: number;
-  enquiries: number;
-  signal: string;
-  signalTone: "ok" | "steady" | "warn" | "danger";
-};
-
-export type DeliveryRow = {
-  id: string;
-  customer: string;
-  product: string;
-  when: string;
-  status: string;
-};
-
-export type CategoryInterest = {
-  name: string;
-  count: number;
-  pct: number;
-};
-
-export type AdminDashboardProps = {
-  greeting: string;
-  subtitle: string;
-  kpis: DashboardKpi[];
-  attention: AttentionItem[];
-  topProducts: TopProductRow[];
-  deliveries: DeliveryRow[];
-  interest: CategoryInterest[];
-  ctaSplit: { visit: number; call: number; whatsapp: number };
-};
-
-const signalClass: Record<TopProductRow["signalTone"], string> = {
+const signalClass: Record<
+  AdminDashboardProps["topProducts"][0]["signalTone"],
+  string
+> = {
   ok: "bg-emerald-500/15 text-emerald-800 dark:text-emerald-300",
   steady: "bg-muted text-muted-foreground",
   warn: "bg-amber-500/15 text-amber-800 dark:text-amber-300",
@@ -83,6 +44,7 @@ const signalClass: Record<TopProductRow["signalTone"], string> = {
 export function AdminDashboard({
   greeting,
   subtitle,
+  rangeDays,
   kpis,
   attention,
   topProducts,
@@ -100,18 +62,17 @@ export function AdminDashboard({
           <p className="mt-1 text-sm text-muted-foreground">{subtitle}</p>
         </div>
         <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto">
-          <Button type="button" variant="outline" size="sm" className="gap-1.5" disabled>
-            <CalendarDays className="size-3.5" />
-            <span className="hidden sm:inline">Last 7 days</span>
-            <span className="sm:hidden">7 days</span>
-          </Button>
+          <div className="inline-flex rounded-lg border border-border p-0.5">
+            <RangeLink days={7} active={rangeDays === 7} />
+            <RangeLink days={30} active={rangeDays === 30} />
+          </div>
           <Button
             size="sm"
             className="flex-1 sm:flex-none"
             nativeButton={false}
-            render={<Link href={ROUTES.admin.sales} />}
+            render={<Link href={ROUTES.admin.orders} />}
           >
-            + Record sale
+            + Record order
           </Button>
         </div>
       </div>
@@ -147,223 +108,288 @@ export function AdminDashboard({
 
       <div className="grid gap-4 xl:grid-cols-[minmax(0,1.2fr)_minmax(0,0.8fr)]">
         <div className="space-y-4">
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="font-heading text-lg">Needs attention</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-2">
-              {attention.length === 0 ? (
-                <p className="text-sm text-muted-foreground">
-                  Nothing urgent right now.
-                </p>
-              ) : (
-                attention.map((item) => (
-                  <div
-                    key={item.text}
-                    className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-border/70 px-3 py-2.5"
-                  >
-                    <p className="min-w-0 flex-1 text-sm">{item.text}</p>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      nativeButton={false}
-                      render={<Link href={item.href} />}
-                    >
-                      {item.action}
-                      <ArrowUpRight className="size-3.5" />
-                    </Button>
-                  </div>
-                ))
-              )}
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-col gap-2 pb-3 sm:flex-row sm:items-center sm:justify-between">
-              <CardTitle className="font-heading text-base sm:text-lg">
-                Top viewed products — last 7 days
-              </CardTitle>
-              <Button
-                size="sm"
-                variant="ghost"
-                className="self-start text-muted-foreground sm:self-auto"
-                nativeButton={false}
-                render={<Link href={ROUTES.admin.leads} />}
-              >
-                Behaviour report
-              </Button>
-            </CardHeader>
-            <CardContent className="-mx-2 overflow-x-auto px-2">
-              <Table className="min-w-[640px]">
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Product</TableHead>
-                    <TableHead>Views</TableHead>
-                    <TableHead>Shortlists</TableHead>
-                    <TableHead>Enquiries</TableHead>
-                    <TableHead>Signal</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {topProducts.map((p) => (
-                    <TableRow key={p.id}>
-                      <TableCell className="max-w-[240px]">
-                        <Link
-                          href={ROUTES.admin.productEdit(p.id)}
-                          className="flex items-center gap-2.5"
-                        >
-                          <span className="relative size-10 shrink-0 overflow-hidden rounded-md bg-muted">
-                            {p.image ? (
-                              <Image
-                                src={p.image}
-                                alt=""
-                                fill
-                                className="object-cover"
-                                sizes="40px"
-                              />
-                            ) : null}
-                          </span>
-                          <span className="min-w-0">
-                            <span className="block truncate font-medium hover:underline">
-                              {p.name}
-                            </span>
-                            <span className="block truncate text-xs text-muted-foreground">
-                              {p.category}
-                            </span>
-                          </span>
-                        </Link>
-                      </TableCell>
-                      <TableCell>{p.views}</TableCell>
-                      <TableCell>{p.shortlists}</TableCell>
-                      <TableCell>{p.enquiries}</TableCell>
-                      <TableCell>
-                        <Badge
-                          variant="secondary"
-                          className={cn("font-normal", signalClass[p.signalTone])}
-                        >
-                          {p.signal}
-                        </Badge>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                  {topProducts.length === 0 ? (
-                    <TableRow>
-                      <TableCell colSpan={5} className="text-muted-foreground">
-                        No browse signals yet — leads drive this table.
-                      </TableCell>
-                    </TableRow>
-                  ) : null}
-                </TableBody>
-              </Table>
-            </CardContent>
-          </Card>
+          <AttentionCard attention={attention} />
+          <TopProductsCard rangeDays={rangeDays} topProducts={topProducts} />
         </div>
-
         <div className="space-y-4">
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="font-heading text-lg">
-                Deliveries this week
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              {deliveries.length === 0 ? (
-                <p className="text-sm text-muted-foreground">
-                  No open deliveries scheduled.
-                </p>
-              ) : (
-                deliveries.map((d) => (
-                  <div
-                    key={d.id}
-                    className="rounded-lg border border-border/70 px-3 py-2.5"
-                  >
-                    <div className="flex items-start justify-between gap-2">
-                      <div className="min-w-0">
-                        <p className="truncate font-medium">{d.customer}</p>
-                        <p className="truncate text-xs text-muted-foreground">
-                          {d.product}
-                        </p>
-                      </div>
-                      <Badge variant="outline" className="shrink-0 capitalize">
-                        {d.status.replaceAll("_", " ")}
-                      </Badge>
-                    </div>
-                    <p className="mt-1 text-xs text-muted-foreground">
-                      Expected {d.when || "—"}
-                    </p>
-                  </div>
-                ))
-              )}
-              <Button
-                variant="outline"
-                size="sm"
-                className="w-full"
-                nativeButton={false}
-                render={<Link href={ROUTES.admin.sales} />}
-              >
-                Open sales & delivery
-              </Button>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="font-heading text-lg">
-                Interest by category
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              {interest.length === 0 ? (
-                <p className="text-sm text-muted-foreground">No category interest yet.</p>
-              ) : (
-                interest.map((c) => (
-                  <div key={c.name} className="space-y-1">
-                    <div className="flex justify-between text-sm">
-                      <span>{c.name}</span>
-                      <span className="text-muted-foreground">{c.count}</span>
-                    </div>
-                    <div className="h-2 overflow-hidden rounded-full bg-muted">
-                      <div
-                        className="h-full rounded-full bg-primary"
-                        style={{ width: `${Math.max(c.pct, 4)}%` }}
-                      />
-                    </div>
-                  </div>
-                ))
-              )}
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="font-heading text-lg">CTA mix</CardTitle>
-            </CardHeader>
-            <CardContent className="grid grid-cols-3 gap-2 text-center">
-              <div className="rounded-lg bg-muted/50 px-2 py-3">
-                <Store className="mx-auto size-4 text-muted-foreground" />
-                <p className="mt-1 font-heading text-xl">{ctaSplit.visit}</p>
-                <p className="text-[10px] uppercase tracking-wide text-muted-foreground">
-                  Store
-                </p>
-              </div>
-              <div className="rounded-lg bg-muted/50 px-2 py-3">
-                <Phone className="mx-auto size-4 text-muted-foreground" />
-                <p className="mt-1 font-heading text-xl">{ctaSplit.call}</p>
-                <p className="text-[10px] uppercase tracking-wide text-muted-foreground">
-                  Call
-                </p>
-              </div>
-              <div className="rounded-lg bg-muted/50 px-2 py-3">
-                <MessageCircle className="mx-auto size-4 text-muted-foreground" />
-                <p className="mt-1 font-heading text-xl">{ctaSplit.whatsapp}</p>
-                <p className="text-[10px] uppercase tracking-wide text-muted-foreground">
-                  WhatsApp
-                </p>
-              </div>
-            </CardContent>
-          </Card>
+          <DeliveriesCard deliveries={deliveries} />
+          <InterestCard interest={interest} rangeDays={rangeDays} />
+          <CtaMixCard ctaSplit={ctaSplit} />
         </div>
       </div>
     </div>
+  );
+}
+
+function RangeLink({ days, active }: { days: 7 | 30; active: boolean }) {
+  return (
+    <Link
+      href={`${ROUTES.admin.dashboard}?range=${days}`}
+      className={cn(
+        "inline-flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-xs font-medium transition-colors sm:text-sm",
+        active
+          ? "bg-primary text-primary-foreground"
+          : "text-muted-foreground hover:text-foreground",
+      )}
+    >
+      <CalendarDays className="size-3.5" />
+      {days}d
+    </Link>
+  );
+}
+
+function AttentionCard({
+  attention,
+}: {
+  attention: AdminDashboardProps["attention"];
+}) {
+  return (
+    <Card>
+      <CardHeader className="pb-3">
+        <CardTitle className="font-heading text-lg">Needs attention</CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-2">
+        {attention.length === 0 ? (
+          <p className="text-sm text-muted-foreground">Nothing urgent right now.</p>
+        ) : (
+          attention.map((item) => (
+            <div
+              key={item.text}
+              className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-border/70 px-3 py-2.5"
+            >
+              <p className="min-w-0 flex-1 text-sm">{item.text}</p>
+              <Button
+                size="sm"
+                variant="outline"
+                nativeButton={false}
+                render={<Link href={item.href} />}
+              >
+                {item.action}
+                <ArrowUpRight className="size-3.5" />
+              </Button>
+            </div>
+          ))
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
+function TopProductsCard({
+  rangeDays,
+  topProducts,
+}: {
+  rangeDays: number;
+  topProducts: AdminDashboardProps["topProducts"];
+}) {
+  return (
+    <Card>
+      <CardHeader className="flex flex-col gap-2 pb-3 sm:flex-row sm:items-center sm:justify-between">
+        <CardTitle className="font-heading text-base sm:text-lg">
+          Top viewed products — last {rangeDays} days
+        </CardTitle>
+        <Button
+          size="sm"
+          variant="ghost"
+          className="self-start text-muted-foreground sm:self-auto"
+          nativeButton={false}
+          render={<Link href={ROUTES.admin.leads} />}
+        >
+          All leads
+        </Button>
+      </CardHeader>
+      <CardContent className="overflow-x-auto rounded-lg border border-border/60">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead className="min-w-[200px]">Product</TableHead>
+              <TableHead className="w-16 text-right">Views</TableHead>
+              <TableHead className="w-20 text-right">Shortlists</TableHead>
+              <TableHead className="w-20 text-right">CTAs</TableHead>
+              <TableHead className="min-w-[100px]">Signal</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {topProducts.map((p) => (
+              <TableRow key={p.id}>
+                <TableCell>
+                  <Link
+                    href={ROUTES.admin.productEdit(p.id)}
+                    className="flex items-center gap-2.5"
+                  >
+                    <span className="relative size-10 shrink-0 overflow-hidden rounded-md bg-muted">
+                      {p.image ? (
+                        <Image
+                          src={p.image}
+                          alt=""
+                          fill
+                          className="object-cover"
+                          sizes="40px"
+                        />
+                      ) : null}
+                    </span>
+                    <span className="min-w-0">
+                      <span className="block truncate font-medium hover:underline">
+                        {p.name}
+                      </span>
+                      <span className="block truncate text-xs text-muted-foreground">
+                        {p.category}
+                      </span>
+                    </span>
+                  </Link>
+                </TableCell>
+                <TableCell className="text-right tabular-nums">{p.views}</TableCell>
+                <TableCell className="text-right tabular-nums">
+                  {p.shortlists}
+                </TableCell>
+                <TableCell className="text-right tabular-nums">
+                  {p.enquiries}
+                </TableCell>
+                <TableCell>
+                  <Badge
+                    variant="secondary"
+                    className={cn("font-normal", signalClass[p.signalTone])}
+                  >
+                    {p.signal}
+                  </Badge>
+                </TableCell>
+              </TableRow>
+            ))}
+            {topProducts.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={5} className="py-8 text-center text-sm text-muted-foreground">
+                  No product views in this period — browsing shows up in lead events.
+                </TableCell>
+              </TableRow>
+            ) : null}
+          </TableBody>
+        </Table>
+      </CardContent>
+    </Card>
+  );
+}
+
+function DeliveriesCard({
+  deliveries,
+}: {
+  deliveries: AdminDashboardProps["deliveries"];
+}) {
+  return (
+    <Card>
+      <CardHeader className="pb-3">
+        <CardTitle className="font-heading text-lg">Deliveries this week</CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-3">
+        {deliveries.length === 0 ? (
+          <p className="text-sm text-muted-foreground">
+            No open orders scheduled this week.
+          </p>
+        ) : (
+          deliveries.map((d) => (
+            <div
+              key={d.id}
+              className="rounded-lg border border-border/70 px-3 py-2.5"
+            >
+              <div className="flex items-start justify-between gap-2">
+                <div className="min-w-0">
+                  <p className="truncate font-medium">{d.customer}</p>
+                  <p className="truncate text-xs text-muted-foreground">{d.product}</p>
+                </div>
+                <Badge variant="outline" className="shrink-0 capitalize">
+                  {d.status.replaceAll("_", " ")}
+                </Badge>
+              </div>
+              <p className="mt-1 text-xs text-muted-foreground">
+                Expected {d.when || "—"}
+              </p>
+            </div>
+          ))
+        )}
+        <Button
+          variant="outline"
+          size="sm"
+          className="w-full"
+          nativeButton={false}
+          render={<Link href={ROUTES.admin.orders} />}
+        >
+          Open orders
+        </Button>
+      </CardContent>
+    </Card>
+  );
+}
+
+function InterestCard({
+  interest,
+  rangeDays,
+}: {
+  interest: AdminDashboardProps["interest"];
+  rangeDays: number;
+}) {
+  return (
+    <Card>
+      <CardHeader className="pb-3">
+        <CardTitle className="font-heading text-lg">
+          Views by category ({rangeDays}d)
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-3">
+        {interest.length === 0 ? (
+          <p className="text-sm text-muted-foreground">No views in this period.</p>
+        ) : (
+          interest.map((c) => (
+            <div key={c.name} className="space-y-1">
+              <div className="flex justify-between text-sm">
+                <span>{c.name}</span>
+                <span className="text-muted-foreground">{c.count}</span>
+              </div>
+              <div className="h-2 overflow-hidden rounded-full bg-muted">
+                <div
+                  className="h-full rounded-full bg-primary"
+                  style={{ width: `${Math.max(c.pct, 4)}%` }}
+                />
+              </div>
+            </div>
+          ))
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
+function CtaMixCard({
+  ctaSplit,
+}: {
+  ctaSplit: AdminDashboardProps["ctaSplit"];
+}) {
+  return (
+    <Card>
+      <CardHeader className="pb-3">
+        <CardTitle className="font-heading text-lg">Store CTAs</CardTitle>
+      </CardHeader>
+      <CardContent className="grid grid-cols-3 gap-2 text-center">
+        <div className="rounded-lg bg-muted/50 px-2 py-3">
+          <Store className="mx-auto size-4 text-muted-foreground" />
+          <p className="mt-1 font-heading text-xl">{ctaSplit.visit}</p>
+          <p className="text-[10px] uppercase tracking-wide text-muted-foreground">
+            Visit
+          </p>
+        </div>
+        <div className="rounded-lg bg-muted/50 px-2 py-3">
+          <Phone className="mx-auto size-4 text-muted-foreground" />
+          <p className="mt-1 font-heading text-xl">{ctaSplit.call}</p>
+          <p className="text-[10px] uppercase tracking-wide text-muted-foreground">
+            Call
+          </p>
+        </div>
+        <div className="rounded-lg bg-muted/50 px-2 py-3">
+          <MessageCircle className="mx-auto size-4 text-muted-foreground" />
+          <p className="mt-1 font-heading text-xl">{ctaSplit.whatsapp}</p>
+          <p className="text-[10px] uppercase tracking-wide text-muted-foreground">
+            WhatsApp
+          </p>
+        </div>
+      </CardContent>
+    </Card>
   );
 }

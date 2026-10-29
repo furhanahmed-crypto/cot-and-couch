@@ -4,21 +4,21 @@
  */
 import { eq } from "drizzle-orm";
 import type { NeonHttpDatabase } from "drizzle-orm/neon-http";
-import * as schema from "./schema";
+import * as schema from "./app-schema";
 
 type Db = NeonHttpDatabase<typeof schema>;
 
 export async function clearOps(db: Db) {
   await db.delete(schema.orderStatusHistory);
+  await db.delete(schema.orderLines);
   await db.delete(schema.orders);
+  await db.delete(schema.leadEvents);
   await db.delete(schema.leads);
   await db.delete(schema.galleryItems);
   await db.delete(schema.reels);
   await db.delete(schema.productCollections);
   await db.delete(schema.collections);
   await db.delete(schema.storeSettings);
-  await db.delete(schema.auditLogs);
-  await db.delete(schema.segments);
 }
 
 export async function seedOps(db: Db) {
@@ -177,32 +177,33 @@ export async function seedOps(db: Db) {
   const sofa = allProducts.find((p) => p.slug.startsWith("sofas-"));
   const table = allProducts.find((p) => p.slug.startsWith("computer-tables-"));
 
-  await db.insert(schema.leads).values([
+  const leadRows = [
     {
       mobile: "9848012345",
       name: "Ananya Reddy",
       area: "Gachibowli",
       firstSeenAt: new Date("2026-10-01"),
       lastSeenAt: new Date("2026-10-15"),
-      intent: "hot",
+      intent: "hot" as const,
       whatsappOffers: true,
-      viewedProductIds: [ortho?.id, cloud?.id].filter(Boolean) as string[],
-      shortlistedIds: ortho ? [ortho.id] : [],
-      ctaTaps: ortho
-        ? [
-            {
-              type: "visit_store",
-              productId: ortho.id,
-              at: "2026-10-14T11:00:00Z",
-            },
-            {
-              type: "whatsapp",
-              productId: ortho.id,
-              at: "2026-10-15T09:20:00Z",
-            },
-          ]
-        : [],
       followUpDone: false,
+      events: [
+        ...(ortho
+          ? [
+              { type: "view" as const, productId: ortho.id, at: new Date("2026-10-10") },
+              { type: "shortlist" as const, productId: ortho.id, at: new Date("2026-10-12") },
+              {
+                type: "cta" as const,
+                productId: ortho.id,
+                at: new Date("2026-10-14T11:00:00Z"),
+                payload: { type: "visit_store" },
+              },
+            ]
+          : []),
+        ...(cloud
+          ? [{ type: "view" as const, productId: cloud.id, at: new Date("2026-10-11") }]
+          : []),
+      ],
     },
     {
       mobile: "9123456780",
@@ -210,14 +211,21 @@ export async function seedOps(db: Db) {
       area: "Miyapur",
       firstSeenAt: new Date("2026-09-20"),
       lastSeenAt: new Date("2026-10-12"),
-      intent: "warm",
+      intent: "warm" as const,
       whatsappOffers: false,
-      viewedProductIds: sofa ? [sofa.id] : [],
-      shortlistedIds: sofa ? [sofa.id] : [],
-      ctaTaps: sofa
-        ? [{ type: "call", productId: sofa.id, at: "2026-10-12T16:00:00Z" }]
-        : [],
       followUpDone: true,
+      events: sofa
+        ? [
+            { type: "view" as const, productId: sofa.id, at: new Date("2026-10-11") },
+            { type: "shortlist" as const, productId: sofa.id, at: new Date("2026-10-12") },
+            {
+              type: "cta" as const,
+              productId: sofa.id,
+              at: new Date("2026-10-12T16:00:00Z"),
+              payload: { type: "call" },
+            },
+          ]
+        : [],
     },
     {
       mobile: "9988776655",
@@ -225,14 +233,30 @@ export async function seedOps(db: Db) {
       area: "Lingampally",
       firstSeenAt: new Date("2026-10-10"),
       lastSeenAt: new Date("2026-10-11"),
-      intent: "cold",
+      intent: "cold" as const,
       whatsappOffers: true,
-      viewedProductIds: table ? [table.id] : [],
-      shortlistedIds: [],
-      ctaTaps: [],
       followUpDone: false,
+      events: table
+        ? [{ type: "view" as const, productId: table.id, at: new Date("2026-10-10") }]
+        : [],
     },
-  ]);
+  ];
+
+  for (const row of leadRows) {
+    const { events, ...lead } = row;
+    const [inserted] = await db.insert(schema.leads).values(lead).returning();
+    if (events.length) {
+      await db.insert(schema.leadEvents).values(
+        events.map((e) => ({
+          leadId: inserted.id,
+          eventType: e.type,
+          productId: e.productId,
+          payload: "payload" in e ? e.payload : {},
+          occurredAt: e.at,
+        })),
+      );
+    }
+  }
 
   const orthoVariant = ortho
     ? (
@@ -251,16 +275,22 @@ export async function seedOps(db: Db) {
         customerMobile: "9848012345",
         customerName: "Ananya Reddy",
         address: "Flat 402, Gachibowli",
-        productId: ortho.id,
-        variantId: orthoVariant.id,
-        quantity: 1,
-        agreedPrice: "72000",
+        subtotal: "72000",
         advancePaid: "20000",
         expectedDelivery: "2026-10-25",
-        salespersonName: "Ravi",
         status: "in_production",
       })
       .returning();
+
+    await db.insert(schema.orderLines).values({
+      orderId: order.id,
+      productId: ortho.id,
+      variantId: orthoVariant.id,
+      quantity: 1,
+      unitPrice: "72000",
+      lineTotal: "72000",
+      sortOrder: 0,
+    });
 
     await db.insert(schema.orderStatusHistory).values([
       {
@@ -277,26 +307,4 @@ export async function seedOps(db: Db) {
       },
     ]);
   }
-
-  await db.insert(schema.auditLogs).values([
-    {
-      at: new Date("2026-10-16T08:00:00Z"),
-      actorName: "Admin",
-      action: "seed",
-      detail: "Catalogue and ops seed completed",
-    },
-  ]);
-
-  await db.insert(schema.segments).values([
-    {
-      name: "Hot mattress shoppers",
-      description: "Hot intent leads who viewed mattresses",
-      count: 1,
-    },
-    {
-      name: "Shortlisted Royal Range",
-      description: "Leads who shortlisted Royal Range sofas",
-      count: 1,
-    },
-  ]);
 }

@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { eq } from "drizzle-orm";
 import { db } from "@/db";
-import { categories, productVariants } from "@/db/schema";
+import { categories, productVariants } from "@/db";
 import { revalidateShopCache } from "@/lib/cache-tags";
 import { requireStaffProfile } from "@/services/profile";
 import { ROUTES } from "@/constants/routes";
@@ -19,7 +19,6 @@ export async function setVariantPriceAction(input: {
     .update(productVariants)
     .set({ price: input.price, mrp: input.mrp })
     .where(eq(productVariants.id, input.variantId));
-  revalidatePath(ROUTES.admin.pricing);
   revalidatePath(ROUTES.admin.products);
   if (input.productId) {
     revalidatePath(ROUTES.admin.productEdit(input.productId));
@@ -38,7 +37,6 @@ export async function setVariantStockAction(input: {
     .update(productVariants)
     .set({ stockQty: input.stockQty })
     .where(eq(productVariants.id, input.variantId));
-  revalidatePath(ROUTES.admin.stock);
   revalidatePath(ROUTES.admin.products);
   if (input.productId) {
     revalidatePath(ROUTES.admin.productEdit(input.productId));

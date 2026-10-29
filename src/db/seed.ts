@@ -6,7 +6,7 @@ import "dotenv/config";
 import { neon } from "@neondatabase/serverless";
 import { drizzle } from "drizzle-orm/neon-http";
 import { eq } from "drizzle-orm";
-import * as schema from "./schema";
+import * as schema from "./app-schema";
 import { categoryConfigSeedRows } from "@/constants/category-config";
 import {
   MATTRESS_BRANDS,
@@ -50,6 +50,7 @@ async function insertVariants(rows: VariantInsert[]) {
 
 async function clearCatalogue() {
   await db.delete(schema.productVariants);
+  await db.delete(schema.productOptionValues);
   await db.delete(schema.products);
   await db.delete(schema.sizeDimensions);
   await db.delete(schema.mattressBrandOptions);
@@ -75,6 +76,20 @@ async function addOptions(
       })),
     )
     .returning();
+}
+
+async function syncProductOptions(
+  productId: string,
+  rows: { optionGroupId: string; optionId: string }[],
+) {
+  if (!rows.length) return;
+  await db.insert(schema.productOptionValues).values(
+    rows.map((r) => ({
+      productId,
+      optionGroupId: r.optionGroupId,
+      optionId: r.optionId,
+    })),
+  );
 }
 
 async function seed() {
@@ -316,16 +331,19 @@ async function seed() {
           name,
           slug,
           description: `${name} — ${model.purpose === "pain-relief" ? "pain relief" : "everyday sleeping"} mattress.`,
-          purposeOptionId: purposeBy[model.purpose].id,
-          coverMaterialOptionId: coverBy[model.cover].id,
-          fillingOptionId: fillingBy[model.filling].id,
-          comfortOptionId: comfortBy[model.comfort].id,
           imageUrl: mattressImagePath(brand.slug, model.key),
           status: "published",
           isFeatured: m === 0,
           sortOrder: m + 1,
         })
         .returning();
+
+      await syncProductOptions(product.id, [
+        { optionGroupId: g.purpose.id, optionId: purposeBy[model.purpose].id },
+        { optionGroupId: g.cover_material.id, optionId: coverBy[model.cover].id },
+        { optionGroupId: g.filling.id, optionId: fillingBy[model.filling].id },
+        { optionGroupId: g.comfort.id, optionId: comfortBy[model.comfort].id },
+      ]);
 
       // HTML product-editor model: size (L×W) × thickness only — no colour.
       const batch: VariantInsert[] = [];

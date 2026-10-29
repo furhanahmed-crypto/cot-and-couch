@@ -1,6 +1,6 @@
 import { and, asc, count, eq } from "drizzle-orm";
 import { db } from "@/db";
-import { carts } from "@/db/schema";
+import { carts } from "@/db";
 import { getCurrentProfile } from "@/lib/auth/profile";
 import { sameCustomSize } from "@/lib/cart-find";
 import { getProductById } from "@/services/catalogue";

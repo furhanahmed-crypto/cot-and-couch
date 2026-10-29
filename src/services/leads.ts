@@ -1,6 +1,6 @@
-import { desc, eq, sql } from "drizzle-orm";
+import { desc, eq, inArray, sql } from "drizzle-orm";
 import { db } from "@/db";
-import { leads, profiles, type Profile } from "@/db/schema";
+import { leadEvents, leads, profiles, type Profile } from "@/db";
 import type { Lead } from "@/types";
 
 function displayName(profile: Profile) {
@@ -16,10 +16,28 @@ function contactMobile(profile: Profile) {
   return profile.email?.trim() || "pending";
 }
 
-/**
- * Ensure a CRM lead exists for a storefront customer profile.
- * `touchLastSeen` updates last_seen (use on login / admin sync).
- */
+function aggregateLeadEvents(
+  events: (typeof leadEvents.$inferSelect)[],
+) {
+  const viewedProductIds: string[] = [];
+  const shortlistedIds: string[] = [];
+  const ctaTaps: Lead["ctaTaps"] = [];
+  for (const e of events) {
+    if (e.eventType === "view" && e.productId) viewedProductIds.push(e.productId);
+    if (e.eventType === "shortlist" && e.productId) {
+      shortlistedIds.push(e.productId);
+    }
+    if (e.eventType === "cta") {
+      ctaTaps.push({
+        type: e.payload?.type ?? "cta",
+        productId: e.productId ?? undefined,
+        at: e.occurredAt.toISOString(),
+      });
+    }
+  }
+  return { viewedProductIds, shortlistedIds, ctaTaps };
+}
+
 export async function ensureLeadForProfile(
   profile: Profile,
   opts?: { touchLastSeen?: boolean },
@@ -39,9 +57,9 @@ export async function ensureLeadForProfile(
         .set({
           name: displayName(profile),
           mobile: contactMobile(profile),
-          area: profile.area ?? existing[0].area,
-          whatsappOffers: profile.whatsappOffers,
+          area: profile.address ?? existing[0].area,
           lastSeenAt: new Date(),
+          updatedAt: new Date(),
         })
         .where(eq(leads.id, existing[0].id));
     }
@@ -54,8 +72,7 @@ export async function ensureLeadForProfile(
       profileId: profile.id,
       name: displayName(profile),
       mobile: contactMobile(profile),
-      area: profile.area ?? null,
-      whatsappOffers: profile.whatsappOffers,
+      area: profile.address ?? null,
       intent: "cold",
       followUpDone: false,
       firstSeenAt: profile.createdAt ?? new Date(),
@@ -66,7 +83,6 @@ export async function ensureLeadForProfile(
   return row;
 }
 
-/** Backfill leads for any customer profiles missing a lead row. */
 export async function syncCustomerLeadsFromProfiles() {
   const customers = await db
     .select()
@@ -95,7 +111,6 @@ export type AdminLead = Lead & {
   source: "storefront" | "manual";
 };
 
-/** Admin leads list — storefront customers + any manual leads. */
 export async function getAdminLeads(): Promise<AdminLead[]> {
   await syncCustomerLeadsFromProfiles();
 
@@ -105,13 +120,28 @@ export async function getAdminLeads(): Promise<AdminLead[]> {
       email: profiles.email,
       phone: profiles.phone,
       profileName: profiles.name,
-      profileArea: profiles.area,
+      profileAddress: profiles.address,
       profileId: profiles.id,
       role: profiles.role,
     })
     .from(leads)
     .leftJoin(profiles, eq(leads.profileId, profiles.id))
     .orderBy(desc(leads.lastSeenAt));
+
+  const leadIds = rows.map((r) => r.lead.id);
+  const events =
+    leadIds.length === 0
+      ? []
+      : await db
+          .select()
+          .from(leadEvents)
+          .where(inArray(leadEvents.leadId, leadIds));
+  const eventsByLead = new Map<string, typeof events>();
+  for (const e of events) {
+    const list = eventsByLead.get(e.leadId) ?? [];
+    list.push(e);
+    eventsByLead.set(e.leadId, list);
+  }
 
   return rows
     .filter((r) => {
@@ -121,11 +151,12 @@ export async function getAdminLeads(): Promise<AdminLead[]> {
     .map((r) => {
       const l = r.lead;
       const storefront = Boolean(r.profileId);
+      const agg = aggregateLeadEvents(eventsByLead.get(l.id) ?? []);
       return {
         id: l.id,
         mobile: r.phone?.trim() || l.mobile,
         name: r.profileName?.trim() || l.name,
-        area: r.profileArea ?? l.area ?? undefined,
+        area: r.profileAddress ?? l.area ?? undefined,
         email: r.email ?? undefined,
         profileId: r.profileId ?? undefined,
         source: storefront ? ("storefront" as const) : ("manual" as const),
@@ -134,10 +165,8 @@ export async function getAdminLeads(): Promise<AdminLead[]> {
         intent: l.intent,
         assignedTo: l.assignedToProfileId ?? undefined,
         whatsappOffers: l.whatsappOffers,
-        viewedProductIds: l.viewedProductIds ?? [],
-        shortlistedIds: l.shortlistedIds ?? [],
-        ctaTaps: l.ctaTaps ?? [],
         followUpDone: l.followUpDone,
+        ...agg,
       };
     });
 }

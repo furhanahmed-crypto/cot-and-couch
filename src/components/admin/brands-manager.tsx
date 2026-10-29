@@ -16,7 +16,7 @@ import {
   updateCollectionAction,
   updateColourAction,
   updateSizeAction,
-} from "@/app/admin/masters/actions";
+} from "@/app/admin/brands/actions";
 import { AppSelect } from "@/components/ui/app-select";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -35,7 +35,7 @@ import type { Brand, Collection, Colour, SizeOption } from "@/types";
 
 type SizeGroup = { slug: string; label: string };
 
-export function MastersManager({
+export function BrandsManager({
   colours,
   brands,
   collections,

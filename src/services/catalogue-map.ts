@@ -19,7 +19,15 @@ import type {
   Product as DbProduct,
   ProductVariant as DbVariant,
   SizeDimension as DbDim,
-} from "@/db/schema";
+} from "@/db";
+
+export type DbProductForMap = DbProduct & {
+  purposeOptionId?: string | null;
+  coverMaterialOptionId?: string | null;
+  fillingOptionId?: string | null;
+  comfortOptionId?: string | null;
+  attributes?: Record<string, string>;
+};
 
 const COVER_BY_SLUG = Object.fromEntries(
   SEED_CATEGORIES.map((c) => [c.slug, c.coverImage]),
@@ -109,7 +117,9 @@ export function mapVariant(
   dimLabelById?: Map<string, string>,
 ): Variant {
   const colour = row.colourOptionId ? opts.get(row.colourOptionId) : undefined;
-  const sizeGroup = opts.get(row.sizeGroupOptionId);
+  const widthOpt = row.widthOptionId ? opts.get(row.widthOptionId) : undefined;
+  const sizeKey = row.sizeGroupOptionId ?? row.widthOptionId;
+  const sizeGroup = sizeKey ? opts.get(sizeKey) : undefined;
   const thickness = row.thicknessOptionId
     ? opts.get(row.thicknessOptionId)
     : undefined;
@@ -121,13 +131,15 @@ export function mapVariant(
   return {
     id: row.id,
     sku: row.sku,
-    sizeGroupOptionId: row.sizeGroupOptionId,
-    sizeGroupLabel: sizeGroup?.label ?? "Size",
-    sizeGroupSlug: sizeGroup?.slug ?? "",
+    sizeGroupOptionId: row.sizeGroupOptionId ?? row.widthOptionId ?? "",
+    sizeGroupLabel: widthOpt?.label ?? sizeGroup?.label ?? "Size",
+    sizeGroupSlug: sizeGroup?.slug ?? widthOpt?.slug ?? "",
     sizeDimensionId: row.sizeDimensionId,
-    sizeDimensionLabel: row.sizeDimensionId
-      ? (dimLabelById?.get(row.sizeDimensionId) ?? null)
-      : null,
+    sizeDimensionLabel: widthOpt?.detail
+      ? widthOpt.detail
+      : row.sizeDimensionId
+        ? (dimLabelById?.get(row.sizeDimensionId) ?? null)
+        : null,
     isCustomSize: row.isCustomSize,
     thicknessOptionId: row.thicknessOptionId,
     thicknessLabel: thickness?.label ?? null,
@@ -158,7 +170,7 @@ function collectionFor(categorySlug: string, featured: boolean): string {
 }
 
 export function mapProduct(
-  row: DbProduct,
+  row: DbProductForMap,
   variants: DbVariant[],
   opts: OptionLookup,
   categorySlug: string,
@@ -221,10 +233,10 @@ export function mapProduct(
         : "sc-queen",
     collectionId: collectionFor(categorySlug, row.isFeatured),
     mattressBrandId: row.mattressBrandId,
-    purposeOptionId: row.purposeOptionId,
-    coverMaterialOptionId: row.coverMaterialOptionId,
-    fillingOptionId: row.fillingOptionId,
-    comfortOptionId: row.comfortOptionId,
+    purposeOptionId: row.purposeOptionId ?? null,
+    coverMaterialOptionId: row.coverMaterialOptionId ?? null,
+    fillingOptionId: row.fillingOptionId ?? null,
+    comfortOptionId: row.comfortOptionId ?? null,
     imageUrl: row.imageUrl,
     attributes,
     highlights: highlights.length ? highlights : ["Showroom exclusive"],
