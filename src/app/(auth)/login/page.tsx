@@ -60,12 +60,6 @@ export default function LoginPage() {
           Create an account
         </Link>
       </p>
-      <p className="text-center text-xs text-muted-foreground">
-        Staff?{" "}
-        <Link href={ROUTES.admin.login} className="underline">
-          Admin console
-        </Link>
-      </p>
     </div>
   );
 }

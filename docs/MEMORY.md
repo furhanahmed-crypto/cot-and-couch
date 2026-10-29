@@ -2,6 +2,11 @@
 
 Short record of material choices. See `ARCHITECTURE.md` and `README.md`.
 
+## 2026 — Single login for shop + admin
+
+- No `/admin/login`. Use `/login` (and register).
+- `/admin` layout: `getStaffProfile()` → else `redirect("/")` before render.
+
 ## 2026 — Admin “Cots” / shop “Beds”
 
 - Admin UI + DB category name: **Cots** (slug `cots`).

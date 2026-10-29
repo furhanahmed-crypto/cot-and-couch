@@ -14,7 +14,8 @@ export const ROUTES = {
   privacy: "/privacy",
   admin: {
     root: "/admin",
-    login: "/admin/login",
+    /** @deprecated Use ROUTES.login — staff use the same sign-in as the shop. */
+    login: "/login",
     dashboard: "/admin",
     categories: "/admin/categories",
     brands: "/admin/brands",

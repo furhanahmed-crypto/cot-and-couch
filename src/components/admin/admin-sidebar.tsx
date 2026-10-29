@@ -1,6 +1,5 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { LogOut, X } from "lucide-react";
 import { AdminSidebarNav } from "@/components/admin/admin-sidebar-nav";
@@ -20,27 +19,21 @@ import {
 } from "@/components/ui/sidebar";
 import { ROUTES } from "@/constants/routes";
 import { authClient } from "@/lib/auth/client";
-import { getStaffProfile } from "@/services/profile";
 
-export function AdminSidebar() {
+export function AdminSidebar({
+  staffName,
+  isAdmin,
+}: {
+  staffName: string;
+  isAdmin: boolean;
+}) {
   const router = useRouter();
-  const { data: session } = authClient.useSession();
   const { isMobile, setOpenMobile } = useSidebar();
-  const [role, setRole] = useState<"admin" | "team" | null>(null);
-  const [staffLabel, setStaffLabel] = useState<string>("");
-
-  useEffect(() => {
-    getStaffProfile().then((profile) => {
-      if (!profile) return;
-      setRole(profile.role === "admin" ? "admin" : "team");
-      setStaffLabel(profile.name?.trim() || profile.email);
-    });
-  }, [session?.user?.id]);
 
   async function handleLogout() {
     await authClient.signOut();
     if (isMobile) setOpenMobile(false);
-    router.replace(ROUTES.admin.login);
+    router.replace(ROUTES.home);
   }
 
   return (
@@ -79,16 +72,16 @@ export function AdminSidebar() {
             </Button>
           ) : null}
         </div>
-        {isMobile && staffLabel ? (
+        {isMobile && staffName ? (
           <p className="mt-2 truncate px-0.5 text-xs text-sidebar-foreground/60">
-            {staffLabel}
-            {role ? ` · ${role === "admin" ? "Admin" : "Team"}` : ""}
+            {staffName}
+            {` · ${isAdmin ? "Admin" : "Team"}`}
           </p>
         ) : null}
       </SidebarHeader>
 
       <SidebarContent className="gap-1 overflow-y-auto">
-        <AdminSidebarNav isAdmin={role === "admin"} />
+        <AdminSidebarNav isAdmin={isAdmin} />
       </SidebarContent>
 
       <SidebarFooter className="border-t border-sidebar-border pb-6 md:pb-10">

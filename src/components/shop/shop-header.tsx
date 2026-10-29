@@ -190,7 +190,7 @@ export function ShopHeader({ categories }: { categories: Category[] }) {
               </DropdownMenuItem>
               <DropdownMenuItem
                 nativeButton={false}
-                render={<Link href={ROUTES.admin.login} prefetch />}
+                render={<Link href={ROUTES.admin.dashboard} prefetch />}
               >
                 Staff console
               </DropdownMenuItem>

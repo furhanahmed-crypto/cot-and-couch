@@ -34,9 +34,9 @@ npm run dev
 
 Open [http://localhost:3000](http://localhost:3000) → **Register** with email → you land in the shop.
 
-### 3. Staff / team console login
+### 3. Staff / team console
 
-Sign in at [`/admin/login`](http://localhost:3000/admin/login).
+Sign in at [`/login`](http://localhost:3000/login) (same form as the shop), then open [`/admin`](http://localhost:3000/admin). Non-staff roles are redirected home.
 
 **Demo team credentials**
 

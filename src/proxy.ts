@@ -11,6 +11,6 @@ export const config = {
      * Protect shop + admin app.
      * Leave auth pages, privacy, Neon Auth API, and static assets public.
      */
-    "/((?!login|register|privacy|verify|admin/login|api/auth|_next/static|_next/image|favicon.ico|images).*)",
+    "/((?!login|register|privacy|verify|api/auth|_next/static|_next/image|favicon.ico|images).*)",
   ],
 };
