@@ -19,6 +19,7 @@ type CartStore = {
     variantId?: string,
     customLengthIn?: number | null,
     customWidthIn?: number | null,
+    addonIds?: string[],
   ) => CartSummaryLine | null;
   addItem: (input: AddToCartInput) => Promise<{ ok: boolean; error?: string }>;
 };
@@ -49,6 +50,7 @@ export const useCartStore = create<CartStore>((set, get) => ({
     variantId,
     customLengthIn = null,
     customWidthIn = null,
+    addonIds = [],
   ) =>
     findSummaryLine(
       get().lines,
@@ -56,6 +58,7 @@ export const useCartStore = create<CartStore>((set, get) => ({
       variantId,
       customLengthIn,
       customWidthIn,
+      addonIds,
     ),
 
   addItem: async (input) => {

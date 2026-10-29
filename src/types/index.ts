@@ -109,6 +109,9 @@ export interface Product {
   mattressBrandId: string | null;
   bedRangeId: string | null;
   bedRangeName?: string | null;
+  bedRangeSlug?: string | null;
+  /** Beds only — drives cushion head/foot addon visibility. */
+  cotType?: "non_cushion" | "cushion" | null;
   purposeOptionId: string | null;
   coverMaterialOptionId: string | null;
   fillingOptionId: string | null;

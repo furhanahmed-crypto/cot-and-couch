@@ -11,18 +11,21 @@ import {
 } from "@/components/shop/shop-skeletons";
 import { ROUTES } from "@/constants/routes";
 import { getMasters, getProductBySlug, getProductsByIds } from "@/services/catalogue";
+import { listBedCategoryAddons } from "@/services/bed-addons";
 import { getStoreInfo } from "@/services/ops";
 
 async function ProductContent({ slug }: { slug: string }) {
   const product = await getProductBySlug(slug);
   if (!product) notFound();
 
-  const [related, completeRoom, masters, storeInfo] = await Promise.all([
-    getProductsByIds(product.relatedIds),
-    getProductsByIds(product.completeRoomIds),
-    getMasters(),
-    getStoreInfo(),
-  ]);
+  const [related, completeRoom, masters, storeInfo, bedAddonRows] =
+    await Promise.all([
+      getProductsByIds(product.relatedIds),
+      getProductsByIds(product.completeRoomIds),
+      getMasters(),
+      getStoreInfo(),
+      product.bedRangeId ? listBedCategoryAddons() : Promise.resolve([]),
+    ]);
   const productUrl = ROUTES.product(product.slug);
 
   return (
@@ -33,6 +36,12 @@ async function ProductContent({ slug }: { slug: string }) {
           product={product}
           colours={masters.colours}
           sizes={masters.sizes}
+          bedAddonRows={bedAddonRows.map((r) => ({
+            id: r.id,
+            key: r.key,
+            label: r.label,
+            sortOrder: r.sortOrder,
+          }))}
         />
 
         {related.length > 0 && (

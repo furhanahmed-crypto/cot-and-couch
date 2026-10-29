@@ -2,6 +2,13 @@
 
 Short record of material choices. See `ARCHITECTURE.md` and `README.md`.
 
+## 2026 — Cot price lists + addons
+
+- Widths show inches (`King 75×72 inches`) plus 78″ extra-length SKUs with per-size surcharges.
+- **Prime Range** = former Cushion / Cushion Back (never use those names in UI). `cot_type = cushion`.
+- Addon prices: Ideal/Optimum/Prime = affordable sheet; Essential+ = standard sheet. Cushion head/foot only on non-cushion ranges.
+- Constants: `src/constants/bed-pricing.ts`. Reseed: `bun run db:seed-beds` after migrate `0011`.
+
 ## 2026 — Bed ranges as masters
 
 - **`coc_bed_ranges`** mirrors **`coc_mattress_brands`**. Products use `bed_range_id` (not “one product per range”).

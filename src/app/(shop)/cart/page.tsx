@@ -22,7 +22,10 @@ async function CartContent() {
   const lineCount = lines.length;
   const unitCount = lines.reduce((sum, line) => sum + line.quantity, 0);
   const subtotal = lines.reduce(
-    (sum, line) => sum + line.variant.price * line.quantity,
+    (sum, line) => {
+      const addons = line.addons.reduce((s, a) => s + a.price, 0);
+      return sum + (line.variant.price + addons) * line.quantity;
+    },
     0,
   );
 

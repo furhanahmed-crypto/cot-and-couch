@@ -57,6 +57,13 @@
       "when": 1761752400000,
       "tag": "0010_bed_ranges_as_masters",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1761756000000,
+      "tag": "0011_bed_pricing_widths_addons",
+      "breakpoints": true
     }
   ]
 }

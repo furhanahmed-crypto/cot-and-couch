@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { and, eq } from "drizzle-orm";
 import { db } from "@/db";
 import {
+  bedRanges,
   categories,
   optionGroups,
   options,
@@ -21,6 +22,10 @@ import { revalidateShopCache } from "@/lib/cache-tags";
 import { requireStaffProfile } from "@/services/profile";
 import { ROUTES } from "@/constants/routes";
 import { BED_WIDTH_GROUP_KEY } from "@/constants/bed-model";
+import {
+  bedSizeKeyFromSlug,
+  bedVariantPrices,
+} from "@/constants/bed-pricing";
 
 function revalidateProduct(productId: string) {
   revalidatePath(ROUTES.admin.products);
@@ -317,30 +322,44 @@ export async function generateProductVariantsAction(productId: string) {
         error: "Add bed widths under Categories → Beds → Manage options",
       };
     }
+    let rangeSlug: string | null = null;
+    if (product.bedRangeId) {
+      const [range] = await db
+        .select({ slug: bedRanges.slug })
+        .from(bedRanges)
+        .where(eq(bedRanges.id, product.bedRangeId))
+        .limit(1);
+      rangeSlug = range?.slug ?? null;
+    }
     const prefix = slugBase.toUpperCase();
-    if (colours.length) {
-      for (const w of widths) {
+    for (const w of widths) {
+      const sizeKey = bedSizeKeyFromSlug(w.slug);
+      const isExtra = w.slug.includes("-78x");
+      const priced =
+        rangeSlug && sizeKey
+          ? bedVariantPrices(rangeSlug, sizeKey, isExtra)
+          : null;
+      if (!priced) continue;
+      if (colours.length) {
         for (const colour of colours) {
           batch.push({
             productId,
             sku: `${prefix}-${w.slug}-${colour.slug}`.slice(0, 80).toUpperCase(),
             widthOptionId: w.id,
             colourOptionId: colour.id,
-            mrp: "0",
-            price: "0",
+            mrp: String(priced.mrp),
+            price: String(priced.price),
             stockQty: 0,
             isActive: true,
           });
         }
-      }
-    } else {
-      for (const w of widths) {
+      } else {
         batch.push({
           productId,
           sku: `${prefix}-${w.slug}`.slice(0, 80).toUpperCase(),
           widthOptionId: w.id,
-          mrp: "0",
-          price: "0",
+          mrp: String(priced.mrp),
+          price: String(priced.price),
           stockQty: 0,
           isActive: true,
         });

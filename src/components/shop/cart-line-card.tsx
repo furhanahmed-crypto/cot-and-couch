@@ -33,7 +33,9 @@ export function CartLineCard({ line }: { line: CartLine }) {
   const image =
     line.variant.images[0] ??
     line.product.variants.find((v) => v.images[0])?.images[0];
-  const lineTotal = line.variant.price * line.quantity;
+  const addonsTotal = line.addons.reduce((sum, a) => sum + a.price, 0);
+  const unit = line.variant.price + addonsTotal;
+  const lineTotal = unit * line.quantity;
   const configLabel = buildConfigLabel(line);
 
   return (
@@ -67,12 +69,21 @@ export function CartLineCard({ line }: { line: CartLine }) {
             {configLabel ? (
               <p className="text-sm text-muted-foreground">{configLabel}</p>
             ) : null}
+            {line.addons.length > 0 ? (
+              <ul className="space-y-0.5 text-xs text-muted-foreground">
+                {line.addons.map((a) => (
+                  <li key={a.addonId}>
+                    + {a.label} ({formatINR(a.price)})
+                  </li>
+                ))}
+              </ul>
+            ) : null}
             <p className="text-xs text-muted-foreground">SKU {line.variant.sku}</p>
           </div>
           <div className="text-right">
             <p className="font-semibold">{formatINR(lineTotal)}</p>
             <p className="text-xs text-muted-foreground">
-              {formatINR(line.variant.price)} each
+              {formatINR(unit)} each
             </p>
           </div>
         </div>

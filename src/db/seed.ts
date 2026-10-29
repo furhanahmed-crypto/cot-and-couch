@@ -15,6 +15,12 @@ import {
   bedProductSlug,
 } from "@/constants/bed-model";
 import {
+  BED_ADDON_DEFS,
+  BED_ADDON_PRICES,
+  bedSizeKeyFromSlug,
+  bedVariantPrices,
+} from "@/constants/bed-pricing";
+import {
   MATTRESS_BRANDS,
   CATEGORIES,
   COLOURS,
@@ -410,6 +416,19 @@ async function seed() {
         .where(eq(schema.options.groupId, widthGroup.id))
     : [];
 
+  if (catBySlug.cots) {
+    await db.insert(schema.categoryAddons).values(
+      BED_ADDON_DEFS.map((def) => ({
+        categoryId: catBySlug.cots.id,
+        key: def.key,
+        label: def.label,
+        price: String(BED_ADDON_PRICES.standard[def.key]),
+        sortOrder: def.sortOrder,
+        isActive: true,
+      })),
+    );
+  }
+
   const bedRangeRows = await db
     .insert(schema.bedRanges)
     .values(
@@ -448,14 +467,22 @@ async function seed() {
       const bedBatch: VariantInsert[] = [];
       const skuPrefix = `COT-${range.slug.slice(0, 8)}-${style.slice(0, 4)}`;
       for (const w of widthOpts) {
+        if (!w.isActive) continue;
+        const sizeKey = bedSizeKeyFromSlug(w.slug);
+        const isExtra = w.slug.includes("-78x");
+        const priced =
+          sizeKey != null
+            ? bedVariantPrices(range.slug, sizeKey, isExtra)
+            : null;
+        if (!priced) continue;
         for (const colour of colours) {
           bedBatch.push({
             productId: product.id,
             sku: `${skuPrefix}-${w.slug}-${colour.slug}`.slice(0, 80).toUpperCase(),
             widthOptionId: w.id,
             colourOptionId: colour.id,
-            mrp: String(24999 + range.sortOrder * 2000 + si * 500),
-            price: String(19999 + range.sortOrder * 1500 + si * 400),
+            mrp: String(priced.mrp),
+            price: String(priced.price),
             stockQty: 4 + range.sortOrder,
             isActive: true,
           });

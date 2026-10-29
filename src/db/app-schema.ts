@@ -42,6 +42,7 @@ export {
 export {
   cocProfileFavourites as profileFavourites,
   cocCartLines as carts,
+  cocCartLineAddons as cartLineAddons,
   type CocCartLine as Cart,
 } from "./schema-coc-shop";
 

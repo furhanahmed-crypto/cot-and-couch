@@ -13,6 +13,8 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { BED_ADDON_DEFS, BED_ADDON_PRICES } from "@/constants/bed-pricing";
+import { formatINR } from "@/lib/format";
 import type { AdminBedRange } from "@/services/admin-categories";
 
 export function BedsCategorySection({
@@ -81,8 +83,27 @@ export function BedsCategorySection({
       <p className="text-sm text-muted-foreground">
         Bed ranges are masters (like mattress brands). Add products under each
         range on the Products page. Edit a range to rename it and manage shared
-        widths.
+        widths (inches + optional 78″ extra length). Prime Range is the cushion
+        range — never label it “cushion back”.
       </p>
+
+      <div className="rounded-lg border border-border/80 bg-background px-3 py-3">
+        <p className="text-sm font-medium">Additional storage & cushion</p>
+        <p className="mt-1 text-xs text-muted-foreground">
+          Ideal / Optimum / Prime use affordable-sheet prices; Essential and
+          above use standard-sheet prices. Cushion head/foot only on
+          non-cushion ranges.
+        </p>
+        <ul className="mt-2 grid gap-1 text-xs text-muted-foreground sm:grid-cols-2">
+          {BED_ADDON_DEFS.map((def) => (
+            <li key={def.key}>
+              {def.label}: {formatINR(BED_ADDON_PRICES.affordable[def.key])} /{" "}
+              {formatINR(BED_ADDON_PRICES.standard[def.key])}
+              {def.nonCushionOnly ? " · non-cushion only" : ""}
+            </li>
+          ))}
+        </ul>
+      </div>
 
       <form
         className="flex flex-wrap items-end gap-2"

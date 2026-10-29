@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, useTransition } from "react";
+import { useEffect, useMemo, useState, useTransition } from "react";
 import { Heart, ShoppingCart } from "lucide-react";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
@@ -8,14 +8,23 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { CartQuantityControls } from "@/components/shop/cart-quantity-controls";
+import { PdpBedAddons } from "@/components/shop/pdp-bed-addons";
 import { useCart } from "@/hooks/use-cart";
 import { useShortlist } from "@/hooks/use-shortlist";
 import { discountPercent, formatINR, stockLabel } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { productColours } from "@/lib/catalogue-utils";
+import { resolveShopBedAddons } from "@/constants/bed-pricing";
 import type { Colour, Product, Variant } from "@/types";
 import { PdpDetails } from "./pdp-details";
 import { PdpGallery } from "./pdp-gallery";
+
+type BedAddonRow = {
+  id: string;
+  key: string;
+  label: string;
+  sortOrder: number;
+};
 
 type Axis = {
   sizeGroupOptionId: string;
@@ -81,11 +90,14 @@ function parseCustomInches(value: string) {
 export function PdpMain({
   product,
   colours,
+  bedAddonRows = [],
 }: {
   product: Product;
   colours: Colour[];
   /** Kept for call-site compat; dimensions come from variants. */
   sizes?: unknown;
+  /** Raw category addons for beds (prices resolved per range). */
+  bedAddonRows?: BedAddonRow[];
 }) {
   const variants = product.variants;
   const initial = variants[0];
@@ -94,6 +106,7 @@ export function PdpMain({
   const { addItem, findLine } = useCart();
   const liked = has(product.id);
   const [pending, startTransition] = useTransition();
+  const isBed = Boolean(product.bedRangeId);
 
   const [axis, setAxis] = useState<Axis>(() => ({
     sizeGroupOptionId: initial?.sizeGroupOptionId ?? "",
@@ -103,6 +116,7 @@ export function PdpMain({
   }));
   const [customLength, setCustomLength] = useState("");
   const [customWidth, setCustomWidth] = useState("");
+  const [selectedAddonIds, setSelectedAddonIds] = useState<string[]>([]);
 
   const sizeGroups = useMemo(
     () =>
@@ -157,6 +171,33 @@ export function PdpMain({
       : (variants.find((v) => v.images.length)?.images ?? []);
   const off = discountPercent(variant.mrp, variant.price);
 
+  const bedAddons = useMemo(() => {
+    if (!isBed || !bedAddonRows.length) return [];
+    return resolveShopBedAddons({
+      rows: bedAddonRows,
+      rangeSlug: product.bedRangeSlug ?? null,
+      cotType: product.cotType ?? null,
+      widthSlug: variant.sizeGroupSlug || null,
+    });
+  }, [
+    isBed,
+    bedAddonRows,
+    product.bedRangeSlug,
+    product.cotType,
+    variant.sizeGroupSlug,
+  ]);
+
+  useEffect(() => {
+    const allowed = new Set(bedAddons.map((a) => a.id));
+    setSelectedAddonIds((ids) => ids.filter((id) => allowed.has(id)));
+  }, [bedAddons]);
+
+  const addonExtra = bedAddons
+    .filter((a) => selectedAddonIds.includes(a.id))
+    .reduce((sum, a) => sum + a.price, 0);
+  const displayPrice = variant.price + addonExtra;
+  const displayMrp = variant.mrp + addonExtra;
+
   const selectedCustomLength = isCustomGroup
     ? parseCustomInches(customLength)
     : null;
@@ -168,6 +209,7 @@ export function PdpMain({
     variant.id,
     selectedCustomLength,
     selectedCustomWidth,
+    selectedAddonIds,
   );
 
   function selectSizeGroup(groupId: string) {
@@ -246,6 +288,7 @@ export function PdpMain({
         quantity: 1,
         customLengthIn,
         customWidthIn,
+        addonIds: selectedAddonIds,
       });
       if (!result.ok) {
         toast.error(result.error ?? "Could not add to cart");
@@ -253,6 +296,12 @@ export function PdpMain({
       }
       toast.success("Added to cart");
     });
+  }
+
+  function toggleAddon(id: string) {
+    setSelectedAddonIds((ids) =>
+      ids.includes(id) ? ids.filter((x) => x !== id) : [...ids, id],
+    );
   }
 
   if (!initial) {
@@ -293,10 +342,10 @@ export function PdpMain({
         <div className="space-y-1">
           <div className="flex flex-wrap items-baseline gap-2">
             <span className="text-2xl font-semibold text-brass">
-              {formatINR(variant.price)}
+              {formatINR(displayPrice)}
             </span>
             <span className="text-lg text-muted-foreground line-through">
-              {formatINR(variant.mrp)}
+              {formatINR(displayMrp)}
             </span>
             {off > 0 && (
               <Badge className="bg-brass/15 text-ink hover:bg-brass/15">
@@ -304,6 +353,11 @@ export function PdpMain({
               </Badge>
             )}
           </div>
+          {addonExtra > 0 ? (
+            <p className="text-xs text-muted-foreground">
+              Includes {formatINR(addonExtra)} in selected add-ons
+            </p>
+          ) : null}
           <p className="text-xs text-muted-foreground">
             Max discount capped at {variant.maxDiscountPercent}% on this variant
             (showroom policy).
@@ -436,6 +490,14 @@ export function PdpMain({
               </p>
             </div>
           )}
+
+          {isBed ? (
+            <PdpBedAddons
+              addons={bedAddons}
+              selectedIds={selectedAddonIds}
+              onToggle={toggleAddon}
+            />
+          ) : null}
 
           <p className="text-xs text-muted-foreground">SKU {variant.sku}</p>
 

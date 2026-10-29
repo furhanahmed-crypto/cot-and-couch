@@ -1,12 +1,12 @@
 /**
  * Upsert bed range masters + 3 products per range (width × colour variants).
- * Run after `bun run db:migrate` (includes 0010). Does not wipe mattresses.
+ * Prices follow showroom sheets (see bed-pricing.ts). Run after `bun run db:migrate`.
  *
  * Usage: bun run db:seed-beds
  */
 import "dotenv/config";
 import { neon } from "@neondatabase/serverless";
-import { and, eq } from "drizzle-orm";
+import { and, eq, notInArray } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/neon-http";
 import {
   BED_CATEGORY_SLUG,
@@ -14,13 +14,22 @@ import {
   BED_RANGE_SEEDS,
   BED_WIDTH_GROUP_KEY,
   BED_WIDTH_OPTIONS,
+  OBSOLETE_BED_WIDTH_SLUGS,
   bedProductName,
   bedProductSlug,
 } from "@/constants/bed-model";
+import {
+  BED_ADDON_DEFS,
+  BED_ADDON_PRICES,
+  BED_RANGE_PRICING,
+  bedSizeKeyFromSlug,
+  bedVariantPrices,
+} from "@/constants/bed-pricing";
 import * as schema from "./app-schema";
 import { cocCategories } from "./schema-coc";
 import {
   cocBedRanges,
+  cocCategoryAddons,
   cocCategoryOptionGroups,
   cocCollections,
   cocOptionGroups,
@@ -47,6 +56,8 @@ async function ensureWidthGroup(categoryId: string) {
       .returning();
   }
 
+  const activeSlugs = BED_WIDTH_OPTIONS.map((w) => w.slug);
+
   for (let i = 0; i < BED_WIDTH_OPTIONS.length; i++) {
     const w = BED_WIDTH_OPTIONS[i]!;
     const [existing] = await db
@@ -68,6 +79,23 @@ async function ensureWidthGroup(categoryId: string) {
         sortOrder: i + 1,
       });
     }
+  }
+
+  await db
+    .update(cocOptions)
+    .set({ isActive: false })
+    .where(
+      and(
+        eq(cocOptions.groupId, group.id),
+        notInArray(cocOptions.slug, activeSlugs),
+      ),
+    );
+
+  for (const slug of OBSOLETE_BED_WIDTH_SLUGS) {
+    await db
+      .update(cocOptions)
+      .set({ isActive: false })
+      .where(and(eq(cocOptions.groupId, group.id), eq(cocOptions.slug, slug)));
   }
 
   await db
@@ -100,9 +128,46 @@ async function ensureWidthGroup(categoryId: string) {
   return group.id;
 }
 
+async function ensureAddons(categoryId: string) {
+  for (const def of BED_ADDON_DEFS) {
+    const price = String(BED_ADDON_PRICES.standard[def.key]);
+    const [existing] = await db
+      .select({ id: cocCategoryAddons.id })
+      .from(cocCategoryAddons)
+      .where(
+        and(
+          eq(cocCategoryAddons.categoryId, categoryId),
+          eq(cocCategoryAddons.key, def.key),
+        ),
+      )
+      .limit(1);
+    if (existing) {
+      await db
+        .update(cocCategoryAddons)
+        .set({
+          label: def.label,
+          price,
+          sortOrder: def.sortOrder,
+          isActive: true,
+        })
+        .where(eq(cocCategoryAddons.id, existing.id));
+    } else {
+      await db.insert(cocCategoryAddons).values({
+        categoryId,
+        key: def.key,
+        label: def.label,
+        price,
+        sortOrder: def.sortOrder,
+        isActive: true,
+      });
+    }
+  }
+}
+
 async function ensureRanges() {
   const bySlug = new Map<string, string>();
   for (const seed of BED_RANGE_SEEDS) {
+    const pricing = BED_RANGE_PRICING[seed.slug];
     const [existing] = await db
       .select()
       .from(cocBedRanges)
@@ -131,6 +196,7 @@ async function ensureRanges() {
         .returning();
       bySlug.set(seed.slug, row.id);
     }
+    void pricing;
   }
   return bySlug;
 }
@@ -138,12 +204,21 @@ async function ensureRanges() {
 async function rebuildVariants(
   productId: string,
   skuPrefix: string,
+  rangeSlug: string,
   widthIds: { id: string; slug: string }[],
   colourIds: { id: string; slug: string }[],
 ) {
   await db.delete(cocProductVariants).where(eq(cocProductVariants.productId, productId));
   const rows = [];
   for (const w of widthIds) {
+    const sizeKey = bedSizeKeyFromSlug(w.slug);
+    const isExtra = w.slug.includes("-78x");
+    const priced =
+      sizeKey != null
+        ? bedVariantPrices(rangeSlug, sizeKey, isExtra)
+        : null;
+    if (!priced) continue;
+
     if (colourIds.length) {
       for (const c of colourIds) {
         rows.push({
@@ -151,8 +226,8 @@ async function rebuildVariants(
           sku: `${skuPrefix}-${w.slug}-${c.slug}`.slice(0, 80).toUpperCase(),
           widthOptionId: w.id,
           colourOptionId: c.id,
-          mrp: "29999",
-          price: "24999",
+          mrp: String(priced.mrp),
+          price: String(priced.price),
           stockQty: 5,
           isActive: true,
         });
@@ -162,8 +237,8 @@ async function rebuildVariants(
         productId,
         sku: `${skuPrefix}-${w.slug}`.slice(0, 80).toUpperCase(),
         widthOptionId: w.id,
-        mrp: "29999",
-        price: "24999",
+        mrp: String(priced.mrp),
+        price: String(priced.price),
         stockQty: 5,
         isActive: true,
       });
@@ -173,7 +248,7 @@ async function rebuildVariants(
 }
 
 async function main() {
-  console.log("Seeding bed catalogue (ranges + products)…");
+  console.log("Seeding bed catalogue (ranges + priced products + addons)…");
 
   const [cat] = await db
     .select()
@@ -186,6 +261,7 @@ async function main() {
   }
 
   const widthGroupId = await ensureWidthGroup(cat.id);
+  await ensureAddons(cat.id);
   const rangeBySlug = await ensureRanges();
 
   const widths = await db
@@ -205,7 +281,6 @@ async function main() {
         .where(and(eq(cocOptions.groupId, colourGroup.id), eq(cocOptions.isActive, true)))
     : [];
 
-  // Clear existing cot products so seed is deterministic
   await db.delete(cocProducts).where(eq(cocProducts.categoryId, cat.id));
 
   let productCount = 0;
@@ -213,10 +288,12 @@ async function main() {
 
   for (const range of BED_RANGE_SEEDS) {
     const rangeId = rangeBySlug.get(range.slug)!;
+    const pricing = BED_RANGE_PRICING[range.slug];
     for (let si = 0; si < BED_PRODUCT_STYLES.length; si++) {
       const style = BED_PRODUCT_STYLES[si]!;
       const name = bedProductName(range.name, style);
       const slug = bedProductSlug(range.slug, style);
+      const features = pricing?.features ?? `${range.name} bed`;
       const [product] = await db
         .insert(cocProducts)
         .values({
@@ -224,7 +301,7 @@ async function main() {
           bedRangeId: rangeId,
           name,
           slug,
-          description: `${name} — house-made bed in the ${range.name}.`,
+          description: `${name} — ${features}. ${pricing?.warrantyYears ?? 2} years warranty.`,
           imageUrl: `/images/cots/${range.slug}-${style.toLowerCase()}.jpg`,
           cotType: range.cotType,
           status: "published",
@@ -234,7 +311,7 @@ async function main() {
         .returning();
 
       const skuPrefix = `COT-${range.slug.slice(0, 8)}-${style.slice(0, 4)}`;
-      await rebuildVariants(product.id, skuPrefix, widths, colours);
+      await rebuildVariants(product.id, skuPrefix, range.slug, widths, colours);
       productBySlug.set(slug, product.id);
       productCount++;
     }
@@ -260,7 +337,7 @@ async function main() {
   }
 
   console.log(
-    `Done. ${BED_RANGE_SEEDS.length} ranges, ${productCount} products, ${widths.length} widths × ${colours.length || 1} colour(s).`,
+    `Done. ${BED_RANGE_SEEDS.length} ranges, ${productCount} products, ${widths.length} widths × ${colours.length || 1} colour(s), ${BED_ADDON_DEFS.length} addons.`,
   );
 }
 

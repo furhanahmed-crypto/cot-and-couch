@@ -216,6 +216,8 @@ export function mapProduct(
     mattressBrandId: row.mattressBrandId,
     bedRangeId: row.bedRangeId ?? null,
     bedRangeName: null,
+    bedRangeSlug: null,
+    cotType: row.cotType ?? null,
     purposeOptionId: row.purposeOptionId ?? null,
     coverMaterialOptionId: row.coverMaterialOptionId ?? null,
     fillingOptionId: row.fillingOptionId ?? null,

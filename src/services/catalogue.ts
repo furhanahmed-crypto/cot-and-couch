@@ -262,12 +262,20 @@ async function hydrateProducts(
     ...new Set(rows.map((r) => r.bedRangeId).filter(Boolean)),
   ] as string[];
   const rangeNameById = new Map<string, string>();
+  const rangeSlugById = new Map<string, string>();
   if (rangeIds.length) {
     const rangeRows = await db
-      .select({ id: bedRangesTable.id, name: bedRangesTable.name })
+      .select({
+        id: bedRangesTable.id,
+        name: bedRangesTable.name,
+        slug: bedRangesTable.slug,
+      })
       .from(bedRangesTable)
       .where(inArray(bedRangesTable.id, rangeIds));
-    for (const r of rangeRows) rangeNameById.set(r.id, r.name);
+    for (const r of rangeRows) {
+      rangeNameById.set(r.id, r.name);
+      rangeSlugById.set(r.id, r.slug);
+    }
   }
 
   return rows.map((row) => {
@@ -292,7 +300,9 @@ async function hydrateProducts(
     if (row.bedRangeId) {
       product.bedRangeId = row.bedRangeId;
       product.bedRangeName = rangeNameById.get(row.bedRangeId) ?? null;
+      product.bedRangeSlug = rangeSlugById.get(row.bedRangeId) ?? null;
     }
+    product.cotType = row.cotType ?? null;
     return product;
   });
 }
