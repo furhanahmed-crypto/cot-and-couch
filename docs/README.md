@@ -48,11 +48,11 @@ The app runs on **Neon Postgres** with **`coc_*` tables**, a **storefront**, and
 
 - **8 range products** (`cot-range-1` … `cot-range-8`), each a product with its own pricing in the product editor.
 - Default names: ranges **1–6** Ideal / Optimum / Essential / Prime / Premium / Royal Range; **7–8** stay **Range 7** / **Range 8**.
-- **4 shared width options** (`cot_width`): name in `label`, dimensions in `detail` (e.g. Queen Size + `5 ft × 6 ft`). Admin: Categories → Beds → **Manage bed widths** (add/edit via name + size modal).
-- **Ranges UI** on Categories mirrors mattresses: **Add range**, cards with edit/delete (archive).
+- **4 shared width options** (`cot_width`): name in `label`, dimensions in `detail` (e.g. Queen Size + `5 ft × 6 ft`). Managed inside the range edit sheet (add/edit via name + size modal).
+- **Ranges UI** mirrors mattresses: **Add range**, cards with edit/delete; **Edit** opens a sheet (range name + widths).
 - Collections: tag **Royal Range** and **Victoria** on products (typically range 8 and 7) under product editor.
 
-Constants and seeds: `src/constants/bed-model.ts`. Server actions: `src/app/admin/categories/bed-actions.ts`. UI: `src/components/admin/beds-category-section.tsx`, `bed-width-options-sheet.tsx`.
+Constants and seeds: `src/constants/bed-model.ts`. Server actions: `src/app/admin/categories/bed-actions.ts`. UI: `src/components/admin/beds-category-section.tsx`, `bed-range-editor-sheet.tsx` (edit opens sheet: range name + shared widths).
 
 ### Commands (quick reference)
 

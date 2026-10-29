@@ -7,7 +7,7 @@ Short record of material choices. See `ARCHITECTURE.md` and `README.md` for curr
 - **Slug** stays `cots` in Postgres; **storefront label** is **Beds** (slug unchanged for URLs and FKs).
 - Each **range** is a **published product** (max 8), not a free-form option list. Obsolete bed option groups (headboard, wood, polish, etc.) removed in `0007_bed_model_cleanup.sql`.
 - **Widths** are shared masters in `cot_width`: display **name** + **size** stored as `coc_options.label` and `coc_options.detail` (`0008_bed_width_detail.sql`).
-- **Admin Categories** for beds matches mattresses pattern: range cards + width sheet with two-field modal; generic “Manage options” sheet is not used for `cots`.
+- **Admin Categories** for beds matches mattresses: range cards; **Edit** opens a sheet (rename range, then shared widths with name+size modal). No separate “Manage bed widths” button.
 - **Collections** Royal Range / Victoria are product tags (ranges 8 / 7 in the normalisation script), separate from product name “Royal Range” on range 6.
 
 ## 2026 — `coc_*` database revamp (Phases 1–8)

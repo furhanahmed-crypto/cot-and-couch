@@ -1,32 +1,21 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useEffect, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Pencil, Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import {
   createBedRangeAction,
   deleteBedRangeAction,
-  updateBedRangeAction,
 } from "@/app/admin/categories/bed-actions";
-import { BedWidthOptionsSheet } from "@/components/admin/bed-width-options-sheet";
+import { BedRangeEditorSheet } from "@/components/admin/bed-range-editor-sheet";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-  Dialog,
-  DialogContent,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
 import type { AdminBedRange } from "@/services/admin-categories";
-import { ROUTES } from "@/constants/routes";
-import Link from "next/link";
 
 export function BedsCategorySection({
-  categoryId,
   categoryName,
   visible,
   pending,
@@ -40,17 +29,26 @@ export function BedsCategorySection({
   visible: boolean;
   pending: boolean;
   bedRanges: AdminBedRange[];
-  widthOptions: { id: string; label: string; detail?: string | null }[];
+  widthOptions: {
+    id: string;
+    label: string;
+    detail?: string | null;
+    isActive?: boolean;
+  }[];
   onRenameCategory: (name: string) => void;
   onToggleVisible: () => void;
 }) {
   const router = useRouter();
   const [name, setName] = useState(categoryName);
   const [rangeName, setRangeName] = useState("");
-  const [widthSheetOpen, setWidthSheetOpen] = useState(false);
-  const [editRange, setEditRange] = useState<AdminBedRange | null>(null);
-  const [editName, setEditName] = useState("");
+  const [editing, setEditing] = useState<AdminBedRange | null>(null);
   const [, startTransition] = useTransition();
+
+  useEffect(() => {
+    if (!editing) return;
+    const fresh = bedRanges.find((r) => r.id === editing.id);
+    if (fresh) setEditing(fresh);
+  }, [bedRanges, editing?.id]);
 
   function refresh() {
     router.refresh();
@@ -81,8 +79,8 @@ export function BedsCategorySection({
       </div>
 
       <p className="text-sm text-muted-foreground">
-        Eight bed ranges (products). Shared widths apply to every range; set prices
-        per product in the editor.
+        Bed ranges and the shared widths each range uses. Edit a range to rename
+        it and manage width options.
       </p>
 
       <form
@@ -124,17 +122,11 @@ export function BedsCategorySection({
             <div className="min-w-0">
               <p className="truncate font-medium">{range.name}</p>
               <p className="text-xs text-muted-foreground">
-                Range {range.rangeNumber} · {range.variantCount} variants
+                {widthOptions.length} widths shared
                 {range.collectionLabels.length
                   ? ` · ${range.collectionLabels.join(", ")}`
                   : ""}
               </p>
-              <Link
-                href={ROUTES.admin.productEdit(range.id)}
-                className="text-xs text-primary hover:underline"
-              >
-                Open product
-              </Link>
             </div>
             <div className="flex shrink-0 gap-1">
               <Button
@@ -142,10 +134,7 @@ export function BedsCategorySection({
                 size="icon-sm"
                 variant="outline"
                 aria-label={`Edit ${range.name}`}
-                onClick={() => {
-                  setEditRange(range);
-                  setEditName(range.name);
-                }}
+                onClick={() => setEditing(range)}
               >
                 <Pencil className="size-3.5" />
               </Button>
@@ -170,66 +159,16 @@ export function BedsCategorySection({
         ))}
       </div>
 
-      <div className="flex flex-wrap items-center gap-2">
-        <Button
-          type="button"
-          size="sm"
-          variant="outline"
-          onClick={() => setWidthSheetOpen(true)}
-        >
-          <Pencil className="size-3.5" />
-          Manage bed widths ({widthOptions.length})
-        </Button>
-        <p className="text-xs text-muted-foreground">
-          Tag Royal Range / Victoria collections on individual products.
-        </p>
-      </div>
-
-      <BedWidthOptionsSheet
-        open={widthSheetOpen}
-        onOpenChange={setWidthSheetOpen}
-        options={widthOptions}
+      <BedRangeEditorSheet
+        open={Boolean(editing)}
+        range={editing}
+        widthOptions={widthOptions}
         pending={pending}
+        onOpenChange={(open) => {
+          if (!open) setEditing(null);
+        }}
         onSaved={refresh}
       />
-
-      <Dialog open={Boolean(editRange)} onOpenChange={(o) => !o && setEditRange(null)}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Rename range</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-2">
-            <Label>Display name</Label>
-            <Input value={editName} onChange={(e) => setEditName(e.target.value)} />
-          </div>
-          <DialogFooter>
-            <Button type="button" variant="outline" onClick={() => setEditRange(null)}>
-              Cancel
-            </Button>
-            <Button
-              type="button"
-              disabled={pending || !editName.trim()}
-              onClick={() => {
-                if (!editRange) return;
-                startTransition(async () => {
-                  const res = await updateBedRangeAction({
-                    id: editRange.id,
-                    name: editName,
-                  });
-                  if (!res.ok) toast.error(res.error);
-                  else {
-                    toast.success("Range updated");
-                    setEditRange(null);
-                    refresh();
-                  }
-                });
-              }}
-            >
-              Save
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </section>
   );
 }

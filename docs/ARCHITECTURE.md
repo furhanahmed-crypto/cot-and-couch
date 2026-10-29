@@ -38,7 +38,7 @@ Migration `0006_drop_legacy.sql` removes pre-revamp tables. `0007` / `0008` spec
 | Category (slug) | Shop label | Admin pattern |
 |-----------------|------------|---------------|
 | `mattresses` | Mattresses | Brands grid + per-brand option sheet |
-| `cots` | Beds | Range products grid + shared width sheet (name + size) |
+| `cots` | Beds | Range cards; Edit sheet = name + shared widths (name + size) |
 | Other furniture | Per category | Category config sheet (option groups from `category-config`) |
 
 Product variants for beds: **width** (`cot_width`, label + detail) × **colour** when colour group is linked. Mapping for PDP/PLP: `src/services/catalogue-map.ts`.
