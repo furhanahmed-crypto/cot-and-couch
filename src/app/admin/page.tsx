@@ -1,6 +1,6 @@
 import { Suspense } from "react";
 import { AdminDashboard } from "@/components/admin/admin-dashboard";
-import { getAllProducts, getCategories } from "@/services/catalogue";
+import { getAdminCategories, getAllProducts } from "@/services/catalogue";
 import {
   getAdminDashboardData,
   type AdminDashboardRange,
@@ -18,7 +18,7 @@ function parseRange(raw: string | undefined): AdminDashboardRange {
 async function DashboardContent({ rangeDays }: { rangeDays: AdminDashboardRange }) {
   const [products, categories, staff] = await Promise.all([
     getAllProducts(),
-    getCategories({ includeHidden: true }),
+    getAdminCategories({ includeHidden: true }),
     getStaffProfile(),
   ]);
 

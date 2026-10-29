@@ -52,8 +52,14 @@ async function ensureWidthGroup(categoryId: string) {
   if (!group) {
     [group] = await db
       .insert(cocOptionGroups)
-      .values({ key: BED_WIDTH_GROUP_KEY, label: "Bed width", sortOrder: 5 })
+      .values({ key: BED_WIDTH_GROUP_KEY, label: "Cot width", sortOrder: 5 })
       .returning();
+  } else if (group.label !== "Cot width") {
+    await db
+      .update(cocOptionGroups)
+      .set({ label: "Cot width" })
+      .where(eq(cocOptionGroups.id, group.id));
+    group = { ...group, label: "Cot width" };
   }
 
   const activeSlugs = BED_WIDTH_OPTIONS.map((w) => w.slug);

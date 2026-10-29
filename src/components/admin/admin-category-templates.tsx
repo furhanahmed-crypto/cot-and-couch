@@ -818,7 +818,7 @@ function CategoryConfigSheet({
           <SheetTitle>{config?.title ?? "Category"} options</SheetTitle>
           <SheetDescription>
             {config?.slug === "cots"
-              ? "Shared bed widths apply to all 8 range products. Set prices per variant in each Range product."
+              ? "Shared cot widths apply across range products. Set prices per variant on each cot product."
               : "Add, rename, or remove values for each configuration field. Products pick from these lists in the editor."}
           </SheetDescription>
         </SheetHeader>

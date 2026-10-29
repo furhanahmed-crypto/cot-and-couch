@@ -110,7 +110,7 @@ export function AdminProductsCreate({
             </div>
             {isBeds ? (
               <div className="space-y-1">
-                <Label htmlFor="np-range">Bed range</Label>
+                <Label htmlFor="np-range">Cot range</Label>
                 <AppSelect
                   id="np-range"
                   value={bedRangeId}

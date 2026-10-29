@@ -127,7 +127,7 @@ export function BedRangeEditorSheet({
           <SheetHeader>
             <SheetTitle>{range?.name ?? "Range"} options</SheetTitle>
             <SheetDescription>
-              Rename this range. Shared bed widths apply to every product in
+              Rename this range. Shared cot widths apply to every product in
               every range.
             </SheetDescription>
           </SheetHeader>
@@ -148,7 +148,7 @@ export function BedRangeEditorSheet({
 
               <div className="space-y-3 rounded-lg border border-border/70 p-3">
                 <div>
-                  <p className="text-sm font-medium">Bed widths (shared)</p>
+                  <p className="text-sm font-medium">Cot widths (shared)</p>
                   <p className="text-xs text-muted-foreground">
                     Name and size for each width. Changes apply to all ranges.
                   </p>
@@ -245,7 +245,7 @@ export function BedRangeEditorSheet({
         <DialogContent>
           <DialogHeader>
             <DialogTitle>
-              {widthModal?.mode === "add" ? "Add bed width" : "Edit bed width"}
+              {widthModal?.mode === "add" ? "Add cot width" : "Edit cot width"}
             </DialogTitle>
           </DialogHeader>
           <div className="space-y-3">

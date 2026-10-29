@@ -81,10 +81,10 @@ export function BedsCategorySection({
       </div>
 
       <p className="text-sm text-muted-foreground">
-        Bed ranges are masters (like mattress brands). Add products under each
+        Cot ranges are masters (like mattress brands). Add products under each
         range on the Products page. Edit a range to rename it and manage shared
         widths (inches + optional 78″ extra length). Prime Range is the cushion
-        range — never label it “cushion back”.
+        range — never label it “cushion back”. Shop shows this category as Beds.
       </p>
 
       <div className="rounded-lg border border-border/80 bg-background px-3 py-3">

@@ -2,6 +2,12 @@
 
 Short record of material choices. See `ARCHITECTURE.md` and `README.md`.
 
+## 2026 — Admin “Cots” / shop “Beds”
+
+- Admin UI + DB category name: **Cots** (slug `cots`).
+- Customer shop: `shopCategoryDisplayName` maps `cots` → **Beds**.
+- Admin reads categories via **`getAdminCategories`** (uncached). Shop uses cached `getCategories` + shop label map.
+
 ## 2026 — Cot price lists + addons
 
 - Widths show inches (`King 75×72 inches`) plus 78″ extra-length SKUs with per-size surcharges.

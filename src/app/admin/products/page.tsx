@@ -1,7 +1,7 @@
 import { Suspense } from "react";
 import { AdminProductsTable } from "@/components/admin/admin-products-table";
 import { getBedRangesForAdmin } from "@/services/admin-categories";
-import { getAllProducts, getCategories } from "@/services/catalogue";
+import { getAdminCategories, getAllProducts } from "@/services/catalogue";
 import { getCollections } from "@/services/ops";
 
 export const instant = false;
@@ -9,7 +9,7 @@ export const instant = false;
 async function ProductsContent() {
   const [products, categories, collections, bedRangeRows] = await Promise.all([
     getAllProducts(),
-    getCategories(),
+    getAdminCategories(),
     getCollections(),
     getBedRangesForAdmin(),
   ]);

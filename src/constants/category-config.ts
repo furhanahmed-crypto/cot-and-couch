@@ -1,7 +1,7 @@
 /**
  * Admin-editable option groups for live furniture categories.
  * Sofas / computer tables are deferred — add configs when those ship.
- * DB category slug `cots` = Beds in the shop UI.
+ * DB / admin: Cots (slug `cots`). Shop UI maps that slug to “Beds”.
  */
 import {
   BED_WIDTH_GROUP_KEY,
@@ -34,15 +34,15 @@ export type CategoryConfigDef = {
 export const CATEGORY_CONFIGS: CategoryConfigDef[] = [
   {
     slug: "cots",
-    title: "Beds",
+    title: "Cots",
     subtitle:
       "Range masters · 2–3 products per range · shared widths · colour on variants",
     variants: ["Width", "Colour"],
-    note: "Add products under Products and assign a bed range. Collections are optional tags.",
+    note: "Add products under Products and assign a cot range. Collections are optional tags.",
     groups: [
       {
         key: BED_WIDTH_GROUP_KEY,
-        label: "Bed width (shared)",
+        label: "Cot width (shared)",
         seed: BED_WIDTH_OPTIONS.map((w) => w.label),
       },
     ],

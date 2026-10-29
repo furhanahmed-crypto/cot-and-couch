@@ -153,7 +153,7 @@ export async function createProductAction(input: {
     .where(eq(categories.id, input.categoryId))
     .limit(1);
   if (cat?.slug === "cots" && !input.bedRangeId) {
-    return { ok: false as const, error: "Choose a bed range" };
+    return { ok: false as const, error: "Choose a cot range" };
   }
   const [row] = await db
     .insert(products)
@@ -319,7 +319,7 @@ export async function generateProductVariantsAction(productId: string) {
     if (!widths.length) {
       return {
         ok: false as const,
-        error: "Add bed widths under Categories → Beds → Manage options",
+        error: "Add cot widths under Categories → Cots → Manage options",
       };
     }
     let rangeSlug: string | null = null;

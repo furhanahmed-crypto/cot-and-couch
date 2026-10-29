@@ -12,9 +12,9 @@ export type CategoryProductTemplate = {
 export const CATEGORY_PRODUCT_TEMPLATES: CategoryProductTemplate[] = [
   {
     slug: "beds",
-    name: "Beds",
+    name: "Cots",
     variants: ["Width", "Colour"],
-    note: "Eight range products share width masters. Set prices per SKU in Variants.",
+    note: "Cot range products share width masters. Set prices per SKU in Variants.",
     required: ["Width"],
     optional: [],
   },

@@ -3,8 +3,8 @@ import { notFound } from "next/navigation";
 import { PageHeader } from "@/components/admin/page-header";
 import { ProductEditorForm } from "@/components/admin/product-editor-form";
 import {
+  getAdminCategories,
   getAdminProductById,
-  getCategories,
   getProductEditorLookups,
 } from "@/services/catalogue";
 
@@ -13,7 +13,7 @@ export const instant = false;
 async function ProductEditorContent({ id }: { id: string }) {
   const [product, categories, lookups] = await Promise.all([
     getAdminProductById(id),
-    getCategories({ includeHidden: true }),
+    getAdminCategories({ includeHidden: true }),
     getProductEditorLookups(),
   ]);
   if (!product) notFound();

@@ -88,7 +88,7 @@ export function ProductEditorForm({
         },
       );
     } else if (isBeds) {
-      items.push({ label: "Bed range", ok: Boolean(bedRangeId) });
+      items.push({ label: "Cot range", ok: Boolean(bedRangeId) });
     }
     return items;
   }, [
@@ -182,7 +182,7 @@ export function ProductEditorForm({
             </div>
             {isBeds ? (
               <div className="space-y-1">
-                <Label htmlFor="pe-range">Bed range</Label>
+                <Label htmlFor="pe-range">Cot range</Label>
                 <AppSelect
                   id="pe-range"
                   value={bedRangeId}

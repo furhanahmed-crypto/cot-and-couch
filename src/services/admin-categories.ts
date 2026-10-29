@@ -14,7 +14,7 @@ import {
   options,
   products,
 } from "@/db";
-import { getCategories } from "@/services/catalogue";
+import { getAdminCategories } from "@/services/catalogue";
 import type { Category } from "@/types";
 
 export type AdminOption = {
@@ -77,7 +77,7 @@ export async function getCategoryTemplatesData(): Promise<CategoryTemplatesData>
   await connection();
   const [categories, brandRows, groupRows, optionRows, links, rangeRows] =
     await Promise.all([
-      getCategories({ includeHidden: true }),
+      getAdminCategories({ includeHidden: true }),
       db.select().from(mattressBrands).orderBy(asc(mattressBrands.sortOrder)),
       db.select().from(optionGroups),
       db.select().from(options).orderBy(asc(options.sortOrder)),

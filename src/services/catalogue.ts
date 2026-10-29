@@ -138,6 +138,21 @@ export async function getCategories(opts?: { includeHidden?: boolean }) {
   return mapped.filter((c) => c.visible);
 }
 
+/**
+ * Admin catalogue — uncached so labels match DB (e.g. “Cots”).
+ * Do not use shop helpers here; shop maps `cots` → “Beds”.
+ */
+export async function getAdminCategories(opts?: { includeHidden?: boolean }) {
+  await connection();
+  const rows = await db
+    .select()
+    .from(categoriesTable)
+    .orderBy(asc(categoriesTable.sortOrder));
+  const mapped = rows.map(mapCategory);
+  if (opts?.includeHidden) return mapped;
+  return mapped.filter((c) => c.visible);
+}
+
 export async function getCategoryBySlug(slug: string) {
   "use cache";
   tagShopCache();
@@ -149,7 +164,7 @@ export async function getCategoryBySlug(slug: string) {
   return rows[0] ? mapCategory(rows[0]) : undefined;
 }
 
-/** Storefront categories — e.g. slug `cots` displays as “Beds”. */
+/** Storefront categories — slug `cots` displays as “Beds” (admin keeps “Cots”). */
 export async function getShopCategories() {
   return categoriesForShop(await getCategories());
 }
@@ -486,7 +501,7 @@ export async function filterProducts(
 ) {
   const [list, cats] = await Promise.all([
     getPublishedProducts(),
-    getCategories(),
+    getShopCategories(),
   ]);
   return filterProductList(
     list,

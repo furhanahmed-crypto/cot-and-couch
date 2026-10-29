@@ -43,7 +43,7 @@ export async function createBedWidthOptionAction(input: {
     .from(optionGroups)
     .where(eq(optionGroups.key, BED_WIDTH_GROUP_KEY))
     .limit(1);
-  if (!group) return { ok: false as const, error: "Bed width group missing" };
+  if (!group) return { ok: false as const, error: "Cot width group missing" };
 
   const [dup] = await db
     .select({ id: options.id })

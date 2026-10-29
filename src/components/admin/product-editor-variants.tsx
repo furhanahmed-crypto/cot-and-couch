@@ -221,7 +221,7 @@ export function ProductEditorVariants({
       categorySlug === "mattresses"
         ? "Creates size (L×W) × thickness SKUs from masters (6 in · 8 in)."
         : categorySlug === "cots"
-          ? "Creates 4 width SKUs (× colour if colours exist) from Categories → Beds."
+          ? "Creates width SKUs (× colour if colours exist) from Categories → Cots."
           : "Creates colour SKUs on custom size from masters.";
     return (
       <section className="min-w-0 space-y-3 rounded-xl border border-border bg-card p-4">

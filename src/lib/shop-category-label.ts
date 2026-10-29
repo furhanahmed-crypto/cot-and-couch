@@ -1,6 +1,9 @@
 import type { Category } from "@/types";
 
-/** Customer-facing labels; DB slug `cots` stays for routes and admin. */
+/**
+ * Customer-facing labels only.
+ * Admin / DB use “Cots” (slug `cots`); shop shows “Beds” for clarity.
+ */
 const SHOP_LABEL_BY_SLUG: Record<string, string> = {
   cots: "Beds",
 };

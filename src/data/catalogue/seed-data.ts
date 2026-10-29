@@ -1,6 +1,6 @@
 /**
  * Catalogue masters + product models for DB seed.
- * Live scope: mattresses + beds (`cots`). Sofas / tables ship later.
+ * Live scope: mattresses + cots. Shop displays cots as “Beds”.
  */
 
 export const CATEGORIES = [
@@ -11,7 +11,7 @@ export const CATEGORIES = [
     coverImage: "/images/mattresses/cover.jpg",
   },
   {
-    name: "Beds",
+    name: "Cots",
     slug: "cots",
     sortOrder: 2,
     coverImage: "/images/cots/cover.jpg",

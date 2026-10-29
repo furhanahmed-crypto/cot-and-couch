@@ -1,4 +1,4 @@
-/** Beds (DB slug `cots`) — range masters + shared width options. */
+/** Cots (DB slug `cots`) — range masters + shared width options. Shop label: Beds. */
 
 import {
   BED_RANGE_PRICING,
