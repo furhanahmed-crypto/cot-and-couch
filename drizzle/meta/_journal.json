@@ -64,6 +64,13 @@
       "when": 1761756000000,
       "tag": "0011_bed_pricing_widths_addons",
       "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1761759600000,
+      "tag": "0012_product_options",
+      "breakpoints": true
     }
   ]
 }

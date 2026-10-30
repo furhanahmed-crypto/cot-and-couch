@@ -72,6 +72,9 @@ export function ProductEditorTemplate({
       .filter((g) => g.options.length > 0);
   }, [furniture, lookups.furnitureOptionsByKey]);
 
+  // Cots: range under Identity; sizes/colours under Available colors + Variants.
+  if (categorySlug === "cots") return null;
+
   if (!template) {
     return (
       <section className="rounded-xl border border-dashed border-border bg-card p-4 text-sm text-muted-foreground">

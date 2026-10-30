@@ -112,6 +112,8 @@ export interface Product {
   bedRangeSlug?: string | null;
   /** Beds only — drives cushion head/foot addon visibility. */
   cotType?: "non_cushion" | "cushion" | null;
+  /** Master colour option ids allowed on this product (admin). */
+  colourOptionIds?: string[];
   purposeOptionId: string | null;
   coverMaterialOptionId: string | null;
   fillingOptionId: string | null;

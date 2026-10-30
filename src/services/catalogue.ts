@@ -41,6 +41,7 @@ import {
   categoriesForShop,
   categoryForShop,
 } from "@/lib/shop-category-label";
+import { listProductColourIds } from "@/services/product-colours";
 import type { Product, ProductEditorLookups } from "@/types";
 
 export type { FilterState, SortKey } from "@/lib/catalogue-utils";
@@ -397,6 +398,8 @@ export async function getAdminProductById(id: string) {
     .limit(1);
   if (!rows[0]) return undefined;
   const [product] = await hydrateProducts(rows, "full");
+  if (!product) return undefined;
+  product.colourOptionIds = await listProductColourIds(id);
   return product;
 }
 

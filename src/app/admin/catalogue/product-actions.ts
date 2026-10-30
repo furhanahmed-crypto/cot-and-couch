@@ -13,6 +13,7 @@ import {
   products,
   sizeDimensions,
 } from "@/db";
+import { listProductColourIds, syncProductColours } from "@/services/product-colours";
 import {
   MATTRESS_SIZE_SKUS,
   MATTRESS_THICKNESS_SKUS,
@@ -132,20 +133,18 @@ export async function archiveProductAction(productId: string) {
 export async function createProductAction(input: {
   categoryId: string;
   name: string;
-  slug: string;
   description?: string;
   mattressBrandId?: string | null;
   bedRangeId?: string | null;
 }) {
   await requireStaffProfile();
   const name = input.name.trim();
-  const slug = input.slug
+  const slug = name
     .toLowerCase()
-    .trim()
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-|-$/g, "");
   if (!name || !slug || !input.categoryId) {
-    return { ok: false as const, error: "Name, slug, category required" };
+    return { ok: false as const, error: "Name and category required" };
   }
   const [cat] = await db
     .select({ slug: categories.slug })
@@ -155,21 +154,39 @@ export async function createProductAction(input: {
   if (cat?.slug === "cots" && !input.bedRangeId) {
     return { ok: false as const, error: "Choose a cot range" };
   }
-  const [row] = await db
-    .insert(products)
-    .values({
-      categoryId: input.categoryId,
-      name,
-      slug,
-      description: input.description?.trim() || null,
-      mattressBrandId: input.mattressBrandId || null,
-      bedRangeId: input.bedRangeId || null,
-      status: "draft",
-    })
-    .returning({ id: products.id });
-  revalidatePath(ROUTES.admin.products);
-  revalidateShopCache();
-  return { ok: true as const, id: row.id };
+  const [taken] = await db
+    .select({ id: products.id })
+    .from(products)
+    .where(eq(products.slug, slug))
+    .limit(1);
+  if (taken) {
+    return {
+      ok: false as const,
+      error: "A product with this name already exists. Choose a different name.",
+    };
+  }
+  try {
+    const [row] = await db
+      .insert(products)
+      .values({
+        categoryId: input.categoryId,
+        name,
+        slug,
+        description: input.description?.trim() || null,
+        mattressBrandId: input.mattressBrandId || null,
+        bedRangeId: input.bedRangeId || null,
+        status: "draft",
+      })
+      .returning({ id: products.id });
+    revalidatePath(ROUTES.admin.products);
+    revalidateShopCache();
+    return { ok: true as const, id: row.id };
+  } catch {
+    return {
+      ok: false as const,
+      error: "A product with this name already exists. Choose a different name.",
+    };
+  }
 }
 
 export async function updateProductAction(input: {
@@ -186,6 +203,8 @@ export async function updateProductAction(input: {
   fillingOptionId?: string | null;
   comfortOptionId?: string | null;
   attributes?: Record<string, string>;
+  /** When set, replaces product colour allowlist (non-mattress). */
+  colourOptionIds?: string[];
 }) {
   await requireStaffProfile();
   const name = input.name.trim();
@@ -206,6 +225,10 @@ export async function updateProductAction(input: {
     .where(eq(products.id, input.productId));
 
   await syncProductSpecs(input.productId, input);
+
+  if (input.colourOptionIds !== undefined) {
+    await syncProductColours(input.productId, input.colourOptionIds);
+  }
 
   revalidateProduct(input.productId);
   return { ok: true as const };
@@ -264,7 +287,11 @@ export async function generateProductVariantsAction(productId: string) {
   const thickBySlug = Object.fromEntries(
     byGroup("thickness").map((o) => [o.slug, o]),
   );
-  const colours = byGroup("colour");
+  const allColours = byGroup("colour");
+  const allowedColourIds = await listProductColourIds(productId);
+  const colours = allowedColourIds.length
+    ? allColours.filter((c) => allowedColourIds.includes(c.id))
+    : [];
   const customSize = sizeBySlug.custom;
 
   function findDim(sizeSlug: string, lengthIn: number, widthIn: number) {
@@ -322,6 +349,12 @@ export async function generateProductVariantsAction(productId: string) {
         error: "Add cot widths under Categories → Cots → Manage options",
       };
     }
+    if (!colours.length) {
+      return {
+        ok: false as const,
+        error: "Pick at least one colour under Available colors, then save",
+      };
+    }
     let rangeSlug: string | null = null;
     if (product.bedRangeId) {
       const [range] = await db
@@ -340,24 +373,12 @@ export async function generateProductVariantsAction(productId: string) {
           ? bedVariantPrices(rangeSlug, sizeKey, isExtra)
           : null;
       if (!priced) continue;
-      if (colours.length) {
-        for (const colour of colours) {
-          batch.push({
-            productId,
-            sku: `${prefix}-${w.slug}-${colour.slug}`.slice(0, 80).toUpperCase(),
-            widthOptionId: w.id,
-            colourOptionId: colour.id,
-            mrp: String(priced.mrp),
-            price: String(priced.price),
-            stockQty: 0,
-            isActive: true,
-          });
-        }
-      } else {
+      for (const colour of colours) {
         batch.push({
           productId,
-          sku: `${prefix}-${w.slug}`.slice(0, 80).toUpperCase(),
+          sku: `${prefix}-${w.slug}-${colour.slug}`.slice(0, 80).toUpperCase(),
           widthOptionId: w.id,
+          colourOptionId: colour.id,
           mrp: String(priced.mrp),
           price: String(priced.price),
           stockQty: 0,
@@ -367,10 +388,16 @@ export async function generateProductVariantsAction(productId: string) {
     }
   } else {
     // Sofas, tables, dining, etc. — colour SKUs on custom size.
-    if (!customSize || !colours.length) {
+    if (!customSize) {
       return {
         ok: false as const,
-        error: "Need Custom size + colour options in masters",
+        error: "Need Custom size option in masters",
+      };
+    }
+    if (!colours.length) {
+      return {
+        ok: false as const,
+        error: "Pick at least one colour under Available colors, then save",
       };
     }
     for (const colour of colours) {

@@ -2,6 +2,11 @@
 
 Short record of material choices. See `ARCHITECTURE.md` and `README.md`.
 
+## 2026 — Product colour allowlist
+
+- Table `coc_product_options` (product_id + option_id). V1 UI: Available colors on non-mattress products.
+- Variant generate for cots/furniture uses only selected colours. Unchecking deactivates those SKUs.
+
 ## 2026 — Single login for shop + admin
 
 - No `/admin/login`. Use `/login` (and register).

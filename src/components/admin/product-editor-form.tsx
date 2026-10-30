@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useMemo, useState, useTransition } from "react";
 import { toast } from "sonner";
 import { updateProductAction } from "@/app/admin/catalogue/product-actions";
+import { ProductEditorColors } from "@/components/admin/product-editor-colors";
 import {
   ProductEditorTemplate,
   type MattressSpecState,
@@ -57,10 +58,14 @@ export function ProductEditorForm({
     idealFor: product.attributes?.idealFor ?? "",
   });
   const [bedRangeId, setBedRangeId] = useState(product.bedRangeId ?? "");
+  const [colourOptionIds, setColourOptionIds] = useState<string[]>(
+    product.colourOptionIds ?? [],
+  );
 
   const template = templateForCategorySlug(category?.slug ?? "");
   const isMattress = category?.slug === "mattresses";
   const isBeds = category?.slug === "cots";
+  const showsColours = !isMattress;
 
   const checklist = useMemo(() => {
     const items: { label: string; ok: boolean }[] = [
@@ -90,6 +95,12 @@ export function ProductEditorForm({
     } else if (isBeds) {
       items.push({ label: "Cot range", ok: Boolean(bedRangeId) });
     }
+    if (showsColours) {
+      items.push({
+        label: "At least one colour",
+        ok: colourOptionIds.length > 0,
+      });
+    }
     return items;
   }, [
     name,
@@ -98,8 +109,10 @@ export function ProductEditorForm({
     product.variants.length,
     isMattress,
     isBeds,
+    showsColours,
     mattress,
     bedRangeId,
+    colourOptionIds.length,
   ]);
 
   const readyCount = checklist.filter((c) => c.ok).length;
@@ -131,6 +144,7 @@ export function ProductEditorForm({
           ? mattress.coverMaterialOptionId || null
           : null,
         attributes: nextAttrs,
+        colourOptionIds: showsColours ? colourOptionIds : undefined,
       });
       if (!res.ok) {
         toast.error(res.error);
@@ -234,6 +248,14 @@ export function ProductEditorForm({
               setAttributes((prev) => ({ ...prev, [key]: value }))
             }
           />
+
+          {showsColours ? (
+            <ProductEditorColors
+              colours={lookups.colours}
+              selectedIds={colourOptionIds}
+              onChange={setColourOptionIds}
+            />
+          ) : null}
 
           <ProductEditorVariants
             key={`${product.id}-${product.variants.length}`}

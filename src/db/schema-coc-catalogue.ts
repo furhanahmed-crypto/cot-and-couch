@@ -153,6 +153,20 @@ export const cocProductOptionValues = pgTable(
   (t) => [primaryKey({ columns: [t.productId, t.optionGroupId] })],
 );
 
+/** Product allowlist of master options (v1: colours). */
+export const cocProductOptions = pgTable(
+  "coc_product_options",
+  {
+    productId: uuid("product_id")
+      .notNull()
+      .references(() => cocProducts.id, { onDelete: "cascade" }),
+    optionId: uuid("option_id")
+      .notNull()
+      .references(() => cocOptions.id, { onDelete: "cascade" }),
+  },
+  (t) => [primaryKey({ columns: [t.productId, t.optionId] })],
+);
+
 export const cocProductVariants = pgTable("coc_product_variants", {
   id: uuid("id").defaultRandom().primaryKey(),
   productId: uuid("product_id")

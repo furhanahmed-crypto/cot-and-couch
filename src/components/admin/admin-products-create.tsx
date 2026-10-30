@@ -31,7 +31,6 @@ export function AdminProductsCreate({
   const [open, setOpen] = useState(false);
   const [pending, startTransition] = useTransition();
   const [name, setName] = useState("");
-  const [slug, setSlug] = useState("");
   const [categoryId, setCategoryId] = useState(categories[0]?.id ?? "");
   const [bedRangeId, setBedRangeId] = useState(bedRanges[0]?.id ?? "");
   const [error, setError] = useState<string | null>(null);
@@ -48,7 +47,6 @@ export function AdminProductsCreate({
       const res = await createProductAction({
         categoryId,
         name,
-        slug,
         bedRangeId: isBeds ? bedRangeId || null : null,
       });
       if (!res.ok) {
@@ -57,7 +55,6 @@ export function AdminProductsCreate({
       }
       setOpen(false);
       setName("");
-      setSlug("");
       router.push(ROUTES.admin.productEdit(res.id));
     });
   }
@@ -80,20 +77,8 @@ export function AdminProductsCreate({
               <Input
                 id="np-name"
                 value={name}
-                onChange={(e) => {
-                  setName(e.target.value);
-                  setSlug(
-                    e.target.value
-                      .toLowerCase()
-                      .replace(/[^a-z0-9]+/g, "-")
-                      .replace(/^-|-$/g, ""),
-                  );
-                }}
+                onChange={(e) => setName(e.target.value)}
               />
-            </div>
-            <div className="space-y-1">
-              <Label htmlFor="np-slug">Slug</Label>
-              <Input id="np-slug" value={slug} onChange={(e) => setSlug(e.target.value)} />
             </div>
             <div className="space-y-1">
               <Label htmlFor="np-cat">Category</Label>
