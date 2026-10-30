@@ -313,8 +313,14 @@ export function PdpMain({
   }
 
   return (
-    <div className="grid gap-8 lg:grid-cols-2 lg:gap-10">
-      <PdpGallery images={galleryImages} videos={variant.videos} alt={product.name} />
+    <div className="grid gap-8 lg:grid-cols-2 lg:gap-10 lg:items-start">
+      <div className="lg:sticky lg:top-24 lg:self-start">
+        <PdpGallery
+          images={galleryImages}
+          videos={variant.videos}
+          alt={product.name}
+        />
+      </div>
       <div className="space-y-5">
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0 space-y-1.5">
@@ -370,7 +376,7 @@ export function PdpMain({
         <div className="space-y-5 rounded-xl bg-card p-4 ring-1 ring-border/60">
           {sizeGroups.length > 0 && (
             <div className="space-y-2">
-              <Label>Size</Label>
+              <Label>Available sizes</Label>
               <div className="flex flex-wrap gap-2">
                 {sizeGroups.map((g) => (
                   <button
@@ -465,7 +471,7 @@ export function PdpMain({
 
           {swatches.length > 0 && (
             <div className="space-y-2">
-              <Label>Colour</Label>
+              <Label>Available colors</Label>
               <div className="flex flex-wrap gap-2">
                 {swatches.map((c) => (
                   <button
