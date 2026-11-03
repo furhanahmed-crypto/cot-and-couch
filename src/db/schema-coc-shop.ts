@@ -11,7 +11,12 @@ import {
   unique,
   uuid,
 } from "drizzle-orm/pg-core";
-import { cocCategoryAddons, cocProductVariants, cocProducts } from "./schema-coc-catalogue";
+import {
+  cocBedRanges,
+  cocCategoryAddons,
+  cocProductVariants,
+  cocProducts,
+} from "./schema-coc-catalogue";
 import { cocProfiles } from "./schema-coc";
 
 export const cocProfileFavourites = pgTable(
@@ -40,6 +45,10 @@ export const cocCartLines = pgTable("coc_cart_lines", {
   variantId: uuid("variant_id")
     .notNull()
     .references(() => cocProductVariants.id, { onDelete: "cascade" }),
+  /** Selected bed quality/range for sheet pricing (nullable for non-beds). */
+  bedRangeId: uuid("bed_range_id").references(() => cocBedRanges.id, {
+    onDelete: "set null",
+  }),
   quantity: integer("quantity").notNull().default(1),
   customLengthIn: integer("custom_length_in"),
   customWidthIn: integer("custom_width_in"),

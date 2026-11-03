@@ -87,6 +87,8 @@ export interface Variant {
   colourId: string;
   colourName?: string;
   colourHex?: string;
+  /** Cot range this SKU is priced for (Ideal / Optimum / …). */
+  bedRangeId?: string | null;
   /** @deprecated alias of sizeDimensionId for older call sites */
   sizeId?: string;
   mrp: number;
@@ -107,9 +109,14 @@ export interface Product {
   subCategoryId: string;
   collectionId: string | null;
   mattressBrandId: string | null;
+  /** Primary / default range (first linked by sort_order). */
   bedRangeId: string | null;
   bedRangeName?: string | null;
   bedRangeSlug?: string | null;
+  /** All linked range ids (for PLP filters). */
+  bedRangeIds?: string[];
+  /** Linked ranges sorted by sort_order (PDP Change quality). */
+  availableRanges?: { id: string; name: string; slug: string }[];
   /** Beds only — drives cushion head/foot addon visibility. */
   cotType?: "non_cushion" | "cushion" | null;
   /** Master colour option ids allowed on this product (admin). */

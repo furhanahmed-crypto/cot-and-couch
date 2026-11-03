@@ -20,6 +20,7 @@ type CartStore = {
     customLengthIn?: number | null,
     customWidthIn?: number | null,
     addonIds?: string[],
+    bedRangeId?: string | null,
   ) => CartSummaryLine | null;
   addItem: (input: AddToCartInput) => Promise<{ ok: boolean; error?: string }>;
 };
@@ -51,6 +52,7 @@ export const useCartStore = create<CartStore>((set, get) => ({
     customLengthIn = null,
     customWidthIn = null,
     addonIds = [],
+    bedRangeId = null,
   ) =>
     findSummaryLine(
       get().lines,
@@ -59,6 +61,7 @@ export const useCartStore = create<CartStore>((set, get) => ({
       customLengthIn,
       customWidthIn,
       addonIds,
+      bedRangeId,
     ),
 
   addItem: async (input) => {

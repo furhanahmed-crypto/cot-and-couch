@@ -22,6 +22,7 @@ export function findSummaryLine(
   customLengthIn: number | null = null,
   customWidthIn: number | null = null,
   addonIds: string[] = [],
+  bedRangeId: string | null = null,
 ) {
   if (variantId) {
     return (
@@ -29,11 +30,18 @@ export function findSummaryLine(
         (line) =>
           line.productId === productId &&
           line.variantId === variantId &&
+          (line.bedRangeId ?? null) === (bedRangeId ?? null) &&
           sameCustomSize(line, customLengthIn, customWidthIn) &&
           sameAddonSet(line.addonIds, addonIds),
       ) ?? null
     );
   }
 
-  return lines.find((line) => line.productId === productId) ?? null;
+  return (
+    lines.find(
+      (line) =>
+        line.productId === productId &&
+        (line.bedRangeId ?? null) === (bedRangeId ?? null),
+    ) ?? null
+  );
 }

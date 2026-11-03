@@ -90,7 +90,15 @@ export function AdminProductsTable({
     const q = query.trim().toLowerCase();
     let list = products.filter((p) => {
       if (categoryId !== "all" && p.categoryId !== categoryId) return false;
-      if (bedRangeId !== "all" && p.bedRangeId !== bedRangeId) return false;
+      if (
+        bedRangeId !== "all" &&
+        !(
+          p.bedRangeIds?.includes(bedRangeId) ||
+          p.bedRangeId === bedRangeId
+        )
+      ) {
+        return false;
+      }
       if (status !== "all" && p.status !== status) return false;
       if (collectionId !== "all" && p.collectionId !== collectionId) return false;
 

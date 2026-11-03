@@ -9,6 +9,7 @@ import * as schema from "./app-schema";
 import { categoryConfigSeedRows } from "@/constants/category-config";
 import {
   BED_PRODUCT_STYLES,
+  BED_QUALITY_SWITCH_RANGE_SLUGS,
   BED_RANGE_SEEDS,
   BED_WIDTH_GROUP_KEY,
   bedProductName,
@@ -17,6 +18,7 @@ import {
 import {
   BED_ADDON_DEFS,
   BED_ADDON_PRICES,
+  BED_RANGE_PRICING,
   bedSizeKeyFromSlug,
   bedVariantPrices,
 } from "@/constants/bed-pricing";
@@ -442,7 +444,76 @@ async function seed() {
     .returning();
   const bedRangeBySlug = Object.fromEntries(bedRangeRows.map((r) => [r.slug, r]));
 
+  const sharedSlugs = new Set<string>(BED_QUALITY_SWITCH_RANGE_SLUGS);
+  const idealRow = bedRangeBySlug["ideal-range"]!;
+
+  async function seedBedVariants(
+    productId: string,
+    skuPrefix: string,
+    rangeSlug: string,
+    stockBase: number,
+  ) {
+    const bedBatch: VariantInsert[] = [];
+    for (const w of widthOpts) {
+      if (!w.isActive) continue;
+      const sizeKey = bedSizeKeyFromSlug(w.slug);
+      const isExtra = w.slug.includes("-78x");
+      const priced =
+        sizeKey != null ? bedVariantPrices(rangeSlug, sizeKey, isExtra) : null;
+      if (!priced) continue;
+      for (const colour of colours) {
+        bedBatch.push({
+          productId,
+          sku: `${skuPrefix}-${w.slug}-${colour.slug}`.slice(0, 80).toUpperCase(),
+          widthOptionId: w.id,
+          colourOptionId: colour.id,
+          mrp: String(priced.mrp),
+          price: String(priced.price),
+          stockQty: 4 + stockBase,
+          isActive: true,
+        });
+      }
+    }
+    await insertVariants(bedBatch);
+    variantCount += bedBatch.length;
+  }
+
+  for (let si = 0; si < BED_PRODUCT_STYLES.length; si++) {
+    const style = BED_PRODUCT_STYLES[si]!;
+    const name = style;
+    const slug = style.toLowerCase();
+    const [product] = await db
+      .insert(schema.products)
+      .values({
+        categoryId: catBySlug.cots.id,
+        bedRangeId: idealRow.id,
+        name,
+        slug,
+        description: `${name} — Ideal, Optimum & Essential. ${BED_RANGE_PRICING["ideal-range"]?.features ?? ""}`,
+        imageUrl: `/images/cots/ideal-range-${style.toLowerCase()}.jpg`,
+        cotType: "non_cushion",
+        status: "published",
+        isFeatured: si === 0,
+        sortOrder: si + 1,
+      })
+      .returning();
+
+    await db.insert(schema.productBedRanges).values(
+      BED_QUALITY_SWITCH_RANGE_SLUGS.map((rs) => ({
+        productId: product.id,
+        bedRangeId: bedRangeBySlug[rs]!.id,
+      })),
+    );
+    await seedBedVariants(
+      product.id,
+      `COT-shared-${style.slice(0, 4)}`,
+      "ideal-range",
+      1,
+    );
+  }
+
   for (const range of BED_RANGE_SEEDS) {
+    if (sharedSlugs.has(range.slug)) continue;
     const rangeRow = bedRangeBySlug[range.slug]!;
     for (let si = 0; si < BED_PRODUCT_STYLES.length; si++) {
       const style = BED_PRODUCT_STYLES[si]!;
@@ -459,37 +530,22 @@ async function seed() {
           imageUrl: `/images/cots/${range.slug}-${style.toLowerCase()}.jpg`,
           cotType: range.cotType,
           status: "published",
-          isFeatured: range.sortOrder === 1 && si === 0,
+          isFeatured: false,
           sortOrder: range.sortOrder * 10 + si + 1,
         })
         .returning();
 
-      const bedBatch: VariantInsert[] = [];
-      const skuPrefix = `COT-${range.slug.slice(0, 8)}-${style.slice(0, 4)}`;
-      for (const w of widthOpts) {
-        if (!w.isActive) continue;
-        const sizeKey = bedSizeKeyFromSlug(w.slug);
-        const isExtra = w.slug.includes("-78x");
-        const priced =
-          sizeKey != null
-            ? bedVariantPrices(range.slug, sizeKey, isExtra)
-            : null;
-        if (!priced) continue;
-        for (const colour of colours) {
-          bedBatch.push({
-            productId: product.id,
-            sku: `${skuPrefix}-${w.slug}-${colour.slug}`.slice(0, 80).toUpperCase(),
-            widthOptionId: w.id,
-            colourOptionId: colour.id,
-            mrp: String(priced.mrp),
-            price: String(priced.price),
-            stockQty: 4 + range.sortOrder,
-            isActive: true,
-          });
-        }
-      }
-      await insertVariants(bedBatch);
-      variantCount += bedBatch.length;
+      await db.insert(schema.productBedRanges).values({
+        productId: product.id,
+        bedRangeId: rangeRow.id,
+      });
+
+      await seedBedVariants(
+        product.id,
+        `COT-${range.slug.slice(0, 8)}-${style.slice(0, 4)}`,
+        range.slug,
+        range.sortOrder,
+      );
     }
   }
 

@@ -24,27 +24,45 @@ import { discountPercent, formatINR } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import type { Variant } from "@/types";
 
+type RangeTab = { id: string; name: string; slug: string };
+
 /** HTML product-editor style: size × thickness chips + compact editable grid. */
 export function ProductEditorVariants({
   productId,
   variants: initial,
   noColour,
   categorySlug,
+  ranges = [],
 }: {
   productId: string;
   variants: Variant[];
   /** Mattresses: hide colour axis (HTML / category template). */
   noColour?: boolean;
   categorySlug?: string;
+  /** Cot ranges this product is sold in — one tab of SKUs each. */
+  ranges?: RangeTab[];
 }) {
   const router = useRouter();
   const [variants, setVariants] = useState(initial);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [pending, startTransition] = useTransition();
+  const [rangeTabId, setRangeTabId] = useState(
+    () => ranges[0]?.id ?? "",
+  );
+
+  const visible = useMemo(() => {
+    if (!ranges.length) return variants;
+    const tab = rangeTabId || ranges[0]?.id;
+    return variants.filter(
+      (v) =>
+        v.bedRangeId === tab ||
+        (!v.bedRangeId && tab === ranges[0]?.id),
+    );
+  }, [variants, ranges, rangeTabId]);
 
   const sizeChips = useMemo(() => {
     const map = new Map<string, { key: string; label: string; count: number }>();
-    for (const v of variants) {
+    for (const v of visible) {
       const key = v.sizeDimensionId ?? `custom:${v.sizeGroupOptionId}`;
       const label = v.isCustomSize
         ? "Custom"
@@ -57,11 +75,11 @@ export function ProductEditorVariants({
       });
     }
     return [...map.values()];
-  }, [variants]);
+  }, [visible]);
 
   const thicknessChips = useMemo(() => {
     const map = new Map<string, { key: string; label: string; count: number }>();
-    for (const v of variants) {
+    for (const v of visible) {
       if (!v.thicknessOptionId || !v.thicknessLabel) continue;
       const prev = map.get(v.thicknessOptionId);
       map.set(v.thicknessOptionId, {
@@ -71,12 +89,12 @@ export function ProductEditorVariants({
       });
     }
     return [...map.values()];
-  }, [variants]);
+  }, [visible]);
 
   const colourChips = useMemo(() => {
     if (noColour) return [];
     const map = new Map<string, { key: string; label: string; count: number }>();
-    for (const v of variants) {
+    for (const v of visible) {
       if (!v.colourId || !v.colourName) continue;
       const prev = map.get(v.colourId);
       map.set(v.colourId, {
@@ -86,7 +104,7 @@ export function ProductEditorVariants({
       });
     }
     return [...map.values()];
-  }, [variants, noColour]);
+  }, [visible, noColour]);
 
   const summary = useMemo(() => {
     const parts: string[] = [];
@@ -97,8 +115,20 @@ export function ProductEditorVariants({
     if (colourChips.length) parts.push(`${colourChips.length} colours`);
     const combo = parts.join(" × ");
     const note = noColour ? " · no colour option for mattresses" : "";
-    return `${combo} = ${variants.length} variants${note}`;
-  }, [sizeChips, thicknessChips, colourChips, variants.length, noColour]);
+    const scope =
+      ranges.length > 1
+        ? ` · ${visible.length} in this range (${variants.length} total)`
+        : ` = ${variants.length} variants`;
+    return `${combo}${scope}${note}`;
+  }, [
+    sizeChips,
+    thicknessChips,
+    colourChips,
+    variants.length,
+    visible.length,
+    ranges.length,
+    noColour,
+  ]);
 
   function patchLocal(
     variantId: string,
@@ -119,7 +149,12 @@ export function ProductEditorVariants({
   }
 
   function toggleAll(on: boolean) {
-    setSelected(on ? new Set(variants.map((v) => v.id)) : new Set());
+    setSelected(on ? new Set(visible.map((v) => v.id)) : new Set());
+  }
+
+  function selectRangeTab(id: string) {
+    setRangeTabId(id);
+    setSelected(new Set());
   }
 
   function savePrice(v: Variant, mrp: number, price: number) {
@@ -221,7 +256,7 @@ export function ProductEditorVariants({
       categorySlug === "mattresses"
         ? "Creates size (L×W) × thickness SKUs from masters (6 in · 8 in)."
         : categorySlug === "cots"
-          ? "Creates width SKUs (× colour if colours exist) from Categories → Cots."
+          ? "Creates width × colour SKUs for each selected cot range (Ideal, Optimum, …)."
           : "Creates colour SKUs on custom size from masters.";
     return (
       <section className="min-w-0 space-y-3 rounded-xl border border-border bg-card p-4">
@@ -245,6 +280,35 @@ export function ProductEditorVariants({
           <p className="text-sm text-muted-foreground">{summary}</p>
         </div>
       </div>
+
+      {ranges.length > 0 ? (
+        <div className="flex flex-wrap gap-2 border-b border-border pb-3">
+          {ranges.map((r) => {
+            const count = variants.filter(
+              (v) =>
+                v.bedRangeId === r.id ||
+                (!v.bedRangeId && r.id === ranges[0]?.id),
+            ).length;
+            const active = (rangeTabId || ranges[0]?.id) === r.id;
+            return (
+              <button
+                key={r.id}
+                type="button"
+                onClick={() => selectRangeTab(r.id)}
+                className={cn(
+                  "rounded-md border px-3 py-1.5 text-sm transition-colors",
+                  active
+                    ? "border-foreground bg-foreground text-background"
+                    : "border-border bg-background hover:border-foreground/40",
+                )}
+              >
+                {r.name}
+                <span className="ml-1.5 opacity-70">({count})</span>
+              </button>
+            );
+          })}
+        </div>
+      ) : null}
 
       <div className="space-y-3">
         <ChipRow label="Size (L × W)" chips={sizeChips} />
@@ -271,41 +335,51 @@ export function ProductEditorVariants({
         </Button>
       </div>
 
-      <div className="-mx-1 overflow-x-auto px-1">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead className="w-10">
-                <Checkbox
-                  checked={selected.size === variants.length && variants.length > 0}
-                  onCheckedChange={(v) => toggleAll(Boolean(v))}
-                  aria-label="Select all variants"
+      {visible.length === 0 ? (
+        <p className="rounded-lg border border-dashed border-border p-4 text-sm text-muted-foreground">
+          No variants for this range yet. Save Available ranges, then use
+          Generate (or re-save ranges) to create SKUs from the price sheet.
+        </p>
+      ) : (
+        <div className="-mx-1 overflow-x-auto px-1">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead className="w-10">
+                  <Checkbox
+                    checked={
+                      visible.length > 0 &&
+                      visible.every((v) => selected.has(v.id))
+                    }
+                    onCheckedChange={(v) => toggleAll(Boolean(v))}
+                    aria-label="Select all variants in this range"
+                  />
+                </TableHead>
+                <TableHead>Variant</TableHead>
+                <TableHead className="w-28">MRP</TableHead>
+                <TableHead className="w-28">Offer price</TableHead>
+                <TableHead className="w-16">Off</TableHead>
+                <TableHead className="w-24">Stock</TableHead>
+                <TableHead>Status</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {visible.map((v) => (
+                <VariantRow
+                  key={v.id}
+                  variant={v}
+                  noColour={noColour}
+                  checked={selected.has(v.id)}
+                  disabled={pending}
+                  onCheckedChange={(on) => toggle(v.id, on)}
+                  onSavePrice={(mrp, price) => savePrice(v, mrp, price)}
+                  onSaveStock={(qty) => saveStock(v, qty)}
                 />
-              </TableHead>
-              <TableHead>Variant</TableHead>
-              <TableHead className="w-28">MRP</TableHead>
-              <TableHead className="w-28">Offer price</TableHead>
-              <TableHead className="w-16">Off</TableHead>
-              <TableHead className="w-24">Stock</TableHead>
-              <TableHead>Status</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {variants.map((v) => (
-              <VariantRow
-                key={v.id}
-                variant={v}
-                noColour={noColour}
-                checked={selected.has(v.id)}
-                disabled={pending}
-                onCheckedChange={(on) => toggle(v.id, on)}
-                onSavePrice={(mrp, price) => savePrice(v, mrp, price)}
-                onSaveStock={(qty) => saveStock(v, qty)}
-              />
-            ))}
-          </TableBody>
-        </Table>
-      </div>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
+      )}
     </section>
   );
 }

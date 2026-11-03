@@ -167,6 +167,20 @@ export const cocProductOptions = pgTable(
   (t) => [primaryKey({ columns: [t.productId, t.optionId] })],
 );
 
+/** Product ↔ bed ranges (e.g. Classic in Ideal + Optimum + Essential). */
+export const cocProductBedRanges = pgTable(
+  "coc_product_bed_ranges",
+  {
+    productId: uuid("product_id")
+      .notNull()
+      .references(() => cocProducts.id, { onDelete: "cascade" }),
+    bedRangeId: uuid("bed_range_id")
+      .notNull()
+      .references(() => cocBedRanges.id, { onDelete: "cascade" }),
+  },
+  (t) => [primaryKey({ columns: [t.productId, t.bedRangeId] })],
+);
+
 export const cocProductVariants = pgTable("coc_product_variants", {
   id: uuid("id").defaultRandom().primaryKey(),
   productId: uuid("product_id")
@@ -176,6 +190,10 @@ export const cocProductVariants = pgTable("coc_product_variants", {
   sizeGroupOptionId: uuid("size_group_option_id").references(() => cocOptions.id),
   sizeDimensionId: uuid("size_dimension_id").references(() => cocSizeDimensions.id),
   widthOptionId: uuid("width_option_id").references(() => cocOptions.id),
+  /** Cot quality/range this SKU’s price belongs to (null for mattresses). */
+  bedRangeId: uuid("bed_range_id").references(() => cocBedRanges.id, {
+    onDelete: "set null",
+  }),
   isCustomSize: boolean("is_custom_size").notNull().default(false),
   thicknessOptionId: uuid("thickness_option_id").references(() => cocOptions.id),
   colourOptionId: uuid("colour_option_id").references(() => cocOptions.id),

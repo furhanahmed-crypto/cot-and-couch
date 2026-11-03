@@ -127,6 +127,7 @@ export function mapVariant(
     colourId: row.colourOptionId ?? "",
     colourName: colour?.label,
     colourHex: colour?.hex ?? undefined,
+    bedRangeId: row.bedRangeId ?? null,
     sizeId: row.sizeDimensionId ?? undefined,
     mrp,
     price,

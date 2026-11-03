@@ -6,6 +6,7 @@ import { Plus } from "lucide-react";
 import { createProductAction } from "@/app/admin/catalogue/product-actions";
 import { AppSelect } from "@/components/ui/app-select";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -32,7 +33,9 @@ export function AdminProductsCreate({
   const [pending, startTransition] = useTransition();
   const [name, setName] = useState("");
   const [categoryId, setCategoryId] = useState(categories[0]?.id ?? "");
-  const [bedRangeId, setBedRangeId] = useState(bedRanges[0]?.id ?? "");
+  const [bedRangeIds, setBedRangeIds] = useState<string[]>(
+    bedRanges[0]?.id ? [bedRanges[0].id] : [],
+  );
   const [error, setError] = useState<string | null>(null);
 
   const selectedCat = useMemo(
@@ -41,13 +44,19 @@ export function AdminProductsCreate({
   );
   const isBeds = selectedCat?.slug === "cots";
 
+  function toggleRange(id: string) {
+    setBedRangeIds((prev) =>
+      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id],
+    );
+  }
+
   function submit() {
     setError(null);
     startTransition(async () => {
       const res = await createProductAction({
         categoryId,
         name,
-        bedRangeId: isBeds ? bedRangeId || null : null,
+        bedRangeIds: isBeds ? bedRangeIds : undefined,
       });
       if (!res.ok) {
         setError(res.error);
@@ -94,19 +103,21 @@ export function AdminProductsCreate({
               />
             </div>
             {isBeds ? (
-              <div className="space-y-1">
-                <Label htmlFor="np-range">Cot range</Label>
-                <AppSelect
-                  id="np-range"
-                  value={bedRangeId}
-                  onValueChange={setBedRangeId}
-                  triggerClassName="w-full"
-                  items={bedRanges.map((r) => ({
-                    value: r.id,
-                    label: r.name,
-                  }))}
-                  placeholder="Select range"
-                />
+              <div className="space-y-2">
+                <Label>Cot ranges</Label>
+                <ul className="max-h-40 space-y-1.5 overflow-y-auto rounded-lg border border-border p-2">
+                  {bedRanges.map((r) => (
+                    <li key={r.id}>
+                      <label className="flex cursor-pointer items-center gap-2 text-sm">
+                        <Checkbox
+                          checked={bedRangeIds.includes(r.id)}
+                          onCheckedChange={() => toggleRange(r.id)}
+                        />
+                        <span>{r.name}</span>
+                      </label>
+                    </li>
+                  ))}
+                </ul>
               </div>
             ) : null}
           </div>

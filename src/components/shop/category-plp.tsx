@@ -23,8 +23,11 @@ import {
 import { STORAGE_KEYS } from "@/constants/routes";
 import { cn } from "@/lib/utils";
 import {
+  cardMatchesPriceDiscount,
   filterProductList,
+  maxDiscount,
   productWidthLabels,
+  startingPrice,
   type FilterState,
   type SortKey,
 } from "@/lib/catalogue-utils";
@@ -74,7 +77,11 @@ export function CategoryPlp({
     if (!isBeds) return [];
     const map = new Map<string, string>();
     for (const p of products) {
-      if (p.bedRangeId && p.bedRangeName) map.set(p.bedRangeId, p.bedRangeName);
+      if (p.availableRanges?.length) {
+        for (const r of p.availableRanges) map.set(r.id, r.name);
+      } else if (p.bedRangeId && p.bedRangeName) {
+        map.set(p.bedRangeId, p.bedRangeName);
+      }
     }
     return [...map.entries()]
       .map(([id, label]) => ({ id, label }))
@@ -128,6 +135,48 @@ export function CategoryPlp({
       ),
     [products, category.id, category.name, filters, sort],
   );
+
+  /** Cots: one card per product × linked range (each with its own price). */
+  const cards = useMemo(() => {
+    if (!isBeds) {
+      return list.map((p) => ({
+        product: p,
+        rangeId: undefined as string | undefined,
+      }));
+    }
+    const active = filters.bedRanges;
+    let entries = list.flatMap((p) => {
+      const ranges = p.availableRanges ?? [];
+      if (!ranges.length) {
+        return [{ product: p, rangeId: p.bedRangeId ?? undefined }];
+      }
+      return ranges
+        .filter((r) => !active?.length || active.includes(r.id))
+        .map((r) => ({ product: p, rangeId: r.id as string | undefined }));
+    });
+
+    // Per-card price / discount (product-level already kept if any range fits).
+    entries = entries.filter(({ product, rangeId }) =>
+      cardMatchesPriceDiscount(product, filters, rangeId),
+    );
+
+    if (sort === "price_asc" || sort === "price_desc") {
+      const dir = sort === "price_asc" ? 1 : -1;
+      entries.sort(
+        (a, b) =>
+          dir *
+          (startingPrice(a.product, a.rangeId) -
+            startingPrice(b.product, b.rangeId)),
+      );
+    } else if (sort === "discount") {
+      entries.sort(
+        (a, b) =>
+          maxDiscount(b.product, b.rangeId) -
+          maxDiscount(a.product, a.rangeId),
+      );
+    }
+    return entries;
+  }, [list, isBeds, filters, sort]);
 
   const filterPanel = (
     <FilterPanel
@@ -250,7 +299,7 @@ export function CategoryPlp({
             </SheetContent>
           </Sheet>
           <p className="ml-auto text-sm text-muted-foreground sm:ml-0">
-            {list.length} results
+            {cards.length} results
           </p>
         </div>
       </div>
@@ -262,14 +311,18 @@ export function CategoryPlp({
           </div>
         </aside>
         <div>
-          {list.length === 0 ? (
+          {cards.length === 0 ? (
             <p className="rounded-xl border border-dashed border-border p-8 text-center text-muted-foreground">
               No products match these filters.
             </p>
           ) : (
             <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-3">
-              {list.map((p) => (
-                <ProductCard key={p.id} product={p} />
+              {cards.map(({ product, rangeId }) => (
+                <ProductCard
+                  key={`${product.id}:${rangeId ?? ""}`}
+                  product={product}
+                  rangeId={rangeId}
+                />
               ))}
             </div>
           )}

@@ -14,6 +14,7 @@ import {
   sizeDimensions,
 } from "@/db";
 import { listProductColourIds, syncProductColours } from "@/services/product-colours";
+import { syncProductBedRanges } from "@/services/product-bed-ranges";
 import {
   MATTRESS_SIZE_SKUS,
   MATTRESS_THICKNESS_SKUS,
@@ -135,6 +136,9 @@ export async function createProductAction(input: {
   name: string;
   description?: string;
   mattressBrandId?: string | null;
+  /** Preferred: one or more ranges for cots. */
+  bedRangeIds?: string[];
+  /** @deprecated Use bedRangeIds */
   bedRangeId?: string | null;
 }) {
   await requireStaffProfile();
@@ -151,8 +155,11 @@ export async function createProductAction(input: {
     .from(categories)
     .where(eq(categories.id, input.categoryId))
     .limit(1);
-  if (cat?.slug === "cots" && !input.bedRangeId) {
-    return { ok: false as const, error: "Choose a cot range" };
+  const rangeIds =
+    input.bedRangeIds?.filter(Boolean) ??
+    (input.bedRangeId ? [input.bedRangeId] : []);
+  if (cat?.slug === "cots" && !rangeIds.length) {
+    return { ok: false as const, error: "Choose at least one cot range" };
   }
   const [taken] = await db
     .select({ id: products.id })
@@ -174,10 +181,13 @@ export async function createProductAction(input: {
         slug,
         description: input.description?.trim() || null,
         mattressBrandId: input.mattressBrandId || null,
-        bedRangeId: input.bedRangeId || null,
+        bedRangeId: rangeIds[0] || null,
         status: "draft",
       })
       .returning({ id: products.id });
+    if (rangeIds.length) {
+      await syncProductBedRanges(row.id, rangeIds);
+    }
     revalidatePath(ROUTES.admin.products);
     revalidateShopCache();
     return { ok: true as const, id: row.id };
@@ -197,6 +207,8 @@ export async function updateProductAction(input: {
   isFeatured?: boolean;
   imageUrl?: string | null;
   mattressBrandId?: string | null;
+  bedRangeIds?: string[];
+  /** @deprecated Use bedRangeIds */
   bedRangeId?: string | null;
   purposeOptionId?: string | null;
   coverMaterialOptionId?: string | null;
@@ -210,6 +222,32 @@ export async function updateProductAction(input: {
   const name = input.name.trim();
   if (!name) return { ok: false as const, error: "Name required" };
 
+  const rangeIds =
+    input.bedRangeIds ??
+    (input.bedRangeId !== undefined
+      ? input.bedRangeId
+        ? [input.bedRangeId]
+        : []
+      : undefined);
+
+  if (rangeIds !== undefined && rangeIds.length === 0) {
+    const [prod] = await db
+      .select({ categoryId: products.categoryId })
+      .from(products)
+      .where(eq(products.id, input.productId))
+      .limit(1);
+    if (prod) {
+      const [cat] = await db
+        .select({ slug: categories.slug })
+        .from(categories)
+        .where(eq(categories.id, prod.categoryId))
+        .limit(1);
+      if (cat?.slug === "cots") {
+        return { ok: false as const, error: "Choose at least one cot range" };
+      }
+    }
+  }
+
   await db
     .update(products)
     .set({
@@ -219,10 +257,13 @@ export async function updateProductAction(input: {
       isFeatured: input.isFeatured ?? false,
       imageUrl: input.imageUrl?.trim() || null,
       mattressBrandId: input.mattressBrandId || null,
-      bedRangeId: input.bedRangeId || null,
       updatedAt: new Date(),
     })
     .where(eq(products.id, input.productId));
+
+  if (rangeIds !== undefined) {
+    await syncProductBedRanges(input.productId, rangeIds);
+  }
 
   await syncProductSpecs(input.productId, input);
 
@@ -355,35 +396,54 @@ export async function generateProductVariantsAction(productId: string) {
         error: "Pick at least one colour under Available colors, then save",
       };
     }
-    let rangeSlug: string | null = null;
-    if (product.bedRangeId) {
+    const { listProductBedRanges } = await import(
+      "@/services/product-bed-ranges"
+    );
+    let ranges = await listProductBedRanges(productId);
+    if (!ranges.length && product.bedRangeId) {
       const [range] = await db
-        .select({ slug: bedRanges.slug })
+        .select({
+          id: bedRanges.id,
+          name: bedRanges.name,
+          slug: bedRanges.slug,
+          sortOrder: bedRanges.sortOrder,
+        })
         .from(bedRanges)
         .where(eq(bedRanges.id, product.bedRangeId))
         .limit(1);
-      rangeSlug = range?.slug ?? null;
+      if (range) ranges = [range];
+    }
+    if (!ranges.length) {
+      return {
+        ok: false as const,
+        error: "Pick at least one cot range, then save before generating",
+      };
     }
     const prefix = slugBase.toUpperCase();
-    for (const w of widths) {
-      const sizeKey = bedSizeKeyFromSlug(w.slug);
-      const isExtra = w.slug.includes("-78x");
-      const priced =
-        rangeSlug && sizeKey
-          ? bedVariantPrices(rangeSlug, sizeKey, isExtra)
-          : null;
-      if (!priced) continue;
-      for (const colour of colours) {
-        batch.push({
-          productId,
-          sku: `${prefix}-${w.slug}-${colour.slug}`.slice(0, 80).toUpperCase(),
-          widthOptionId: w.id,
-          colourOptionId: colour.id,
-          mrp: String(priced.mrp),
-          price: String(priced.price),
-          stockQty: 0,
-          isActive: true,
-        });
+    for (const range of ranges) {
+      for (const w of widths) {
+        const sizeKey = bedSizeKeyFromSlug(w.slug);
+        const isExtra = w.slug.includes("-78x");
+        const priced =
+          sizeKey != null
+            ? bedVariantPrices(range.slug, sizeKey, isExtra)
+            : null;
+        if (!priced) continue;
+        for (const colour of colours) {
+          batch.push({
+            productId,
+            sku: `${prefix}-${range.slug.slice(0, 10)}-${w.slug}-${colour.slug}`
+              .slice(0, 80)
+              .toUpperCase(),
+            widthOptionId: w.id,
+            colourOptionId: colour.id,
+            bedRangeId: range.id,
+            mrp: String(priced.mrp),
+            price: String(priced.price),
+            stockQty: 0,
+            isActive: true,
+          });
+        }
       }
     }
   } else {

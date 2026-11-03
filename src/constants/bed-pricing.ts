@@ -264,6 +264,24 @@ export function bedSizeKeyFromSlug(slug: string): BedSizeKey | null {
   return null;
 }
 
+export function bedIsExtraLengthSlug(slug: string) {
+  return /78x/i.test(slug) || /-78/.test(slug);
+}
+
+/** Runtime sheet price for a width slug under a range (PDP / cart / PLP). */
+export function bedSheetPricesForWidth(
+  rangeSlug: string,
+  widthSlug: string,
+): { mrp: number; price: number } | null {
+  const sizeKey = bedSizeKeyFromSlug(widthSlug);
+  if (!sizeKey) return null;
+  return bedVariantPrices(
+    rangeSlug,
+    sizeKey,
+    bedIsExtraLengthSlug(widthSlug),
+  );
+}
+
 export function bedVariantPrices(
   rangeSlug: string,
   sizeKey: BedSizeKey,

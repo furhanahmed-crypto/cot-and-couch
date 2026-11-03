@@ -1,6 +1,7 @@
 import { and, asc, count, eq, inArray } from "drizzle-orm";
 import { db } from "@/db";
-import { carts, cartLineAddons } from "@/db";
+import { bedRanges, carts, cartLineAddons } from "@/db";
+import { bedSheetPricesForWidth } from "@/constants/bed-pricing";
 import { getCurrentProfile } from "@/lib/auth/profile";
 import { sameAddonSet, sameCustomSize } from "@/lib/cart-find";
 import { getProductById } from "@/services/catalogue";
@@ -62,6 +63,7 @@ export async function findMatchingCartLine(
   customLengthIn: number | null,
   customWidthIn: number | null,
   addonIds: string[] = [],
+  bedRangeId: string | null = null,
 ) {
   const rows = await db
     .select()
@@ -70,8 +72,10 @@ export async function findMatchingCartLine(
       and(eq(carts.profileId, profileId), eq(carts.variantId, variantId)),
     );
 
-  const candidates = rows.filter((row) =>
-    sameCustomSize(row, customLengthIn, customWidthIn),
+  const candidates = rows.filter(
+    (row) =>
+      sameCustomSize(row, customLengthIn, customWidthIn) &&
+      (row.bedRangeId ?? null) === (bedRangeId ?? null),
   );
   if (!candidates.length) return null;
 
@@ -108,6 +112,7 @@ export async function listCartSummary(): Promise<CartSummaryLine[]> {
       quantity: carts.quantity,
       customLengthIn: carts.customLengthIn,
       customWidthIn: carts.customWidthIn,
+      bedRangeId: carts.bedRangeId,
     })
     .from(carts)
     .where(eq(carts.profileId, profile.id))
@@ -123,6 +128,22 @@ export async function listCartSummary(): Promise<CartSummaryLine[]> {
 export async function listCartItems(): Promise<CartLine[]> {
   const summary = await listCartSummary();
   const addonSnap = await addonSnapshotsByCartLine(summary.map((r) => r.id));
+  const rangeIds = [
+    ...new Set(summary.map((r) => r.bedRangeId).filter(Boolean)),
+  ] as string[];
+  const rangeMeta = new Map<string, { name: string; slug: string }>();
+  if (rangeIds.length) {
+    const ranges = await db
+      .select({
+        id: bedRanges.id,
+        name: bedRanges.name,
+        slug: bedRanges.slug,
+      })
+      .from(bedRanges)
+      .where(inArray(bedRanges.id, rangeIds));
+    for (const r of ranges) rangeMeta.set(r.id, { name: r.name, slug: r.slug });
+  }
+
   const lines: CartLine[] = [];
 
   for (const row of summary) {
@@ -130,11 +151,24 @@ export async function listCartItems(): Promise<CartLine[]> {
     if (!product) continue;
     const variant = product.variants.find((v) => v.id === row.variantId);
     if (!variant) continue;
+
+    const meta = row.bedRangeId ? rangeMeta.get(row.bedRangeId) : undefined;
+    // Prefer the range-scoped SKU price; sheet only if SKU has no bedRangeId yet.
+    const sheet =
+      meta?.slug != null && !variant.bedRangeId
+        ? bedSheetPricesForWidth(meta.slug, variant.sizeGroupSlug)
+        : null;
+
     lines.push({
       id: row.id,
       quantity: row.quantity,
       customLengthIn: row.customLengthIn,
       customWidthIn: row.customWidthIn,
+      bedRangeId: row.bedRangeId,
+      bedRangeName: meta?.name ?? null,
+      bedRangeSlug: meta?.slug ?? null,
+      unitPrice: sheet?.price ?? variant.price,
+      unitMrp: sheet?.mrp ?? variant.mrp,
       addons: addonSnap.get(row.id) ?? [],
       product,
       variant,

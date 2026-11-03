@@ -42,6 +42,7 @@ import {
   categoryForShop,
 } from "@/lib/shop-category-label";
 import { listProductColourIds } from "@/services/product-colours";
+import { listProductBedRangesByProductIds } from "@/services/product-bed-ranges";
 import type { Product, ProductEditorLookups } from "@/types";
 
 export type { FilterState, SortKey } from "@/lib/catalogue-utils";
@@ -80,12 +81,18 @@ async function loadVariantsByProductIds(
 
   if (mode === "list") {
     const result = await db.execute(sql`
-      SELECT DISTINCT ON (product_id, colour_option_id)
+      SELECT DISTINCT ON (
+          product_id,
+          colour_option_id,
+          bed_range_id
+        )
         id,
         product_id AS "productId",
         sku,
         size_group_option_id AS "sizeGroupOptionId",
         size_dimension_id AS "sizeDimensionId",
+        width_option_id AS "widthOptionId",
+        bed_range_id AS "bedRangeId",
         is_custom_size AS "isCustomSize",
         thickness_option_id AS "thicknessOptionId",
         colour_option_id AS "colourOptionId",
@@ -100,7 +107,7 @@ async function loadVariantsByProductIds(
           productIds.map((id) => sql`${id}::uuid`),
           sql`, `,
         )})
-      ORDER BY product_id, colour_option_id, price ASC
+      ORDER BY product_id, colour_option_id, bed_range_id, price ASC
     `);
     const raw = result as unknown;
     rows = (
@@ -274,25 +281,7 @@ async function hydrateProducts(
       loadProductOptionMeta(ids),
     ]);
 
-  const rangeIds = [
-    ...new Set(rows.map((r) => r.bedRangeId).filter(Boolean)),
-  ] as string[];
-  const rangeNameById = new Map<string, string>();
-  const rangeSlugById = new Map<string, string>();
-  if (rangeIds.length) {
-    const rangeRows = await db
-      .select({
-        id: bedRangesTable.id,
-        name: bedRangesTable.name,
-        slug: bedRangesTable.slug,
-      })
-      .from(bedRangesTable)
-      .where(inArray(bedRangesTable.id, rangeIds));
-    for (const r of rangeRows) {
-      rangeNameById.set(r.id, r.name);
-      rangeSlugById.set(r.id, r.slug);
-    }
-  }
+  const rangesByProduct = await listProductBedRangesByProductIds(ids);
 
   return rows.map((row) => {
     const meta = optionMeta.get(row.id);
@@ -313,10 +302,23 @@ async function hydrateProducts(
     );
     const collectionId = collectionByProduct.get(row.id);
     if (collectionId) product.collectionId = collectionId;
-    if (row.bedRangeId) {
+
+    const linked = rangesByProduct.get(row.id) ?? [];
+    product.availableRanges = linked.map((r) => ({
+      id: r.id,
+      name: r.name,
+      slug: r.slug,
+    }));
+    product.bedRangeIds = linked.map((r) => r.id);
+
+    const primary =
+      linked.find((r) => r.id === row.bedRangeId) ?? linked[0] ?? null;
+    if (primary) {
+      product.bedRangeId = primary.id;
+      product.bedRangeName = primary.name;
+      product.bedRangeSlug = primary.slug;
+    } else if (row.bedRangeId) {
       product.bedRangeId = row.bedRangeId;
-      product.bedRangeName = rangeNameById.get(row.bedRangeId) ?? null;
-      product.bedRangeSlug = rangeSlugById.get(row.bedRangeId) ?? null;
     }
     product.cotType = row.cotType ?? null;
     return product;

@@ -1,48 +1,42 @@
 "use client";
 
-import { useRouter } from "next/navigation";
 import { Label } from "@/components/ui/label";
 import { AppSelect } from "@/components/ui/app-select";
-import { ROUTES } from "@/constants/routes";
+import { bedRangeShortName } from "@/constants/bed-model";
 
 export type PdpQualityOption = {
-  rangeSlug: string;
-  label: string;
-  productSlug: string;
+  id: string;
+  name: string;
+  slug: string;
 };
 
-/** Switch Ideal ↔ Optimum ↔ Essential for the same bed style. */
+/** In-page Ideal / Optimum / Essential (or any linked ranges). */
 export function PdpQualitySwitch({
-  currentRangeSlug,
+  value,
   options,
+  onChange,
 }: {
-  currentRangeSlug: string;
+  value: string;
   options: PdpQualityOption[];
+  onChange: (rangeId: string) => void;
 }) {
-  const router = useRouter();
   if (options.length < 2) return null;
 
   const items = options.map((o) => ({
-    value: o.productSlug,
-    label: o.label,
+    value: o.id,
+    label: bedRangeShortName(o.name),
   }));
-  const current =
-    options.find((o) => o.rangeSlug === currentRangeSlug)?.productSlug ??
-    items[0]!.value;
 
   return (
     <div className="space-y-2">
       <Label htmlFor="pdp-change-quality">Change quality</Label>
       <AppSelect
         id="pdp-change-quality"
-        value={current}
+        value={value}
         items={items}
         placeholder="Select quality"
         triggerClassName="w-full sm:w-56"
-        onValueChange={(slug) => {
-          if (slug === current) return;
-          router.push(ROUTES.product(slug));
-        }}
+        onValueChange={onChange}
       />
     </div>
   );

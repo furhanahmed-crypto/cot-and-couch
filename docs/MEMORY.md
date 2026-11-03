@@ -2,11 +2,14 @@
 
 Short record of material choices. See `ARCHITECTURE.md` and `README.md`.
 
-## 2026 — PDP Change quality (Ideal / Optimum / Essential)
+## 2026 — Multi-range bed products (Ideal / Optimum / Essential)
 
-- On Ideal, Optimum, or Essential PDPs: **Change quality** select (shadcn/`AppSelect`) lists Ideal · Optimum · Essential.
-- Same style sibling via slug (`ideal-range-classic` ↔ `optimum-range-classic` ↔ …). Selecting navigates to that product.
-- Lookup: `getBedQualitySwitchOptions` in `src/services/bed-quality-switch.ts`.
+- Junction `coc_product_bed_ranges`: one style product (Classic / Storage / Platform) can link many ranges.
+- Admin: **Available ranges** multiselect; variants UI has **one tab per range** with editable MRP/price/stock.
+- Variants: `coc_product_variants.bed_range_id` — width × colour × range SKUs (`0014`). Generate / range-save fills missing ranges from the sheet without overwriting edits.
+- Shop PLP: one card per product×range; “from” uses that range’s SKUs. PDP Change quality swaps to that range’s SKUs (DB prices).
+- Cart: `coc_cart_lines.bed_range_id` + range-scoped `variantId`.
+- Migrations `0013` + `0014`; seed: 3 shared styles + per-range products for Prime…Range 8.
 
 ## 2026 — Cot storage: Manual vs Hydraulics
 

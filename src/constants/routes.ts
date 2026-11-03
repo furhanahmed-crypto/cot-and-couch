@@ -5,7 +5,8 @@ export const ROUTES = {
   register: "/register",
   catalogue: "/catalogue",
   category: (slug: string) => `/catalogue/${slug}`,
-  product: (slug: string) => `/product/${slug}`,
+  product: (slug: string, rangeSlug?: string | null) =>
+    rangeSlug ? `/product/${slug}?range=${rangeSlug}` : `/product/${slug}`,
   collection: (slug: string) => `/collections/${slug}`,
   shortlist: "/shortlist",
   cart: "/cart",

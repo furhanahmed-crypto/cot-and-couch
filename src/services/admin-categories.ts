@@ -12,7 +12,7 @@ import {
   mattressBrands,
   optionGroups,
   options,
-  products,
+  productBedRanges,
 } from "@/db";
 import { getAdminCategories } from "@/services/catalogue";
 import type { Category } from "@/types";
@@ -139,15 +139,15 @@ export async function getCategoryTemplatesData(): Promise<CategoryTemplatesData>
       ? []
       : await db
           .select({
-            bedRangeId: products.bedRangeId,
+            bedRangeId: productBedRanges.bedRangeId,
             n: sql<number>`count(*)::int`,
           })
-          .from(products)
-          .where(inArray(products.bedRangeId, rangeIds))
-          .groupBy(products.bedRangeId);
+          .from(productBedRanges)
+          .where(inArray(productBedRanges.bedRangeId, rangeIds))
+          .groupBy(productBedRanges.bedRangeId);
 
   const countByRange = new Map(
-    productCounts.map((r) => [r.bedRangeId!, r.n]),
+    productCounts.map((r) => [r.bedRangeId, r.n]),
   );
 
   const adminBedRanges: AdminBedRange[] = rangeRows.map((r) => ({

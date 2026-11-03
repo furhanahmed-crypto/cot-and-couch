@@ -2,6 +2,10 @@
  * Pure catalogue helpers shared by server and client components.
  * Must stay free of DB / server-only imports so client bundles stay small.
  */
+import {
+  BED_RANGE_PRICING,
+  bedSheetPricesForWidth,
+} from "@/constants/bed-pricing";
 import { discountPercent } from "@/lib/format";
 import type { Colour, Product, StockStatus } from "@/types";
 
@@ -30,16 +34,118 @@ export interface FilterState {
   q?: string;
 }
 
-export function startingPrice(product: Product) {
+/** Sheet “from” / MRP / max % for a range — uses matrix, not stored Ideal SKUs. */
+function sheetPriceStats(rangeSlug: string) {
+  const row = BED_RANGE_PRICING[rangeSlug];
+  if (!row) return null;
+  const prices = Object.values(row.price).filter(
+    (n): n is number => typeof n === "number",
+  );
+  const mrps = Object.values(row.mrp).filter(
+    (n): n is number => typeof n === "number",
+  );
+  if (!prices.length || !mrps.length) return null;
+  let maxOff = 0;
+  for (const key of Object.keys(row.price) as (keyof typeof row.price)[]) {
+    const p = row.price[key];
+    const m = row.mrp[key];
+    if (p == null || m == null) continue;
+    maxOff = Math.max(maxOff, discountPercent(m, p));
+  }
+  return {
+    fromPrice: Math.min(...prices),
+    fromMrp: Math.min(...mrps),
+    maxOff,
+  };
+}
+
+/** Shop display: "Classic - Ideal Range" when a range is known. */
+export function displayProductName(
+  name: string,
+  rangeName?: string | null,
+) {
+  const range = rangeName?.trim();
+  if (!range) return name;
+  const suffix = ` - ${range}`;
+  if (name.endsWith(suffix) || name.endsWith(` - ${range}`)) return name;
+  return `${name}${suffix}`;
+}
+
+export function startingPrice(product: Product, rangeId?: string) {
+  if (rangeId) {
+    const pool = product.variants.filter((v) => v.bedRangeId === rangeId);
+    if (pool.length) return Math.min(...pool.map((v) => v.price));
+    const range = product.availableRanges?.find((r) => r.id === rangeId);
+    if (range) {
+      const stats = sheetPriceStats(range.slug);
+      if (stats) return stats.fromPrice;
+    }
+  }
   const prices = product.variants.map((v) => v.price);
   return prices.length ? Math.min(...prices) : 0;
 }
 
-export function maxDiscount(product: Product) {
+export function startingMrp(product: Product, rangeId?: string) {
+  if (rangeId) {
+    const pool = product.variants.filter((v) => v.bedRangeId === rangeId);
+    if (pool.length) return Math.min(...pool.map((v) => v.mrp));
+    const range = product.availableRanges?.find((r) => r.id === rangeId);
+    if (range) {
+      const stats = sheetPriceStats(range.slug);
+      if (stats) return stats.fromMrp;
+    }
+  }
+  const mrps = product.variants.map((v) => v.mrp);
+  return mrps.length ? Math.min(...mrps) : 0;
+}
+
+export function maxDiscount(product: Product, rangeId?: string) {
+  if (rangeId) {
+    const pool = product.variants.filter((v) => v.bedRangeId === rangeId);
+    if (pool.length) {
+      return Math.max(
+        0,
+        ...pool.map((v) => discountPercent(v.mrp, v.price)),
+      );
+    }
+    const range = product.availableRanges?.find((r) => r.id === rangeId);
+    if (range) {
+      const stats = sheetPriceStats(range.slug);
+      if (stats) return stats.maxOff;
+    }
+  }
   if (!product.variants.length) return 0;
   return Math.max(
     ...product.variants.map((v) => discountPercent(v.mrp, v.price)),
   );
+}
+
+/** Price / discount fit for a PLP card (product × optional range). */
+export function cardMatchesPriceDiscount(
+  product: Product,
+  filters: Pick<FilterState, "priceMin" | "priceMax" | "discountMin">,
+  rangeId?: string,
+) {
+  const price = startingPrice(product, rangeId);
+  if (filters.priceMin != null && price < filters.priceMin) return false;
+  if (filters.priceMax != null && price > filters.priceMax) return false;
+  if (
+    filters.discountMin != null &&
+    maxDiscount(product, rangeId) < filters.discountMin
+  ) {
+    return false;
+  }
+  return true;
+}
+
+function linkedRangeIds(product: Product, filterRangeIds?: string[]) {
+  const all = product.availableRanges?.length
+    ? product.availableRanges.map((r) => r.id)
+    : product.bedRangeId
+      ? [product.bedRangeId]
+      : [];
+  if (!filterRangeIds?.length) return all;
+  return all.filter((id) => filterRangeIds.includes(id));
 }
 
 export function productColours(product: Product): Colour[] {
@@ -97,23 +203,32 @@ export function filterProductList(
         .map((c) => c.name)
         .join(" ")
         .toLowerCase();
+      const ranges = (p.availableRanges ?? [])
+        .map((r) => r.name)
+        .join(" ")
+        .toLowerCase();
       const range = (p.bedRangeName ?? "").toLowerCase();
-      return [p.name, cat, p.material, cols, range, ...p.tags]
+      return [p.name, cat, p.material, cols, range, ranges, ...p.tags]
         .join(" ")
         .toLowerCase()
         .includes(q);
     });
   }
-  if (filters.priceMin != null || filters.priceMax != null) {
+  if (
+    filters.priceMin != null ||
+    filters.priceMax != null ||
+    filters.discountMin != null
+  ) {
     result = result.filter((p) => {
-      const price = startingPrice(p);
-      if (filters.priceMin != null && price < filters.priceMin) return false;
-      if (filters.priceMax != null && price > filters.priceMax) return false;
-      return true;
+      const rangeIds = linkedRangeIds(p, filters.bedRanges);
+      if (rangeIds.length) {
+        // Keep product if any linked (and selected) range card would pass.
+        return rangeIds.some((id) =>
+          cardMatchesPriceDiscount(p, filters, id),
+        );
+      }
+      return cardMatchesPriceDiscount(p, filters);
     });
-  }
-  if (filters.discountMin) {
-    result = result.filter((p) => maxDiscount(p) >= filters.discountMin!);
   }
   if (filters.colours?.length) {
     result = result.filter((p) =>
@@ -138,9 +253,14 @@ export function filterProductList(
     );
   }
   if (filters.bedRanges?.length) {
-    result = result.filter(
-      (p) => p.bedRangeId && filters.bedRanges!.includes(p.bedRangeId),
-    );
+    result = result.filter((p) => {
+      const ids = p.bedRangeIds?.length
+        ? p.bedRangeIds
+        : p.bedRangeId
+          ? [p.bedRangeId]
+          : [];
+      return ids.some((id) => filters.bedRanges!.includes(id));
+    });
   }
   if (filters.widths?.length) {
     result = result.filter((p) =>
@@ -158,10 +278,21 @@ export function filterProductList(
 
   const sorted = [...result];
   sorted.sort((a, b) => {
-    if (sort === "price_asc") return startingPrice(a) - startingPrice(b);
-    if (sort === "price_desc") return startingPrice(b) - startingPrice(a);
+    // Prefer cheapest / highest-discount among ranges that will appear as cards.
+    const priceOf = (p: Product) => {
+      const ids = linkedRangeIds(p, filters.bedRanges);
+      if (!ids.length) return startingPrice(p);
+      return Math.min(...ids.map((id) => startingPrice(p, id)));
+    };
+    const discountOf = (p: Product) => {
+      const ids = linkedRangeIds(p, filters.bedRanges);
+      if (!ids.length) return maxDiscount(p);
+      return Math.max(...ids.map((id) => maxDiscount(p, id)));
+    };
+    if (sort === "price_asc") return priceOf(a) - priceOf(b);
+    if (sort === "price_desc") return priceOf(b) - priceOf(a);
     if (sort === "newest") return b.createdAt.localeCompare(a.createdAt);
-    if (sort === "discount") return maxDiscount(b) - maxDiscount(a);
+    if (sort === "discount") return discountOf(b) - discountOf(a);
     return b.popularity - a.popularity;
   });
   return sorted;

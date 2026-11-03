@@ -5,6 +5,7 @@ import { useMemo, useState, useTransition } from "react";
 import { toast } from "sonner";
 import { updateProductAction } from "@/app/admin/catalogue/product-actions";
 import { ProductEditorColors } from "@/components/admin/product-editor-colors";
+import { ProductEditorRanges } from "@/components/admin/product-editor-ranges";
 import {
   ProductEditorTemplate,
   type MattressSpecState,
@@ -57,7 +58,13 @@ export function ProductEditorForm({
     trialNights: product.attributes?.trialNights ?? "",
     idealFor: product.attributes?.idealFor ?? "",
   });
-  const [bedRangeId, setBedRangeId] = useState(product.bedRangeId ?? "");
+  const [bedRangeIds, setBedRangeIds] = useState<string[]>(
+    product.bedRangeIds?.length
+      ? product.bedRangeIds
+      : product.bedRangeId
+        ? [product.bedRangeId]
+        : [],
+  );
   const [colourOptionIds, setColourOptionIds] = useState<string[]>(
     product.colourOptionIds ?? [],
   );
@@ -93,7 +100,10 @@ export function ProductEditorForm({
         },
       );
     } else if (isBeds) {
-      items.push({ label: "Cot range", ok: Boolean(bedRangeId) });
+      items.push({
+        label: "At least one cot range",
+        ok: bedRangeIds.length > 0,
+      });
     }
     if (showsColours) {
       items.push({
@@ -111,7 +121,7 @@ export function ProductEditorForm({
     isBeds,
     showsColours,
     mattress,
-    bedRangeId,
+    bedRangeIds.length,
     colourOptionIds.length,
   ]);
 
@@ -136,7 +146,7 @@ export function ProductEditorForm({
         isFeatured: product.featured,
         imageUrl,
         mattressBrandId: isMattress ? mattress.mattressBrandId || null : null,
-        bedRangeId: isBeds ? bedRangeId || null : null,
+        bedRangeIds: isBeds ? bedRangeIds : undefined,
         purposeOptionId: isMattress ? mattress.purposeOptionId || null : null,
         comfortOptionId: isMattress ? mattress.comfortOptionId || null : null,
         fillingOptionId: isMattress ? mattress.fillingOptionId || null : null,
@@ -194,22 +204,6 @@ export function ProductEditorForm({
               <Label>Category</Label>
               <Input value={category?.name ?? "—"} disabled />
             </div>
-            {isBeds ? (
-              <div className="space-y-1">
-                <Label htmlFor="pe-range">Cot range</Label>
-                <AppSelect
-                  id="pe-range"
-                  value={bedRangeId}
-                  onValueChange={setBedRangeId}
-                  triggerClassName="w-full"
-                  items={lookups.bedRanges.map((r) => ({
-                    value: r.id,
-                    label: r.name,
-                  }))}
-                  placeholder="Select range"
-                />
-              </div>
-            ) : null}
             <div className="space-y-1">
               <Label htmlFor="pe-desc">Description</Label>
               <Textarea
@@ -249,6 +243,14 @@ export function ProductEditorForm({
             }
           />
 
+          {isBeds ? (
+            <ProductEditorRanges
+              ranges={lookups.bedRanges}
+              selectedIds={bedRangeIds}
+              onChange={setBedRangeIds}
+            />
+          ) : null}
+
           {showsColours ? (
             <ProductEditorColors
               colours={lookups.colours}
@@ -258,11 +260,16 @@ export function ProductEditorForm({
           ) : null}
 
           <ProductEditorVariants
-            key={`${product.id}-${product.variants.length}`}
+            key={`${product.id}-${product.variants.length}-${bedRangeIds.join(",")}`}
             productId={product.id}
             variants={product.variants}
             noColour={isMattress}
             categorySlug={category?.slug ?? ""}
+            ranges={
+              isBeds
+                ? lookups.bedRanges.filter((r) => bedRangeIds.includes(r.id))
+                : []
+            }
           />
         </div>
 

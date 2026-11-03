@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState, useTransition } from "react";
+import { usePathname, useRouter } from "next/navigation";
 import { Heart, ShoppingCart } from "lucide-react";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
@@ -9,16 +10,16 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { CartQuantityControls } from "@/components/shop/cart-quantity-controls";
 import { PdpBedAddons } from "@/components/shop/pdp-bed-addons";
-import {
-  PdpQualitySwitch,
-  type PdpQualityOption,
-} from "@/components/shop/pdp-quality-switch";
+import { PdpQualitySwitch } from "@/components/shop/pdp-quality-switch";
 import { useCart } from "@/hooks/use-cart";
 import { useShortlist } from "@/hooks/use-shortlist";
 import { discountPercent, formatINR, stockLabel } from "@/lib/format";
 import { cn } from "@/lib/utils";
-import { productColours } from "@/lib/catalogue-utils";
-import { resolveShopBedAddons } from "@/constants/bed-pricing";
+import { displayProductName, productColours } from "@/lib/catalogue-utils";
+import {
+  bedSheetPricesForWidth,
+  resolveShopBedAddons,
+} from "@/constants/bed-pricing";
 import type { Colour, Product, Variant } from "@/types";
 import { PdpDetails } from "./pdp-details";
 import { PdpGallery } from "./pdp-gallery";
@@ -95,17 +96,19 @@ export function PdpMain({
   product,
   colours,
   bedAddonRows = [],
-  qualityOptions = [],
+  initialRangeSlug,
 }: {
   product: Product;
+  /** Range preselected from the catalogue card (?range=slug). */
+  initialRangeSlug?: string;
   colours: Colour[];
   /** Kept for call-site compat; dimensions come from variants. */
   sizes?: unknown;
   /** Raw category addons for beds (prices resolved per range). */
   bedAddonRows?: BedAddonRow[];
-  /** Ideal / Optimum / Essential siblings for Change quality. */
-  qualityOptions?: PdpQualityOption[];
 }) {
+  const router = useRouter();
+  const pathname = usePathname();
   const variants = product.variants;
   const initial = variants[0];
   const swatches = productColours(product);
@@ -113,7 +116,8 @@ export function PdpMain({
   const { addItem, findLine } = useCart();
   const liked = has(product.id);
   const [pending, startTransition] = useTransition();
-  const isBed = Boolean(product.bedRangeId);
+  const availableRanges = product.availableRanges ?? [];
+  const isBed = availableRanges.length > 0 || Boolean(product.bedRangeId);
 
   const [axis, setAxis] = useState<Axis>(() => ({
     sizeGroupOptionId: initial?.sizeGroupOptionId ?? "",
@@ -124,21 +128,54 @@ export function PdpMain({
   const [customLength, setCustomLength] = useState("");
   const [customWidth, setCustomWidth] = useState("");
   const [selectedAddonIds, setSelectedAddonIds] = useState<string[]>([]);
+  const [selectedRangeId, setSelectedRangeId] = useState(
+    () =>
+      availableRanges.find((r) => r.slug === initialRangeSlug)?.id ??
+      product.bedRangeId ??
+      availableRanges[0]?.id ??
+      "",
+  );
+
+  function selectQuality(rangeId: string) {
+    setSelectedRangeId(rangeId);
+    const slug = availableRanges.find((r) => r.id === rangeId)?.slug;
+    if (!slug) return;
+    router.replace(`${pathname}?range=${slug}`, { scroll: false });
+  }
+
+  const selectedRange =
+    availableRanges.find((r) => r.id === selectedRangeId) ??
+    availableRanges[0] ??
+    null;
+  const selectedRangeSlug =
+    selectedRange?.slug ?? product.bedRangeSlug ?? null;
+  const displayName = displayProductName(
+    product.name,
+    selectedRange?.name ?? product.bedRangeName,
+  );
+
+  /** Cot SKUs are per range — only show / price the active quality tab. */
+  const rangeVariants = useMemo(() => {
+    if (!isBed || !selectedRangeId) return variants;
+    const scoped = variants.filter((v) => v.bedRangeId === selectedRangeId);
+    if (scoped.length) return scoped;
+    return variants.filter((v) => !v.bedRangeId);
+  }, [variants, selectedRangeId, isBed]);
 
   const sizeGroups = useMemo(
     () =>
-      uniqueBy(variants, (v) => v.sizeGroupOptionId).map((v) => ({
+      uniqueBy(rangeVariants, (v) => v.sizeGroupOptionId).map((v) => ({
         id: v.sizeGroupOptionId,
         label: v.sizeGroupLabel,
         slug: v.sizeGroupSlug,
         isCustom: v.isCustomSize,
       })),
-    [variants],
+    [rangeVariants],
   );
 
   const dimensions = useMemo(() => {
     return uniqueBy(
-      variants.filter(
+      rangeVariants.filter(
         (v) =>
           v.sizeGroupOptionId === axis.sizeGroupOptionId &&
           !v.isCustomSize &&
@@ -149,11 +186,11 @@ export function PdpMain({
       id: v.sizeDimensionId!,
       label: v.sizeDimensionLabel ?? v.sizeDimensionId!,
     }));
-  }, [variants, axis.sizeGroupOptionId]);
+  }, [rangeVariants, axis.sizeGroupOptionId]);
 
   const thicknesses = useMemo(() => {
     return uniqueBy(
-      variants.filter(
+      rangeVariants.filter(
         (v) =>
           v.sizeGroupOptionId === axis.sizeGroupOptionId &&
           (v.isCustomSize ||
@@ -165,31 +202,39 @@ export function PdpMain({
       id: v.thicknessOptionId!,
       label: v.thicknessLabel ?? v.thicknessOptionId!,
     }));
-  }, [variants, axis.sizeGroupOptionId, axis.sizeDimensionId]);
+  }, [rangeVariants, axis.sizeGroupOptionId, axis.sizeDimensionId]);
 
   const hasThickness = thicknesses.length > 0;
   const isCustomGroup =
     sizeGroups.find((g) => g.id === axis.sizeGroupOptionId)?.isCustom ?? false;
 
-  const variant = resolveVariant(variants, axis);
+  const variant = resolveVariant(rangeVariants, axis);
   const galleryImages =
     variant.images.length > 0
       ? variant.images
-      : (variants.find((v) => v.images.length)?.images ?? []);
-  const off = discountPercent(variant.mrp, variant.price);
+      : (rangeVariants.find((v) => v.images.length)?.images ?? []);
+
+  // Prefer DB prices for this range SKU; sheet only if SKU still missing range.
+  const sheetPrices =
+    isBed && selectedRangeSlug && !variant.bedRangeId
+      ? bedSheetPricesForWidth(selectedRangeSlug, variant.sizeGroupSlug)
+      : null;
+  const unitPrice = sheetPrices?.price ?? variant.price;
+  const unitMrp = sheetPrices?.mrp ?? variant.mrp;
+  const off = discountPercent(unitMrp, unitPrice);
 
   const bedAddons = useMemo(() => {
     if (!isBed || !bedAddonRows.length) return [];
     return resolveShopBedAddons({
       rows: bedAddonRows,
-      rangeSlug: product.bedRangeSlug ?? null,
+      rangeSlug: selectedRangeSlug,
       cotType: product.cotType ?? null,
       widthSlug: variant.sizeGroupSlug || null,
     });
   }, [
     isBed,
     bedAddonRows,
-    product.bedRangeSlug,
+    selectedRangeSlug,
     product.cotType,
     variant.sizeGroupSlug,
   ]);
@@ -202,8 +247,8 @@ export function PdpMain({
   const addonExtra = bedAddons
     .filter((a) => selectedAddonIds.includes(a.id))
     .reduce((sum, a) => sum + a.price, 0);
-  const displayPrice = variant.price + addonExtra;
-  const displayMrp = variant.mrp + addonExtra;
+  const displayPrice = unitPrice + addonExtra;
+  const displayMrp = unitMrp + addonExtra;
 
   const selectedCustomLength = isCustomGroup
     ? parseCustomInches(customLength)
@@ -217,6 +262,7 @@ export function PdpMain({
     selectedCustomLength,
     selectedCustomWidth,
     selectedAddonIds,
+    selectedRangeId || null,
   );
 
   function selectSizeGroup(groupId: string) {
@@ -296,6 +342,7 @@ export function PdpMain({
         customLengthIn,
         customWidthIn,
         addonIds: selectedAddonIds,
+        bedRangeId: selectedRangeId || null,
       });
       if (!result.ok) {
         toast.error(result.error ?? "Could not add to cart");
@@ -319,20 +366,15 @@ export function PdpMain({
         <PdpGallery
           images={galleryImages}
           videos={variant.videos}
-          alt={product.name}
+          alt={displayName}
         />
       </div>
       <div className="space-y-5">
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0 space-y-1.5">
             <h1 className="font-heading text-2xl leading-tight md:text-3xl">
-              {product.name}
+              {displayName}
             </h1>
-            {product.bedRangeName ? (
-              <Badge variant="secondary" className="font-normal">
-                {product.bedRangeName}
-              </Badge>
-            ) : null}
           </div>
           <Button
             type="button"
@@ -375,10 +417,11 @@ export function PdpMain({
         </div>
 
         <div className="space-y-5 rounded-xl bg-card p-4 ring-1 ring-border/60">
-          {product.bedRangeSlug && qualityOptions.length > 1 ? (
+          {availableRanges.length > 1 ? (
             <PdpQualitySwitch
-              currentRangeSlug={product.bedRangeSlug}
-              options={qualityOptions}
+              value={selectedRangeId}
+              options={availableRanges}
+              onChange={selectQuality}
             />
           ) : null}
           {sizeGroups.length > 0 && (

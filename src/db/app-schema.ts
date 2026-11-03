@@ -27,6 +27,7 @@ export {
   cocProducts as products,
   cocProductOptionValues as productOptionValues,
   cocProductOptions as productOptions,
+  cocProductBedRanges as productBedRanges,
   cocProductVariants as productVariants,
   cocCategoryAddons as categoryAddons,
   cocCollections as collections,

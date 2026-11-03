@@ -2,6 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { CartQuantityControls } from "@/components/shop/cart-quantity-controls";
 import { ROUTES } from "@/constants/routes";
+import { displayProductName } from "@/lib/catalogue-utils";
 import { formatINR } from "@/lib/format";
 import type { CartLine } from "@/services/cart";
 
@@ -34,21 +35,23 @@ export function CartLineCard({ line }: { line: CartLine }) {
     line.variant.images[0] ??
     line.product.variants.find((v) => v.images[0])?.images[0];
   const addonsTotal = line.addons.reduce((sum, a) => sum + a.price, 0);
-  const unit = line.variant.price + addonsTotal;
+  const unit = line.unitPrice + addonsTotal;
   const lineTotal = unit * line.quantity;
+  const title = displayProductName(line.product.name, line.bedRangeName);
   const configLabel = buildConfigLabel(line);
+  const href = ROUTES.product(line.product.slug, line.bedRangeSlug);
 
   return (
     <article className="flex gap-3 rounded-xl bg-card p-3 ring-1 ring-border/60 sm:gap-4 sm:p-4">
       <Link
-        href={ROUTES.product(line.product.slug)}
+        href={href}
         prefetch
         className="relative size-24 shrink-0 overflow-hidden rounded-lg bg-muted sm:size-28"
       >
         {image ? (
           <Image
             src={image}
-            alt={line.product.name}
+            alt={title}
             fill
             className="object-cover"
             sizes="112px"
@@ -60,11 +63,11 @@ export function CartLineCard({ line }: { line: CartLine }) {
         <div className="flex flex-wrap items-start justify-between gap-2">
           <div className="min-w-0 space-y-1">
             <Link
-              href={ROUTES.product(line.product.slug)}
+              href={href}
               prefetch
               className="font-heading text-lg leading-snug hover:text-brass"
             >
-              {line.product.name}
+              {title}
             </Link>
             {configLabel ? (
               <p className="text-sm text-muted-foreground">{configLabel}</p>

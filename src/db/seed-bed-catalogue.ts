@@ -11,6 +11,7 @@ import { drizzle } from "drizzle-orm/neon-http";
 import {
   BED_CATEGORY_SLUG,
   BED_PRODUCT_STYLES,
+  BED_QUALITY_SWITCH_RANGE_SLUGS,
   BED_RANGE_SEEDS,
   BED_WIDTH_GROUP_KEY,
   BED_WIDTH_OPTIONS,
@@ -34,6 +35,7 @@ import {
   cocCollections,
   cocOptionGroups,
   cocOptions,
+  cocProductBedRanges,
   cocProductCollections,
   cocProductVariants,
   cocProducts,
@@ -291,8 +293,48 @@ async function main() {
 
   let productCount = 0;
   const productBySlug = new Map<string, string>();
+  const sharedSlugs = new Set<string>(BED_QUALITY_SWITCH_RANGE_SLUGS);
+  const idealId = rangeBySlug.get("ideal-range")!;
+  const idealPricing = BED_RANGE_PRICING["ideal-range"];
 
+  // Classic / Storage / Platform — one product each, linked to Ideal+Optimum+Essential
+  for (let si = 0; si < BED_PRODUCT_STYLES.length; si++) {
+    const style = BED_PRODUCT_STYLES[si]!;
+    const name = style;
+    const slug = style.toLowerCase();
+    const features = idealPricing?.features ?? "Shared quality ranges";
+    const [product] = await db
+      .insert(cocProducts)
+      .values({
+        categoryId: cat.id,
+        bedRangeId: idealId,
+        name,
+        slug,
+        description: `${name} — available in Ideal, Optimum & Essential. ${features}. ${idealPricing?.warrantyYears ?? 2} years warranty (Ideal).`,
+        imageUrl: `/images/cots/ideal-range-${style.toLowerCase()}.jpg`,
+        cotType: "non_cushion",
+        status: "published",
+        isFeatured: si === 0,
+        sortOrder: si + 1,
+      })
+      .returning();
+
+    await db.insert(cocProductBedRanges).values(
+      BED_QUALITY_SWITCH_RANGE_SLUGS.map((rs) => ({
+        productId: product.id,
+        bedRangeId: rangeBySlug.get(rs)!,
+      })),
+    );
+
+    const skuPrefix = `COT-shared-${style.slice(0, 4)}`;
+    await rebuildVariants(product.id, skuPrefix, "ideal-range", widths, colours);
+    productBySlug.set(slug, product.id);
+    productCount++;
+  }
+
+  // Other ranges still get their own style products (single range link)
   for (const range of BED_RANGE_SEEDS) {
+    if (sharedSlugs.has(range.slug)) continue;
     const rangeId = rangeBySlug.get(range.slug)!;
     const pricing = BED_RANGE_PRICING[range.slug];
     for (let si = 0; si < BED_PRODUCT_STYLES.length; si++) {
@@ -311,10 +353,15 @@ async function main() {
           imageUrl: `/images/cots/${range.slug}-${style.toLowerCase()}.jpg`,
           cotType: range.cotType,
           status: "published",
-          isFeatured: range.sortOrder === 1 && si === 0,
+          isFeatured: false,
           sortOrder: range.sortOrder * 10 + si + 1,
         })
         .returning();
+
+      await db.insert(cocProductBedRanges).values({
+        productId: product.id,
+        bedRangeId: rangeId,
+      });
 
       const skuPrefix = `COT-${range.slug.slice(0, 8)}-${style.slice(0, 4)}`;
       await rebuildVariants(product.id, skuPrefix, range.slug, widths, colours);
@@ -343,7 +390,7 @@ async function main() {
   }
 
   console.log(
-    `Done. ${BED_RANGE_SEEDS.length} ranges, ${productCount} products, ${widths.length} widths × ${colours.length || 1} colour(s), ${BED_ADDON_DEFS.length} addons.`,
+    `Done. ${BED_RANGE_SEEDS.length} ranges, ${productCount} products (3 shared Ideal/Optimum/Essential + others), ${widths.length} widths × ${colours.length || 1} colour(s), ${BED_ADDON_DEFS.length} addons.`,
   );
 }
 

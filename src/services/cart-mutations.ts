@@ -7,7 +7,6 @@ import {
   bedRangeAddonTier,
   type BedAddonKey,
 } from "@/constants/bed-pricing";
-import { sameAddonSet } from "@/lib/cart-find";
 import {
   findMatchingCartLine,
   requireCartProfile,
@@ -15,25 +14,27 @@ import {
 import type { AddToCartInput } from "@/types/cart";
 
 async function resolveAddonSnapshots(
+  bedRangeId: string | null,
   productId: string,
   addonIds: string[],
 ): Promise<{ addonId: string; labelSnapshot: string; priceSnapshot: string }[]> {
   if (!addonIds.length) return [];
 
-  const [product] = await db
-    .select({
-      bedRangeId: products.bedRangeId,
-    })
-    .from(products)
-    .where(eq(products.id, productId))
-    .limit(1);
-
   let tier = bedRangeAddonTier("essential-range");
-  if (product?.bedRangeId) {
+  let rangeId = bedRangeId;
+  if (!rangeId) {
+    const [product] = await db
+      .select({ bedRangeId: products.bedRangeId })
+      .from(products)
+      .where(eq(products.id, productId))
+      .limit(1);
+    rangeId = product?.bedRangeId ?? null;
+  }
+  if (rangeId) {
     const [range] = await db
       .select({ slug: bedRanges.slug })
       .from(bedRanges)
-      .where(eq(bedRanges.id, product.bedRangeId))
+      .where(eq(bedRanges.id, rangeId))
       .limit(1);
     if (range) tier = bedRangeAddonTier(range.slug);
   }
@@ -65,6 +66,7 @@ export async function addToCart(input: AddToCartInput) {
   const customLengthIn = input.customLengthIn ?? null;
   const customWidthIn = input.customWidthIn ?? null;
   const addonIds = [...new Set(input.addonIds ?? [])];
+  const bedRangeId = input.bedRangeId ?? null;
 
   const existing = await findMatchingCartLine(
     auth.profile.id,
@@ -72,6 +74,7 @@ export async function addToCart(input: AddToCartInput) {
     customLengthIn,
     customWidthIn,
     addonIds,
+    bedRangeId,
   );
 
   if (existing) {
@@ -91,6 +94,7 @@ export async function addToCart(input: AddToCartInput) {
       profileId: auth.profile.id,
       productId: input.productId,
       variantId: input.variantId,
+      bedRangeId,
       quantity,
       customLengthIn,
       customWidthIn,
@@ -98,7 +102,11 @@ export async function addToCart(input: AddToCartInput) {
     .returning({ id: carts.id });
 
   const cartId = inserted[0].id;
-  const snapshots = await resolveAddonSnapshots(input.productId, addonIds);
+  const snapshots = await resolveAddonSnapshots(
+    bedRangeId,
+    input.productId,
+    addonIds,
+  );
   if (snapshots.length) {
     await db.insert(cartLineAddons).values(
       snapshots.map((s) => ({
@@ -169,4 +177,4 @@ export async function decreaseCartQuantity(cartId: string) {
 }
 
 /** Exported for tests / matching helpers. */
-export { sameAddonSet };
+export { sameAddonSet } from "@/lib/cart-find";
