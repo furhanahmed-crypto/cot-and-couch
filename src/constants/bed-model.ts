@@ -74,6 +74,41 @@ export function bedRangeShortName(rangeName: string) {
   return rangeName.replace(/\s+Range$/i, "").trim() || rangeName;
 }
 
+/** Ranges that share the same styles and can switch quality on PDP. */
+export const BED_QUALITY_SWITCH_RANGE_SLUGS = [
+  "ideal-range",
+  "optimum-range",
+  "essential-range",
+] as const;
+
+export type BedQualitySwitchRangeSlug =
+  (typeof BED_QUALITY_SWITCH_RANGE_SLUGS)[number];
+
+export function isBedQualitySwitchRange(
+  slug: string | null | undefined,
+): slug is BedQualitySwitchRangeSlug {
+  return (
+    !!slug &&
+    (BED_QUALITY_SWITCH_RANGE_SLUGS as readonly string[]).includes(slug)
+  );
+}
+
+/** Style key from product slug, e.g. ideal-range-classic → classic */
+export function bedStyleKeyFromProductSlug(
+  productSlug: string,
+  rangeSlug: string,
+) {
+  const prefix = `${rangeSlug}-`;
+  if (!productSlug.startsWith(prefix)) return null;
+  const style = productSlug.slice(prefix.length).trim();
+  return style || null;
+}
+
+export function bedQualityLabel(rangeSlug: string) {
+  const seed = BED_RANGE_SEEDS.find((r) => r.slug === rangeSlug);
+  return seed ? bedRangeShortName(seed.name) : rangeSlug;
+}
+
 export function bedProductSlug(rangeSlug: string, style: string) {
   return `${rangeSlug}-${style.toLowerCase()}`;
 }

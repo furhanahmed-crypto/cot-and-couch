@@ -195,8 +195,9 @@ export const BED_ADDON_DEFS: {
   /** Limit visibility to these size keys when a size is selected */
   sizeKeys?: BedSizeKey[];
 }[] = [
-  { key: "storage_king", label: "Storage box (King)", sortOrder: 1, sizeKeys: ["king"] },
-  { key: "storage_queen", label: "Storage box (Queen)", sortOrder: 2, sizeKeys: ["queen"] },
+  /** Shown in PDP as “Additional storage” → Manual | Hydraulics */
+  { key: "storage_king", label: "Additional storage (King)", sortOrder: 1, sizeKeys: ["king"] },
+  { key: "storage_queen", label: "Additional storage (Queen)", sortOrder: 2, sizeKeys: ["queen"] },
   { key: "hydraulics", label: "Hydraulics", sortOrder: 3 },
   { key: "mobile_top", label: "Mobile top", sortOrder: 4 },
   { key: "headbox_storage", label: "Headbox with storage boxes", sortOrder: 5 },

@@ -2,6 +2,17 @@
 
 Short record of material choices. See `ARCHITECTURE.md` and `README.md`.
 
+## 2026 — PDP Change quality (Ideal / Optimum / Essential)
+
+- On Ideal, Optimum, or Essential PDPs: **Change quality** select (shadcn/`AppSelect`) lists Ideal · Optimum · Essential.
+- Same style sibling via slug (`ideal-range-classic` ↔ `optimum-range-classic` ↔ …). Selecting navigates to that product.
+- Lookup: `getBedQualitySwitchOptions` in `src/services/bed-quality-switch.ts`.
+
+## 2026 — Cot storage: Manual vs Hydraulics
+
+- PDP: **Storage type** = None / Manual / Hydraulic (King/Queen). Manual = storage price; Hydraulic = storage + hydraulics surcharge.
+- Other addons stay independent: mobile top, headbox, cushion head/foot, full body cushion.
+
 ## 2026 — Product colour allowlist
 
 - Table `coc_product_options` (product_id + option_id). V1 UI: Available colors on non-mattress products.

@@ -9,6 +9,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { CartQuantityControls } from "@/components/shop/cart-quantity-controls";
 import { PdpBedAddons } from "@/components/shop/pdp-bed-addons";
+import {
+  PdpQualitySwitch,
+  type PdpQualityOption,
+} from "@/components/shop/pdp-quality-switch";
 import { useCart } from "@/hooks/use-cart";
 import { useShortlist } from "@/hooks/use-shortlist";
 import { discountPercent, formatINR, stockLabel } from "@/lib/format";
@@ -91,6 +95,7 @@ export function PdpMain({
   product,
   colours,
   bedAddonRows = [],
+  qualityOptions = [],
 }: {
   product: Product;
   colours: Colour[];
@@ -98,6 +103,8 @@ export function PdpMain({
   sizes?: unknown;
   /** Raw category addons for beds (prices resolved per range). */
   bedAddonRows?: BedAddonRow[];
+  /** Ideal / Optimum / Essential siblings for Change quality. */
+  qualityOptions?: PdpQualityOption[];
 }) {
   const variants = product.variants;
   const initial = variants[0];
@@ -298,12 +305,6 @@ export function PdpMain({
     });
   }
 
-  function toggleAddon(id: string) {
-    setSelectedAddonIds((ids) =>
-      ids.includes(id) ? ids.filter((x) => x !== id) : [...ids, id],
-    );
-  }
-
   if (!initial) {
     return (
       <p className="text-muted-foreground">
@@ -374,6 +375,12 @@ export function PdpMain({
         </div>
 
         <div className="space-y-5 rounded-xl bg-card p-4 ring-1 ring-border/60">
+          {product.bedRangeSlug && qualityOptions.length > 1 ? (
+            <PdpQualitySwitch
+              currentRangeSlug={product.bedRangeSlug}
+              options={qualityOptions}
+            />
+          ) : null}
           {sizeGroups.length > 0 && (
             <div className="space-y-2">
               <Label>Available sizes</Label>
@@ -501,7 +508,7 @@ export function PdpMain({
             <PdpBedAddons
               addons={bedAddons}
               selectedIds={selectedAddonIds}
-              onToggle={toggleAddon}
+              onChange={setSelectedAddonIds}
             />
           ) : null}
 

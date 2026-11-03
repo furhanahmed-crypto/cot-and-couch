@@ -1,45 +1,61 @@
 "use client";
 
-import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
-import { formatINR } from "@/lib/format";
 import type { ShopBedAddon } from "@/constants/bed-pricing";
+import { PdpAddonRow } from "@/components/shop/pdp-addon-row";
+import { PdpStorageAddon } from "@/components/shop/pdp-storage-addon";
+
+const STORAGE_KEYS = new Set(["storage_king", "storage_queen"]);
 
 export function PdpBedAddons({
   addons,
   selectedIds,
-  onToggle,
+  onChange,
 }: {
   addons: ShopBedAddon[];
   selectedIds: string[];
-  onToggle: (id: string) => void;
+  onChange: (ids: string[]) => void;
 }) {
   if (!addons.length) return null;
 
+  const storage = addons.find((a) => STORAGE_KEYS.has(a.key));
+  const hydraulics = addons.find((a) => a.key === "hydraulics");
+  const others = addons.filter(
+    (a) => !STORAGE_KEYS.has(a.key) && a.key !== "hydraulics",
+  );
+
+  function toggleOther(id: string) {
+    onChange(
+      selectedIds.includes(id)
+        ? selectedIds.filter((x) => x !== id)
+        : [...selectedIds, id],
+    );
+  }
+
   return (
-    <div className="space-y-2">
+    <div className="space-y-3">
       <Label>Additional storage & cushion</Label>
+
+      {storage ? (
+        <PdpStorageAddon
+          storage={storage}
+          hydraulics={hydraulics}
+          selectedIds={selectedIds}
+          onChange={onChange}
+        />
+      ) : null}
+
       <ul className="space-y-2">
-        {addons.map((addon) => {
-          const checked = selectedIds.includes(addon.id);
-          return (
-            <li key={addon.id}>
-              <label className="flex cursor-pointer items-start gap-3 rounded-md border border-border/70 px-3 py-2 text-sm hover:border-foreground/30">
-                <Checkbox
-                  checked={checked}
-                  onCheckedChange={() => onToggle(addon.id)}
-                  className="mt-0.5"
-                />
-                <span className="min-w-0 flex-1">
-                  <span className="font-medium">{addon.label}</span>
-                  <span className="mt-0.5 block text-muted-foreground">
-                    +{formatINR(addon.price)}
-                  </span>
-                </span>
-              </label>
-            </li>
-          );
-        })}
+        {others.map((addon) => (
+          <li key={addon.id}>
+            <PdpAddonRow
+              label={addon.label}
+              price={addon.price}
+              checked={selectedIds.includes(addon.id)}
+              onToggle={() => toggleOther(addon.id)}
+            />
+          </li>
+        ))}
       </ul>
     </div>
   );

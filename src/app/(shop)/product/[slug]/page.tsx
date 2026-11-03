@@ -12,20 +12,31 @@ import {
 import { ROUTES } from "@/constants/routes";
 import { getMasters, getProductBySlug, getProductsByIds } from "@/services/catalogue";
 import { listBedCategoryAddons } from "@/services/bed-addons";
+import { getBedQualitySwitchOptions } from "@/services/bed-quality-switch";
 import { getStoreInfo } from "@/services/ops";
 
 async function ProductContent({ slug }: { slug: string }) {
   const product = await getProductBySlug(slug);
   if (!product) notFound();
 
-  const [related, completeRoom, masters, storeInfo, bedAddonRows] =
-    await Promise.all([
-      getProductsByIds(product.relatedIds),
-      getProductsByIds(product.completeRoomIds),
-      getMasters(),
-      getStoreInfo(),
-      product.bedRangeId ? listBedCategoryAddons() : Promise.resolve([]),
-    ]);
+  const [
+    related,
+    completeRoom,
+    masters,
+    storeInfo,
+    bedAddonRows,
+    qualityOptions,
+  ] = await Promise.all([
+    getProductsByIds(product.relatedIds),
+    getProductsByIds(product.completeRoomIds),
+    getMasters(),
+    getStoreInfo(),
+    product.bedRangeId ? listBedCategoryAddons() : Promise.resolve([]),
+    getBedQualitySwitchOptions({
+      bedRangeSlug: product.bedRangeSlug,
+      productSlug: product.slug,
+    }),
+  ]);
   const productUrl = ROUTES.product(product.slug);
 
   return (
@@ -36,6 +47,7 @@ async function ProductContent({ slug }: { slug: string }) {
           product={product}
           colours={masters.colours}
           sizes={masters.sizes}
+          qualityOptions={qualityOptions}
           bedAddonRows={bedAddonRows.map((r) => ({
             id: r.id,
             key: r.key,
