@@ -28,10 +28,7 @@ Beginner-friendly code, real data only, every edge case handled. Theme, colours 
 1. Sofa range name for the first rows ("Classic Sofa" is a placeholder).
 2. Range 7 and Range 8 cots are on no client sheet → not seeded. OK?
 3. Cushion Back Range: what do "Premium 2,800 / Royal 6,800 / Heavy cushion 6,800 extra" mean?
-4. 78-inch sizes: sheets give only the extra on the discounted price. MRP for 78-inch: none (planned) or base MRP + extra?
+4. 78-inch sizes: sheets give only the extra on the discounted price. Seeded with no MRP. OK, or base MRP + extra?
 5. Mattress prices: wait for the client sheet, or launch with the demo prices?
-6. Product images: download from the Google Drive folder into `public/images/`, or use a storage service?
-
-## Blocker for Phase 2
-
-`.env.local` has every variable empty. Fill `DATABASE_URL`, `DATABASE_URL_UNPOOLED` and the `NEON_AUTH_*` values before Phase 2.
+6. Product images: download from the Google Drive folder into `public/images/`, or use a storage service? (Seeded: mattress images only; cots and sofas have none yet.)
+7. Cot styles Classic / Storage / Platform come from the old site, not the client sheets, and "Storage" overlaps the storage add-ons. Which cot designs should be products?

@@ -33,7 +33,7 @@ Data comes from [../client/](../client/) via the clean price lists in [../pricel
 ### Users and settings
 | Table | Columns | Keys and checks |
 |---|---|---|
-| `profiles` | id, auth_user_id, name, email, phone, address, role, timestamps | `auth_user_id` unique (Neon Auth user id); index `role` |
+| `profiles` | id, auth_user_id, name, email, phone, address, role, timestamps | `auth_user_id` unique (Neon Auth user id); index `role`. Dummy seed customers get a random auth id |
 | `store_settings` | id, name, address, map_url, timings, phone, whatsapp, privacy_notice, updated_at | `id smallint primary key default 1 check (id = 1)`: exactly one row |
 
 ### Catalogue
@@ -46,7 +46,7 @@ Data comes from [../client/](../client/) via the clean price lists in [../pricel
 | `products` | id, category_id, brand_id, name, slug, description, status, is_featured, sort_order, timestamps | `slug` unique; FK category restrict, brand restrict; index (category_id, status), brand_id |
 | `product_images` | id, product_id, url, alt, sort_order, created_at | FK product cascade; index (product_id, sort_order) |
 | `product_specs` | id, product_id, label, value, sort_order | FK product cascade; unique (product_id, label) |
-| `product_variants` | id, product_id, sku, size_label, length_in, width_in, thickness_in, quality_id, colour_id, mrp, price, is_active, sort_order, timestamps | `sku` unique; FK product cascade, quality restrict, colour restrict; `price > 0`; `mrp is null or mrp >= price`; inches `> 0` when set; **unique nulls not distinct (product_id, size_label, thickness_in, quality_id, colour_id)**; index product_id, quality_id |
+| `product_variants` | id, product_id, sku, size_label, length_in, width_in, thickness_in, seats, quality_id, colour_id, mrp, price, is_active, sort_order, timestamps | `sku` unique; FK product cascade, quality restrict, colour restrict; `price > 0`; `mrp is null or mrp >= price`; inches and seats `> 0` when set; **unique nulls not distinct (product_id, size_label, length_in, width_in, thickness_in, quality_id, colour_id)** (its leading product_id also indexes the FK); index quality_id, colour_id |
 | `addons` | id, category_id, product_id, name, kind, price_unit, size_label, sort_order, is_active, timestamps | FK category restrict, product cascade; index category_id, product_id. `product_id` null = category-wide (cots); set = one product only (sofas). `size_label` set = only for that size (e.g. King storage) |
 | `addon_prices` | addon_id, quality_id, price | PK (addon_id, quality_id); FKs cascade; `price >= 0`. No row = add-on not offered for that quality |
 | `collections` | id, name, slug, description, is_featured, sort_order, is_active, timestamps | `slug` unique |
@@ -58,7 +58,9 @@ How each category fits the same tables:
 |---|---|---|---|
 | product | Brand + model | Style (Classic, Storage…) | Range (Luxury High Back…) |
 | `brand_id` | Wake Fit… | null | null |
-| variant `size_label` | Single, Queen… | King 75 x 72 in, King 78 x 72 in… | 3+1+1 / 3+2, 3-Seater… |
+| variant `size_label` | Single, Queen… | King, Queen, Double, Singles-Jodi, Single | Model column: 3+1+1 / 3+2, 3-Seater… |
+| variant `length_in` x `width_in` | 72 x 36… | 75 x 72 and 78 x 72 (two variants), null for Single | null |
+| variant `seats` | null | null | 5, 3; null for "3 + lounger" |
 | variant `quality_id` | null | Ideal Range … Cushion Back Range | Affordable, Premium |
 | variant `thickness_in` | 6, 8 | null | null |
 | variant `colour_id` | null | Teak, Walnut… | null |
@@ -84,7 +86,7 @@ Cart rows store no prices. Prices are read fresh from the DB on every cart view.
 ### CRM and content
 | Table | Columns | Keys and checks |
 |---|---|---|
-| `leads` | id, profile_id, name, phone, area, intent, assigned_to_id, wants_whatsapp_offers, follow_up_done, first_seen_at, last_seen_at, timestamps | `profile_id` unique (one lead per customer), set null; index intent, assigned_to_id, last_seen_at |
+| `leads` | id, profile_id, name, phone (nullable), area, intent, assigned_to_id, wants_whatsapp_offers, follow_up_done, first_seen_at, last_seen_at, timestamps | `profile_id` unique (one lead per customer), set null; index intent, assigned_to_id, last_seen_at |
 | `lead_events` | id, lead_id, type, product_id, details (jsonb), occurred_at | FK lead cascade, product set null; index (lead_id, occurred_at) |
 | `media` | id, type, title, image_url, video_url, instagram_url, product_id, area, delivery_month, tags (text[]), is_published, sort_order, timestamps | FK product set null; `type <> 'reel' or video_url is not null`; index (type, is_published, sort_order) |
 
@@ -107,7 +109,7 @@ How it is made, so the TS schema and SQL never drift:
 3. Reorder the SQL into the sections below with comments, and append triggers in each section.
 4. Run `bunx drizzle-kit generate` again: it must say **no changes**. That is the drift check.
 
-Sections, in order (each: tables → indexes → RLS → triggers, with a comment block on top):
+Sections, in order (each: tables + foreign keys → indexes → RLS → triggers, with a comment block on top):
 ```
 -- 0. Extensions, enums, set_updated_at()
 -- 1. Users and settings
@@ -117,20 +119,25 @@ Sections, in order (each: tables → indexes → RLS → triggers, with a commen
 -- 5. CRM and content
 ```
 
-Scripts in `package.json`:
+Later schema changes: edit `src/db/schema/`, run `bun run db:generate`, review the new `drizzle/0001_*.sql`, run `bun run db:migrate`.
+
+Scripts in `package.json` (all read `.env.local`):
 
 | Script | Does |
 |---|---|
+| `db:generate` | `drizzle-kit generate` |
 | `db:migrate` | `drizzle-kit migrate` |
-| `db:reset` | Drops and recreates the `public` and `drizzle` schemas, then migrates. Refuses to run unless `--yes` is passed. |
-| `db:seed` | Clears app tables and inserts seed data in one batch per area |
-| `db:check` | Runs `scripts/db-smoke.sql`: inserts bad rows and expects each to fail; updates a row and expects `updated_at` to change |
+| `db:reset` | `scripts/db-reset.ts`: drops every app table, sequence, enum and function in `public` plus the `drizzle` schema, then migrates. Keeps `neon_auth` and extension objects (`pg_session_jwt` lives in `public`, so the schema itself is not dropped). Refuses to run without `--yes`. |
+| `db:seed` | `src/db/seed/index.ts`: truncates app tables, restarts order numbers, inserts seed data in one batch per area |
+| `db:check` | `scripts/db-check.ts` runs `scripts/db-smoke.sql` as one block: 13 bad rows must be rejected, `updated_at` must change, the order trigger must write history (16 checks). It always ends with an error so nothing is saved. |
+
+Gotcha found by `db:check`: a check like `a > 0 and b > 0` passes when `b` is null (`null` is not `false`). Write `b is not null and b > 0` when null must fail.
 
 `db:push` is removed.
 
 ## 6. Seed data
 
-Files in `src/db/seed/`, one per area, data in `src/db/seed/data/`.
+Files in `src/db/seed/`, one per area, data in `src/db/seed/data/`. Ids are made in JS (`crypto.randomUUID()`) so related rows go in one batch.
 
 | Data | Source |
 |---|---|
@@ -138,7 +145,20 @@ Files in `src/db/seed/`, one per area, data in `src/db/seed/data/`.
 | Cot qualities, prices, add-ons | `docs/pricelist/cot-pricelist` (from client photos) |
 | Sofa qualities, ranges, prices, recliners, additional options | `docs/pricelist/sofa-pricelist` (client PDF) |
 | Mattress brands, models, prices | current code (demo, flagged) |
-| Colours: Teak, Walnut, Honey, Natural | current code |
+| Cot styles: Classic, Storage, Platform | current code (not on the client sheets) |
+| Colours: Teak, Walnut, Honey, Natural | requirements PDF |
+| Staff profiles | Neon Auth users whose email is in `SEED_STAFF_EMAILS` (default `test@cotandcouch.com`) become admin |
 | Profiles, orders, leads, media, collections | dummy, clearly fake names (e.g. "Test Customer 1") |
 
-Not seeded until the client confirms: Range 7, Range 8, Cushion Back "Premium / Royal / Heavy cushion" extras, 78-inch MRPs.
+Seeded counts (checked after `db:seed`):
+
+| | Count |
+|---|---|
+| Cot variants | 684 = 3 styles x 4 colours x 57 size/quality rows (6 ranges x 8, Royal 6, Cushion Back 3) |
+| Sofa variants | 15 (every row of the sofa price list) |
+| Mattress variants | 240 = 30 products x 4 sizes x 2 thicknesses |
+| Qualities | 10 (8 cot, 2 sofa) |
+| Add-ons / prices | 20 / 92 (9 cot x 8 qualities; 11 sofa) |
+| Orders | 3 (CC-00001 to CC-00003), 5 history rows written by the trigger |
+
+Not seeded until the client confirms: Range 7, Range 8, Cushion Back "Premium / Royal / Heavy cushion" extras. 78-inch variants have no MRP (price = base price + the sheet's extra). The sofa "per seat" column is not stored (it is information, not a price anyone pays).

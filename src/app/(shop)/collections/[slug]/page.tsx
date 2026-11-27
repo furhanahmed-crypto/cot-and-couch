@@ -12,12 +12,17 @@ import {
 } from "@/services/catalogue";
 import { getCollections } from "@/services/ops";
 
+// Cache Components needs at least one param. With no collections (or no DB at
+// build time) a placeholder is used; the page shows notFound() for it.
+const PLACEHOLDER_PARAMS = [{ slug: "__placeholder__" }];
+
 export async function generateStaticParams() {
   try {
     const collections = await getCollections();
-    return collections.map((c) => ({ slug: c.slug }));
+    const params = collections.map((c) => ({ slug: c.slug }));
+    return params.length ? params : PLACEHOLDER_PARAMS;
   } catch {
-    return [];
+    return PLACEHOLDER_PARAMS;
   }
 }
 

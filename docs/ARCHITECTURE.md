@@ -22,7 +22,7 @@ src/
   services/     DB reads and writes
   constants/    routes, nav, category and cot config, cot price sheet
   data/         seed input (mattress brands, models, demo prices)
-  db/           schema files, seed scripts
+  db/           schema/ (new tables), seed/ (seed script + data), old coc_* schema until Phase 3
   stores/       Zustand stores
   hooks/  lib/  types/
   proxy.ts      Next.js request proxy (auth)
@@ -40,14 +40,15 @@ docs/           see docs/README.md
 
 ## Database
 
-- Tables are prefixed `coc_`. Schema files: `src/db/schema-coc*.ts`, re-exported with short names from `src/db/app-schema.ts`.
-- Migrations: `drizzle/0001` … `0014`.
+- New design: 24 tables, no prefix, schema in `src/db/schema/`, one migration `drizzle/0000_init.sql`. Full design: [refactor/database.md](./refactor/database.md).
+- Seed: `src/db/seed/` (client price lists + dummy people, orders, leads, media).
+- **Until refactor Phase 3**, the app code still reads the old `coc_*` schema files (`src/db/schema-coc*.ts`, `src/db/app-schema.ts`), whose tables no longer exist. Pages that read the DB fail and `bun run build` fails until Phase 3.
 - The DB holds seed data only. There are no real customers or orders.
 
 ## Auth and roles
 
 - One login page, `/login`, for customers and staff.
-- `coc_profiles.role` is `admin`, `team` or `customer`.
+- `profiles.role` is `admin`, `team` or `customer`.
 - `/admin` checks the role on the server (`getStaffProfile()`) and redirects everyone else to `/`.
 - Authorise by `profile.id` and `role`, never by comparing email strings.
 - Secrets live in `.env.local` (git-ignored). Never commit them.
@@ -55,6 +56,7 @@ docs/           see docs/README.md
 ## Environment variables
 
 `DATABASE_URL`, `DATABASE_URL_UNPOOLED`, `NEON_AUTH_BASE_URL`, `NEON_AUTH_COOKIE_SECRET`, `NEON_AUTH_JWKS_URL`, `NEON_BRANCH`, `NEXT_PUBLIC_DEV_MODE`.
+Optional: `SEED_STAFF_EMAILS` (comma-separated Neon Auth emails that `db:seed` makes admin; default `test@cotandcouch.com`).
 
 ## Commands
 
@@ -62,9 +64,12 @@ docs/           see docs/README.md
 bun run dev            # dev server
 bun run build          # production build
 bun run lint
+bun run test           # unit tests (Vitest)
+bun run db:generate    # SQL migration from schema changes
 bun run db:migrate     # apply migrations
-bun run db:seed        # full catalogue seed
-bun run db:seed-beds   # cots only
+bun run db:reset --yes # drop all app tables, then migrate (Neon Auth untouched)
+bun run db:seed        # clear app tables and seed
+bun run db:check       # constraint and trigger smoke test (saves nothing)
 bun run db:studio      # browse tables
 ```
 

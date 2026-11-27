@@ -13,6 +13,7 @@ Showroom website for Cot & Couch: product catalogue, shortlist and saved cart fo
 bun install
 bun run db:migrate
 bun run db:seed
+bun run db:check
 bun run dev
 ```
 
@@ -20,10 +21,13 @@ Open http://localhost:3000 and register.
 
 ## Staff access
 
-Staff sign in at `/login` like customers. To make a user staff, run in the Neon SQL editor:
+Staff sign in at `/login` like customers. Sign up once, then either:
+
+- add your email to `SEED_STAFF_EMAILS` in `.env.local` (comma-separated) and run `bun run db:seed`, or
+- run in the Neon SQL editor:
 
 ```sql
-update coc_profiles set role = 'admin' where email = 'you@example.com';
+update profiles set role = 'admin' where email = 'you@example.com';
 ```
 
 Use `team` instead of `admin` for limited access.

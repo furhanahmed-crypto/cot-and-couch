@@ -29,8 +29,8 @@ The app is not live, so admin screens may show "Being rebuilt" between Phase 3 a
 - `drizzle/0000_init.sql` in commented sections with indexes, RLS, triggers. Old migrations deleted.
 - Scripts: `db:reset`, `db:migrate`, `db:seed`, `db:check`.
 - Seed from the client price lists + dummy data.
-- **Needs:** `DATABASE_URL` and `DATABASE_URL_UNPOOLED` filled in `.env.local` (currently empty).
 - **Check:** `db:check` passes; row counts match the price lists (e.g. cot variants = sizes × qualities × colours per style); `drizzle-kit generate` reports no changes.
+- **Known gap:** the app code still uses the old `coc_*` schema, so DB pages fail and `bun run build` fails until Phase 3. Lint and tests pass.
 
 ## Phase 3 — Shop on the new database
 - Services: `catalogue`, `pricing`, `shortlist`, `cart`, `orders` (customer read), `leads` (event tracking), `settings`, `media`.

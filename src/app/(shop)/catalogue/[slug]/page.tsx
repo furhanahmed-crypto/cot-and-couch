@@ -1,5 +1,6 @@
 import { Suspense } from "react";
 import { notFound } from "next/navigation";
+import { CATEGORY_SLUGS } from "@/constants/categories";
 import { CategoryPlp } from "@/components/shop/category-plp";
 import { ReelsStrip } from "@/components/shop/reels-strip";
 import {
@@ -9,17 +10,12 @@ import {
 import {
   getMasters,
   getPublishedProductsByCategoryId,
-  getShopCategories,
   getShopCategoryBySlug,
 } from "@/services/catalogue";
 
-export async function generateStaticParams() {
-  try {
-    const cats = await getShopCategories();
-    return cats.map((c) => ({ slug: c.slug }));
-  } catch {
-    return [];
-  }
+// Category slugs are fixed, so the build does not need the database.
+export function generateStaticParams() {
+  return Object.values(CATEGORY_SLUGS).map((slug) => ({ slug }));
 }
 
 async function CategoryContent({ slug }: { slug: string }) {
