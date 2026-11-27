@@ -59,9 +59,15 @@ function ChoiceGroup(props: { title: string; options: { value: number; label: st
   );
 }
 
-type FilterPanelProps = { filters: ProductFilters; options: FilterOptions; onChange: (next: ProductFilters) => void };
+type FilterPanelProps = {
+  filters: ProductFilters;
+  options: FilterOptions;
+  onChange: (next: ProductFilters) => void;
+  /** "Size", or "Model" for sofas. */
+  sizeTitle: string;
+};
 
-export function FilterPanel({ filters, options, onChange }: FilterPanelProps) {
+export function FilterPanel({ filters, options, onChange, sizeTitle }: FilterPanelProps) {
   function toggleList(field: ListField, value: string) {
     onChange({ ...filters, [field]: toggleValue(filters[field], value) });
   }
@@ -79,7 +85,7 @@ export function FilterPanel({ filters, options, onChange }: FilterPanelProps) {
       </div>
       <CheckboxGroup title="Quality" options={options.qualities} selected={filters.qualityIds} onToggle={(value) => toggleList("qualityIds", value)} />
       <CheckboxGroup title="Brand" options={options.brands} selected={filters.brandIds} onToggle={(value) => toggleList("brandIds", value)} />
-      <CheckboxGroup title="Size" options={options.sizes} selected={filters.sizeLabels} onToggle={(value) => toggleList("sizeLabels", value)} />
+      <CheckboxGroup title={sizeTitle} options={options.sizes} selected={filters.sizeLabels} onToggle={(value) => toggleList("sizeLabels", value)} />
       {options.specs.map((spec) => (
         <CheckboxGroup
           key={spec.label}

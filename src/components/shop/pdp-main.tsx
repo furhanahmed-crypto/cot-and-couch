@@ -6,10 +6,12 @@ import { addToCartAction } from "@/app/(shop)/cart/actions";
 import { PdpAddons } from "@/components/shop/pdp-addons";
 import { NO_CUSTOM_SIZE, PdpCustomSize, type CustomSize } from "@/components/shop/pdp-custom-size";
 import { PdpGallery } from "@/components/shop/pdp-gallery";
+import { PdpNotes } from "@/components/shop/pdp-notes";
 import { PdpOptions } from "@/components/shop/pdp-options";
 import { ShortlistButton } from "@/components/shop/shortlist-button";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { getCategoryNotes, getSizeAxisLabel } from "@/constants/categories";
 import { useActionToast } from "@/hooks/use-action-toast";
 import { discountPercent, formatPrice } from "@/lib/format";
 import { getAddonUnitPrice, getUnitTotal, listOfferedAddons } from "@/lib/pricing";
@@ -94,7 +96,7 @@ export function PdpMain({ product, initialQualityId }: PdpMainProps) {
         </div>
 
         <div className="space-y-5 rounded-xl bg-card p-4 ring-1 ring-border/60">
-          <PdpOptions variants={variants} selected={variant} qualities={product.qualities} colours={product.colours} onSelect={selectOption} />
+          <PdpOptions variants={variants} selected={variant} qualities={product.qualities} colours={product.colours} onSelect={selectOption} sizeTitle={getSizeAxisLabel(product.categorySlug)} />
           <PdpAddons addons={offeredAddons} variant={variant} selectedIds={chosenAddonIds} onToggle={toggleAddon} />
           {canCustomSize ? <PdpCustomSize value={customSize} onChange={setCustomSize} /> : null}
           <p className="text-xs text-muted-foreground">SKU {variant.sku}</p>
@@ -103,6 +105,7 @@ export function PdpMain({ product, initialQualityId }: PdpMainProps) {
             {isPending ? "Adding…" : "Add to cart"}
           </Button>
         </div>
+        <PdpNotes notes={getCategoryNotes(product.categorySlug)} />
       </div>
     </div>
   );

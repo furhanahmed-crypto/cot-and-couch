@@ -39,7 +39,7 @@ docs/           see docs/README.md
 - Every price is in `product_variants` (and `addon_prices`). Nothing is priced in code.
 - **Mattresses:** product = brand + model. Variants = size x thickness.
 - **Cots:** product = style. Variants = quality x size (75 and 78 in) x colour. Add-ons are category-wide, priced per quality.
-- **Sofas:** product = range. Variants = model x quality. Add-ons and recliners belong to the product. They show in the shop with the generic product page; the sofa-specific polish is Phase 8.
+- **Sofas:** product = range. Variants = model x quality. Add-ons and recliners belong to the product. They use the generic product page; sofa pages title the size "Model", show the seat count and the notes from the client's sofa sheet.
 - **Product page:** `lib/variant-picker.ts` picks one variant from quality, size, thickness and colour. A choice the current quality does not have is shown disabled.
 - **Product cards** have no "add to cart" button: cots and sofas need choices first, so adding happens on the product page.
 - **Category filters** live in the URL (`lib/product-filter-params.ts`) and run in the browser over the category's cards.

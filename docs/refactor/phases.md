@@ -64,6 +64,7 @@ The app is not live, so admin screens may show "Being rebuilt" between Phase 3 a
 ## Phase 8 — Sofas in the shop
 - Sofa PDP: size + quality switch, recliners and additional options (fixed and per-seat), seed images.
 - **Check:** every sofa price and option matches `docs/pricelist/sofa-pricelist.pdf`.
+- **Done as:** the generic product page already did quality + size, recliners and additional options (fixed and per-seat, through `lib/pricing.ts`). Added for sofas: the size chips and the shop filter are titled "Model" and show the seat count ("3+1+1 / 3+2 · 5 seats"); the three notes printed on the client's sofa sheet show as "Good to know" (`getCategoryNotes` in `constants/categories.ts`). All 15 sofa variants and 20 add-on prices in the DB were compared with the price list: they match. **Images not seeded:** the files in `public/images/sofas/` (except `cover.jpg`) are unrelated stock photos from the old app (water, a kitchen, a chair), so sofa pages show the neutral placeholder until the client's photos come from the Drive folder (open question 6).
 
 ## Phase 9 — Final pass
 - Update `docs/ARCHITECTURE.md` to the new design; remove anything left from the old model.

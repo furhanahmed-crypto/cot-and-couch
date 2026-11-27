@@ -16,11 +16,15 @@ type PdpOptionsProps = {
   qualities: QualityItem[];
   colours: ColourItem[];
   onSelect: (axis: VariantAxis, value: string) => void;
+  /** "Size", or "Model" for sofas. */
+  sizeTitle: string;
 };
 
-export function formatSizeLabel(variant: Pick<VariantOption, "sizeLabel" | "lengthIn" | "widthIn">): string {
-  if (!variant.lengthIn || !variant.widthIn) return variant.sizeLabel;
-  return `${variant.sizeLabel} · ${variant.lengthIn} x ${variant.widthIn} in`;
+/** "King · 78 x 72 in", or for sofas "3+1+1 / 3+2 · 5 seats". */
+export function formatSizeLabel(variant: Pick<VariantOption, "sizeLabel" | "lengthIn" | "widthIn" | "seats">): string {
+  if (variant.lengthIn && variant.widthIn) return `${variant.sizeLabel} · ${variant.lengthIn} x ${variant.widthIn} in`;
+  if (variant.seats) return `${variant.sizeLabel} · ${variant.seats} seats`;
+  return variant.sizeLabel;
 }
 
 function chipClass(isSelected: boolean): string {
@@ -31,7 +35,7 @@ function chipClass(isSelected: boolean): string {
 }
 
 /** Quality, size, thickness and colour chips. Choices not made in the current quality are disabled, not hidden. */
-export function PdpOptions({ variants, selected, qualities, colours, onSelect }: PdpOptionsProps) {
+export function PdpOptions({ variants, selected, qualities, colours, onSelect, sizeTitle }: PdpOptionsProps) {
   const choice = toChoice(selected);
   const quality = qualities.find((item) => item.id === selected.qualityId);
 
@@ -70,7 +74,7 @@ export function PdpOptions({ variants, selected, qualities, colours, onSelect }:
           {quality.warrantyYears ? ` · ${quality.warrantyYears}-year warranty` : ""}
         </p>
       ) : null}
-      {renderChips("size", "Size", formatSizeLabel)}
+      {renderChips("size", sizeTitle, formatSizeLabel)}
       {renderChips("thickness", "Thickness", (variant) => `${variant.thicknessIn} in`)}
       {colourValues.length > 0 ? (
         <div className="space-y-2">

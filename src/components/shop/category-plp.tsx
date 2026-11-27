@@ -4,6 +4,7 @@ import { useEffect, useMemo } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { SlidersHorizontal } from "lucide-react";
 import { FilterPanel, type FilterOptions } from "@/components/shop/filter-panel";
+import { getSizeAxisLabel } from "@/constants/categories";
 import { PlpToolbar } from "@/components/shop/plp-toolbar";
 import { ProductCard } from "@/components/shop/product-card";
 import { Button, buttonVariants } from "@/components/ui/button";
@@ -64,7 +65,7 @@ export function CategoryPlp({ category, cards, facets, collections }: CategoryPl
     router.replace(nextQuery ? `${pathname}?${nextQuery}` : pathname, { scroll: false });
   }
 
-  const panel = <FilterPanel filters={filters} options={options} onChange={updateFilters} />;
+  const panel = <FilterPanel filters={filters} options={options} onChange={updateFilters} sizeTitle={getSizeAxisLabel(category.slug)} />;
 
   return (
     <div className="mx-auto max-w-7xl px-3 py-5 sm:px-4 md:px-6 md:py-8">

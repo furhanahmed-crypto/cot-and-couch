@@ -39,3 +39,22 @@ export function getVariantFields(categorySlug: string): VariantFields {
 export function hasProductAddons(categorySlug: string): boolean {
   return categorySlug === CATEGORY_SLUGS.sofas;
 }
+
+/** The size chips' title on the product page. The sofa price list calls it "Model". */
+export function getSizeAxisLabel(categorySlug: string): string {
+  return categorySlug === CATEGORY_SLUGS.sofas ? "Model" : "Size";
+}
+
+/** Notes printed on the client's price list, shown on that category's product pages. */
+const CATEGORY_NOTES: Record<string, string[]> = {
+  // Source: docs/pricelist/sofa-pricelist (footer of the client's sofa sheet).
+  [CATEGORY_SLUGS.sofas]: [
+    "Any design and any customisation in size, fabric or design pattern will be manufactured.",
+    "Sofas are manufactured fresh, on order. Delivery takes 3 to 10 days depending on the model.",
+    "Prices vary for modern designs / premium fabrics selected.",
+  ],
+};
+
+export function getCategoryNotes(categorySlug: string): string[] {
+  return CATEGORY_NOTES[categorySlug] ?? [];
+}
