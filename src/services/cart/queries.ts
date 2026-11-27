@@ -2,9 +2,9 @@ import { asc, count, eq, inArray } from "drizzle-orm";
 import { db } from "@/db";
 import { cartItemAddons, cartItems, colours, productImages, productVariants, products, qualities } from "@/db/schema";
 import { toRupees, toRupeesOrNull } from "@/lib/money";
-import { getAddonUnitPrice, getUnitTotal } from "@/lib/pricing";
+import { belongsToProduct, getAddonUnitPrice, getUnitTotal } from "@/lib/pricing";
 import type { CartLine } from "@/types/cart";
-import { belongsToProduct, listAddonOptionsByIds, type CartAddonOption } from "./addon-options";
+import { listAddonOptionsByIds, type CartAddonOption } from "./addon-options";
 
 type CartRow = Awaited<ReturnType<typeof selectCartRows>>[number];
 

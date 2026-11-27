@@ -53,3 +53,29 @@ export const sortOrderSchema = z.coerce.number().int().min(0).max(9999).default(
 
 /** "" or nothing -> null; otherwise an id. */
 export const optionalIdSchema = z.preprocess((value) => (value === "" || value === undefined ? null : value), idSchema.nullable());
+
+const INDIAN_MOBILE_LENGTH = 10;
+
+/** 10-digit Indian mobile. Spaces and dashes are removed; stored as digits only. */
+export const phoneSchema = z
+  .string({ error: "Phone is required" })
+  .transform((text) => text.replace(/\D/g, ""))
+  .refine((digits) => digits.length === INDIAN_MOBILE_LENGTH, { error: "Enter a 10-digit mobile number" });
+
+/** Whole rupees, 0 or more ("" -> 0). */
+export const amountSchema = z.preprocess(
+  (value) => (value === "" || value === undefined ? 0 : value),
+  z.coerce.number({ error: "Enter an amount" }).int({ error: "Use whole rupees" }).min(0, { error: "Amount cannot be negative" }),
+);
+
+/** "YYYY-MM-DD" from a date input; "" -> null. */
+export const optionalDateSchema = z.preprocess(
+  (value) => (value === "" || value === undefined ? null : value),
+  z.iso.date({ error: "Enter a valid date" }).nullable(),
+);
+
+/** An http(s) link; "" -> null. */
+export const optionalUrlSchema = z.preprocess(
+  (value) => (typeof value === "string" ? value.trim() || null : value ?? null),
+  z.url({ protocol: /^https?$/, error: "Enter a link starting with https://" }).max(2000).nullable(),
+);

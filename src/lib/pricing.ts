@@ -27,3 +27,11 @@ export function listOfferedAddons<T extends PricedAddon>(addons: T[], variant: P
 export function getUnitTotal(price: number, addonUnitPrices: number[]): number {
   return addonUnitPrices.reduce((sum, addonPrice) => sum + addonPrice, price);
 }
+
+type OwnedAddon = { isActive: boolean; categoryId: string; productId: string | null };
+
+/** True when the add-on is active and belongs to this product or its category. */
+export function belongsToProduct(addon: OwnedAddon, product: { id: string; categoryId: string }): boolean {
+  if (!addon.isActive || addon.categoryId !== product.categoryId) return false;
+  return addon.productId === null || addon.productId === product.id;
+}

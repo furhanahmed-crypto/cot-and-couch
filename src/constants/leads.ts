@@ -7,3 +7,19 @@ export type LeadEventType = (typeof LEAD_EVENT_TYPES)[number];
 export const LEAD_INTENT_LABELS: Record<LeadIntent, string> = { hot: "Hot", warm: "Warm", cold: "Cold" };
 
 export const LEAD_INTENT_TONES = { hot: "danger", warm: "accent", cold: "neutral" } as const satisfies Record<LeadIntent, string>;
+
+export const LEAD_EVENT_LABELS: Record<LeadEventType, string> = {
+  view: "Viewed",
+  shortlist: "Shortlisted",
+  cta: "Asked to be contacted",
+  login: "Signed in",
+};
+
+/** The shop's contact buttons, as saved in a "cta" event's `action`. */
+export const LEAD_CTA_LABELS: Record<string, string> = {
+  whatsapp: "WhatsApp",
+  call: "Call",
+  visit: "Visit the showroom",
+  callback: "Call me back",
+  maps: "Directions",
+};

@@ -2,10 +2,10 @@ import { and, eq, inArray, sql } from "drizzle-orm";
 import { db } from "@/db";
 import { cartItemAddons, cartItems, productVariants, products } from "@/db/schema";
 import { AppError } from "@/lib/action-result";
-import { getAddonUnitPrice } from "@/lib/pricing";
+import { belongsToProduct, getAddonUnitPrice } from "@/lib/pricing";
 import { CART_QUANTITY_MAX, type addToCartSchema } from "@/validation/shop";
 import type { z } from "zod";
-import { belongsToProduct, listAddonOptionsByIds } from "./addon-options";
+import { listAddonOptionsByIds } from "./addon-options";
 
 type AddToCartData = z.output<typeof addToCartSchema>;
 

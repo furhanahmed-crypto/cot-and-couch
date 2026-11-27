@@ -8,7 +8,7 @@ export const CUSTOM_SIZE_MAX_IN = 96;
 export const CART_QUANTITY_MAX = 20;
 const NOTE_MAX_LENGTH = 500;
 
-const customInchesSchema = z.coerce
+export const customInchesSchema = z.coerce
   .number({ error: "Enter a size in inches" })
   .int({ error: "Use whole inches" })
   .min(CUSTOM_SIZE_MIN_IN, { error: `Size must be ${CUSTOM_SIZE_MIN_IN}–${CUSTOM_SIZE_MAX_IN} inches` })

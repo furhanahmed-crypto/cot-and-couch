@@ -54,6 +54,7 @@ The app is not live, so admin screens may show "Being rebuilt" between Phase 3 a
 ## Phase 6 — Admin sales
 - Orders list, detail, new order. Leads list + side sheet.
 - **Check:** create an order with add-ons and a custom size; totals; status change writes history; advance > subtotal rejected; lead filters, edit, delete.
+- **Done as:** validation in `validation/{orders,leads}.ts`; prices and add-on checks in `lib/order-lines.ts` (tested, the same rules as the cart through `lib/pricing.ts`); services in `services/orders/{create-order,admin-queries,admin-mutations,new-order-queries}.ts`, `services/leads/admin-*.ts`, `services/users/staff-queries.ts`. Every rule above was run against the seeded DB.
 
 ## Phase 7 — Admin content and settings
 - Media (Gallery, Reels), Store settings, Team.

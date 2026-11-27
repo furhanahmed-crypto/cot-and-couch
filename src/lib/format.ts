@@ -20,6 +20,18 @@ export function formatDate(value: Date | string): string {
   }).format(new Date(value));
 }
 
+/** Date or ISO string -> "27 Nov 2026, 5:30 pm", always in IST. */
+export function formatDateTime(value: Date | string): string {
+  return new Intl.DateTimeFormat("en-IN", {
+    timeZone: IST_TIME_ZONE,
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+  }).format(new Date(value));
+}
+
 /** "9876543210" -> "98765 43210". Anything else is returned unchanged. */
 export function formatPhone(phone: string): string {
   const digits = phone.replace(/\D/g, "");

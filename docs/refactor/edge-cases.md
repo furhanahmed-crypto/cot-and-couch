@@ -30,6 +30,9 @@ Each case says what must happen. Tests or browser checks cover every line before
 - Order with no items → cannot be created.
 - Status change → history row written by trigger with who changed it; changing to the same status does nothing.
 - Totals are computed on the server only; client totals are display only.
+- Add-on not offered for the chosen variant (other category, other size, no price for the quality, inactive) → order rejected, like the cart.
+- Variant switched off or product unpublished while the "New order" form is open → order rejected with "An item is no longer available".
+- Lead assigned to someone who is not admin or team → rejected ("Choose a team member").
 
 ## Admin data
 - Delete category / quality / brand / colour that is in use → blocked with "Used by N products. Deactivate it instead."

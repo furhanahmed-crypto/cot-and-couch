@@ -29,9 +29,3 @@ export async function listAddonOptionsByIds(ids: string[]): Promise<CartAddonOpt
     ),
   }));
 }
-
-/** True when the add-on is active and belongs to this product or its category. */
-export function belongsToProduct(addon: CartAddonOption, product: { id: string; categoryId: string }): boolean {
-  if (!addon.isActive || addon.categoryId !== product.categoryId) return false;
-  return addon.productId === null || addon.productId === product.id;
-}

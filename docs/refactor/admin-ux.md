@@ -45,6 +45,7 @@ Built once in Phase 4, used by every screen. URL changes go through `hooks/use-u
 | `AddButton`, `OptionSelect`, `ActiveSwitchField`, `UrlTabs` | — | The page's "Add …" button + its dialog; a form select ("" = none); a labelled switch; tabs kept in `?tab=` |
 | `ConfirmationModal` | shadcn `Dialog` | Shared confirm with pending state. Lives in `components/ui/confirmation-modal.tsx` because the shop uses it too; there is no second confirm component |
 | `FormField` | shadcn `Label` + input | Label, input, help text, error text in one place |
+| `SectionCard` | — | Titled card on detail pages (order detail, new order) |
 | `MoneyInput` | shadcn `Input` | `₹` prefix, digits only, no decimals |
 | `SaveBar` | — | Sticky bottom bar on editors: "Unsaved changes" + Save; the browser warns before closing or reloading the tab. In-app links are not blocked (Next has no route-change guard) |
 | `TableSkeleton`, `FormSkeleton` | shadcn `Skeleton` | `loading.tsx` states (`skeletons.tsx`) |
@@ -119,11 +120,13 @@ Fixes today's issue: layout changes per category, range-tabbed variant grid, hid
 - Columns: Order no., Customer, Phone, Items, Total, Advance, Balance, Status, Expected delivery, Created.
 - **Order detail** `/admin/orders/[id]`: customer card, items (snapshots), totals, status timeline (from history), "Change status" (select + note), advance paid, expected delivery, delivery photo URL.
 - **New order** `/admin/orders/new`: customer (search existing or type name + phone), add items with a product → variant picker, add-ons, custom size; totals computed on the server.
+- Done as: the address is required (the `orders` table needs it). Picking a customer from the search links the order to their account, so it shows in their My orders. The person creating the order is saved as the salesperson. Only active variants of published products can be sold; a custom size does not change the price ("the showroom will confirm"). "Change status" confirms `closed` and `issue`; the note is stored on that history row; choosing the current status does nothing. Payment and delivery (advance, expected delivery, delivery photo link, notes) is one card with its own Save. Orders are not deleted from the admin.
 
 ### Leads `/admin/leads`
 - Toolbar: search (name, phone) · Intent · Assigned to · Follow-up (done / pending).
 - Columns: Name, Phone, Area, Intent, Assigned to, Last seen, Follow-up.
 - Row opens a side sheet: details, activity timeline (events), edit intent / assignee / follow-up. Delete: admin only, confirm.
+- Done as: the sheet is opened by `?lead=<id>` and keeps the filters and page. "Assigned to" lists admin and team members (checked on the server); `?assigned=none` shows leads nobody has. Deleting a lead removes its activity; the customer's account and orders stay.
 
 ### Media `/admin/media`
 - Tabs: Gallery · Reels. Card grid: image, title, Published switch, move up / down, Edit, Delete.
