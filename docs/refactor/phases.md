@@ -30,7 +30,6 @@ The app is not live, so admin screens may show "Being rebuilt" between Phase 3 a
 - Scripts: `db:reset`, `db:migrate`, `db:seed`, `db:check`.
 - Seed from the client price lists + dummy data.
 - **Check:** `db:check` passes; row counts match the price lists (e.g. cot variants = sizes × qualities × colours per style); `drizzle-kit generate` reports no changes.
-- **Known gap:** the app code still uses the old `coc_*` schema, so DB pages fail and `bun run build` fails until Phase 3. Lint and tests pass.
 
 ## Phase 3 — Shop on the new database
 - Services: `catalogue`, `pricing`, `shortlist`, `cart`, `orders` (customer read), `leads` (event tracking), `settings`, `media`.
@@ -38,6 +37,7 @@ The app is not live, so admin screens may show "Being rebuilt" between Phase 3 a
 - Rename wishlist / favourites → shortlist everywhere.
 - Old admin pages replaced by a "Being rebuilt" placeholder.
 - **Check (browser):** home, catalogue, category, product page (mattress, cot quality switch, 78-inch sizes, add-ons), search, collections, shortlist, cart (add, change qty, remove, custom size), my orders. Prices match the PDFs.
+- **Done as:** old schema, `data/`, old services, all admin code, `constants/bed-*`, `catalogue-utils` deleted. Search is a server page (`?q=`). Category filters are in the URL. Pure logic in `lib/` (pricing, variant picker, filters) has unit tests. The 11 old lint errors are gone with the rewritten files.
 
 ## Phase 4 — Admin foundation + Dashboard
 - New shell and navigation ([admin-ux.md §5](./admin-ux.md#5-navigation)), `requireStaff`.

@@ -35,16 +35,3 @@ export function discountPercent(mrp: number, price: number): number {
 export function inchesToCm(inches: number): number {
   return Math.round(inches * 2.54);
 }
-
-export function stockLabel(
-  status: string,
-  qty: number,
-  days?: [number, number],
-): string {
-  if (status === "out_of_stock") return "Out of stock";
-  if (status === "low_stock") return `Only ${qty} left`;
-  if (status === "made_to_order") {
-    return days ? `Made to order (${days[0]}–${days[1]} days)` : "Made to order";
-  }
-  return "In stock";
-}

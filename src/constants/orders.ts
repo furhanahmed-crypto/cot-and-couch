@@ -7,3 +7,12 @@ export const ORDER_STATUSES = [
   "issue",
 ] as const;
 export type OrderStatus = (typeof ORDER_STATUSES)[number];
+
+export const ORDER_STATUS_LABELS: Record<OrderStatus, string> = {
+  confirmed: "Confirmed",
+  in_production: "In production",
+  out_for_delivery: "Out for delivery",
+  delivered: "Delivered",
+  closed: "Closed",
+  issue: "Needs attention",
+};

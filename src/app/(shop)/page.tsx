@@ -1,119 +1,88 @@
 import { Suspense } from "react";
-import { cacheLife, cacheTag } from "next/cache";
 import Image from "next/image";
 import Link from "next/link";
+import { HomeContinueBrowse } from "@/components/shop/home-continue-browse";
 import { HomeHero } from "@/components/shop/home-hero";
+import { HomeRecentSections } from "@/components/shop/home-recent-sections";
 import { ProductCard } from "@/components/shop/product-card";
 import { ReelsStrip } from "@/components/shop/reels-strip";
+import { HomePageSkeleton, ReelsStripSkeleton } from "@/components/shop/shop-skeletons";
 import { StoreBlock } from "@/components/shop/store-block";
-import { HomeContinueBrowse } from "@/components/shop/home-continue-browse";
-import { HomeRecentSections } from "@/components/shop/home-recent-sections";
-import {
-  HomePageSkeleton,
-  ReelsStripSkeleton,
-} from "@/components/shop/shop-skeletons";
 import { ROUTES } from "@/constants/routes";
-import { SHOP_CACHE_TAG } from "@/lib/cache-tags";
-import {
-  getShopCategories,
-  getFeaturedProducts,
-  getProductsByIds,
-  getRoyalRangeProducts,
-} from "@/services/catalogue";
-import { getGallery } from "@/services/ops";
+import { listCategories } from "@/services/catalogue/category-queries";
+import { listFeaturedProductCards, listProductCardsByCollection } from "@/services/catalogue/product-card-queries";
+import { listCollections } from "@/services/collections/queries";
+import { listGalleryPhotos } from "@/services/media/queries";
+import type { CollectionItem } from "@/types/catalogue";
+
+const FEATURED_LIMIT = 8;
+const COLLECTION_LIMIT = 6;
+
+async function CollectionSection({ collection }: { collection: CollectionItem }) {
+  const cards = (await listProductCardsByCollection(collection.id)).slice(0, COLLECTION_LIMIT);
+  if (!cards.length) return null;
+  return (
+    <section>
+      <div className="mb-4 flex items-end justify-between">
+        <div>
+          <p className="text-xs uppercase tracking-[0.18em] text-brass">Collection</p>
+          <h2 className="font-heading text-2xl">{collection.name}</h2>
+        </div>
+        <Link href={ROUTES.collection(collection.slug)} className="text-sm text-muted-foreground hover:text-foreground">
+          Explore
+        </Link>
+      </div>
+      <div className="grid grid-cols-2 gap-3 md:grid-cols-3">
+        {cards.map((card) => (
+          <ProductCard key={card.id} card={card} />
+        ))}
+      </div>
+    </section>
+  );
+}
 
 async function HomeContent() {
-  "use cache";
-  cacheLife("hours");
-  cacheTag(SHOP_CACHE_TAG);
-  const [cats, featured, royal, gallery] = await Promise.all([
-    getShopCategories(),
-    getFeaturedProducts(),
-    getRoyalRangeProducts(),
-    getGallery(),
+  const [categories, featured, collections, gallery] = await Promise.all([
+    listCategories(),
+    listFeaturedProductCards(),
+    listCollections(),
+    listGalleryPhotos(),
   ]);
-  const heroIds = [
-    ...new Set(gallery.map((item) => item.productId).filter(Boolean)),
-  ];
-  const heroProducts = await getProductsByIds(heroIds);
-  const featuredSlice = featured.slice(0, 8);
-  const royalSlice = royal.slice(0, 6);
+  const featuredCards = featured.slice(0, FEATURED_LIMIT);
 
   return (
     <div>
-      <HomeHero products={heroProducts} gallery={gallery} />
+      <HomeHero photos={gallery} />
       <div className="mx-auto max-w-7xl space-y-10 px-3 py-8 sm:px-4 sm:py-10 md:space-y-12 md:px-6 md:py-14">
         <HomeContinueBrowse />
-
         <section>
-          <h2 className="font-heading mb-4 text-2xl">Shop by category</h2>
-          <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
-            {cats.map((c) => (
-              <Link
-                key={c.id}
-                href={ROUTES.category(c.slug)}
-                prefetch
-                className="group relative aspect-[5/4] overflow-hidden rounded-2xl"
-              >
-                <Image
-                  src={c.coverImage}
-                  alt={c.name}
-                  fill
-                  className="object-cover transition duration-500 group-hover:scale-105"
-                  sizes="25vw"
-                />
+          <h2 className="mb-4 font-heading text-2xl">Shop by category</h2>
+          <div className="grid grid-cols-2 gap-3 md:grid-cols-3">
+            {categories.map((category) => (
+              <Link key={category.id} href={ROUTES.category(category.slug)} className="group relative aspect-[5/4] overflow-hidden rounded-2xl bg-muted">
+                <Image src={category.coverImage} alt={category.name} fill className="object-cover transition duration-500 group-hover:scale-105" sizes="33vw" />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent" />
-                <span className="absolute bottom-3 left-3 font-heading text-lg text-white">
-                  {c.name}
-                </span>
+                <span className="absolute bottom-3 left-3 font-heading text-lg text-white">{category.name}</span>
               </Link>
             ))}
           </div>
         </section>
-
-        <HomeRecentSections featured={featuredSlice} />
-
-        <section>
-          <div className="mb-4 flex items-end justify-between">
-            <h2 className="font-heading text-2xl">Featured & new</h2>
-            <Link
-              href={ROUTES.catalogue}
-              prefetch
-              className="text-sm text-muted-foreground hover:text-foreground"
-            >
-              View all
-            </Link>
-          </div>
-          <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
-            {featuredSlice.map((p) => (
-              <ProductCard key={p.id} product={p} />
-            ))}
-          </div>
-        </section>
-
-        <section>
-          <div className="mb-4 flex items-end justify-between">
-            <div>
-              <p className="text-xs uppercase tracking-[0.18em] text-brass">
-                Signature
-              </p>
-              <h2 className="font-heading text-2xl">Royal Range</h2>
+        <HomeRecentSections />
+        {featuredCards.length ? (
+          <section>
+            <h2 className="mb-4 font-heading text-2xl">Featured</h2>
+            <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+              {featuredCards.map((card) => (
+                <ProductCard key={card.id} card={card} />
+              ))}
             </div>
-            <Link
-              href={ROUTES.collection("royal-range")}
-              prefetch
-              className="text-sm text-muted-foreground hover:text-foreground"
-            >
-              Explore
-            </Link>
-          </div>
-          <div className="grid grid-cols-2 gap-3 md:grid-cols-3">
-            {royalSlice.map((p) => (
-              <ProductCard key={p.id} product={p} />
-            ))}
-          </div>
-        </section>
-
+          </section>
+        ) : null}
+        {collections
+          .filter((collection) => collection.isFeatured)
+          .map((collection) => (
+            <CollectionSection key={collection.id} collection={collection} />
+          ))}
         <Suspense fallback={<ReelsStripSkeleton />}>
           <ReelsStrip tag="home" />
         </Suspense>

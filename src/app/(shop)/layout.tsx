@@ -5,13 +5,13 @@ import { ShopHeaderSkeleton } from "@/components/shop/shop-skeletons";
 import { ShopStoresBoot } from "@/components/shop/shop-stores-boot";
 import { BrandMark } from "@/components/shared/brand-mark";
 import { SHOP_CACHE_TAG } from "@/lib/cache-tags";
-import { getShopCategories } from "@/services/catalogue";
+import { listCategories } from "@/services/catalogue/category-queries";
 
 async function ShopHeaderSlot() {
   "use cache";
   cacheLife("hours");
   cacheTag(SHOP_CACHE_TAG);
-  const categories = await getShopCategories();
+  const categories = await listCategories();
   return <ShopHeader categories={categories} />;
 }
 

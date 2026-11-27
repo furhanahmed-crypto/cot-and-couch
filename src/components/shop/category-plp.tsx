@@ -1,333 +1,109 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo } from "react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { SlidersHorizontal } from "lucide-react";
-import { FilterPanel } from "@/components/shop/filter-panel";
+import { FilterPanel, type FilterOptions } from "@/components/shop/filter-panel";
+import { PlpToolbar } from "@/components/shop/plp-toolbar";
 import { ProductCard } from "@/components/shop/product-card";
-import { Badge } from "@/components/ui/badge";
-import { buttonVariants } from "@/components/ui/button";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { CATEGORY_SLUGS } from "@/constants/categories";
-import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-  SheetTrigger,
-} from "@/components/ui/sheet";
+import { Button, buttonVariants } from "@/components/ui/button";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { STORAGE_KEYS } from "@/constants/routes";
+import { writeJson } from "@/lib/local-storage";
+import { parseProductFilters, toFilterQuery } from "@/lib/product-filter-params";
+import { countActiveFilters, EMPTY_FILTERS, filterAndSortCards, type ProductFilters } from "@/lib/product-filters";
 import { cn } from "@/lib/utils";
-import {
-  cardMatchesPriceDiscount,
-  filterProductList,
-  maxDiscount,
-  productWidthLabels,
-  startingPrice,
-  type FilterState,
-  type SortKey,
-} from "@/lib/catalogue-utils";
-import { writeJson } from "@/services/storage";
-import type { Category, Collection, Colour, Product } from "@/types";
+import type { CategoryFacets } from "@/services/catalogue/category-queries";
+import type { CategoryItem, CollectionItem, ProductCardItem } from "@/types/catalogue";
 
-const SORT_ITEMS = [
-  { value: "popularity", label: "Popularity" },
-  { value: "price_asc", label: "Price: low to high" },
-  { value: "price_desc", label: "Price: high to low" },
-  { value: "newest", label: "Newest" },
-  { value: "discount", label: "Highest discount" },
-];
+type CategoryPlpProps = {
+  category: CategoryItem;
+  cards: ProductCardItem[];
+  facets: CategoryFacets;
+  collections: CollectionItem[];
+};
 
-const MATTRESS_ATTR_FACETS = [
-  { key: "purpose", label: "Mattress type" },
-  { key: "comfort", label: "Firmness" },
-  { key: "filling", label: "Layer construction" },
-  { key: "cover", label: "Cover fabric" },
-] as const;
+/** Filter options from what the listed products actually use. */
+function buildFilterOptions(cards: ProductCardItem[], facets: CategoryFacets, collections: CollectionItem[]): FilterOptions {
+  const sizes = [...new Set(cards.flatMap((card) => card.variants.map((variant) => variant.sizeLabel)))];
+  const specValues = new Map<string, Set<string>>();
+  for (const card of cards) {
+    for (const [label, value] of Object.entries(card.specs)) {
+      specValues.set(label, (specValues.get(label) ?? new Set()).add(value));
+    }
+  }
+  const usedCollectionIds = new Set(cards.flatMap((card) => card.collectionIds));
+  return {
+    qualities: facets.qualities.map((quality) => ({ value: quality.id, label: quality.name })),
+    brands: facets.brands.map((brand) => ({ value: brand.id, label: brand.name })),
+    sizes: sizes.map((size) => ({ value: size, label: size })),
+    colours: facets.colours.map((colour) => ({ value: colour.id, label: colour.name, hex: colour.hex })),
+    collections: collections
+      .filter((collection) => usedCollectionIds.has(collection.id))
+      .map((collection) => ({ value: collection.id, label: collection.name })),
+    specs: [...specValues].map(([label, values]) => ({ label, values: [...values].sort() })),
+  };
+}
 
-export function CategoryPlp({
-  category,
-  products,
-  colours,
-  collections,
-}: {
-  category: Category;
-  products: Product[];
-  colours: Colour[];
-  collections: Collection[];
-}) {
-  const [sort, setSort] = useState<SortKey>("popularity");
-  const [filters, setFilters] = useState<FilterState>({});
+export function CategoryPlp({ category, cards, facets, collections }: CategoryPlpProps) {
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const query = searchParams.toString();
+  const filters = useMemo(() => parseProductFilters(new URLSearchParams(query)), [query]);
+  const results = useMemo(() => filterAndSortCards(cards, filters), [cards, filters]);
+  const options = useMemo(() => buildFilterOptions(cards, facets, collections), [cards, facets, collections]);
+  const linkQualityId = filters.qualityIds.length === 1 ? filters.qualityIds[0] : null;
 
   useEffect(() => {
-    writeJson(STORAGE_KEYS.lastBrowse, {
-      path: `/catalogue/${category.slug}`,
-      filters,
-    });
-  }, [category.slug, filters]);
+    writeJson(STORAGE_KEYS.lastBrowse, { path: query ? `${pathname}?${query}` : pathname });
+  }, [pathname, query]);
 
-  const isBeds = category.slug === CATEGORY_SLUGS.cots;
-  const isMattresses = category.slug === CATEGORY_SLUGS.mattresses;
+  function updateFilters(next: ProductFilters) {
+    const nextQuery = toFilterQuery(next);
+    router.replace(nextQuery ? `${pathname}?${nextQuery}` : pathname, { scroll: false });
+  }
 
-  const bedRanges = useMemo(() => {
-    if (!isBeds) return [];
-    const map = new Map<string, string>();
-    for (const p of products) {
-      if (p.availableRanges?.length) {
-        for (const r of p.availableRanges) map.set(r.id, r.name);
-      } else if (p.bedRangeId && p.bedRangeName) {
-        map.set(p.bedRangeId, p.bedRangeName);
-      }
-    }
-    return [...map.entries()]
-      .map(([id, label]) => ({ id, label }))
-      .sort((a, b) => a.label.localeCompare(b.label));
-  }, [products, isBeds]);
-
-  const widths = useMemo(() => {
-    if (!isBeds) return [];
-    const set = new Set<string>();
-    for (const p of products) {
-      for (const w of productWidthLabels(p)) set.add(w);
-    }
-    return [...set].sort();
-  }, [products, isBeds]);
-
-  const attrFacets = useMemo(() => {
-    if (!isMattresses) return [];
-    return MATTRESS_ATTR_FACETS.map((facet) => {
-      const opts = new Set<string>();
-      for (const p of products) {
-        const v = p.specs[facet.key];
-        if (typeof v === "string" && v) opts.add(v);
-      }
-      return {
-        key: facet.key,
-        label: facet.label,
-        options: [...opts].sort(),
-      };
-    }).filter((f) => f.options.length > 0);
-  }, [products, isMattresses]);
-
-  const plpColours = useMemo(() => {
-    if (isMattresses) return [];
-    const ids = new Set<string>();
-    for (const p of products) {
-      for (const v of p.variants) {
-        if (v.colourId) ids.add(v.colourId);
-      }
-    }
-    return colours.filter((c) => ids.has(c.id));
-  }, [products, colours, isMattresses]);
-
-  const list = useMemo(
-    () =>
-      filterProductList(
-        products,
-        category.id,
-        filters,
-        sort,
-        new Map([[category.id, category.name]]),
-      ),
-    [products, category.id, category.name, filters, sort],
-  );
-
-  /** Cots: one card per product × linked range (each with its own price). */
-  const cards = useMemo(() => {
-    if (!isBeds) {
-      return list.map((p) => ({
-        product: p,
-        rangeId: undefined as string | undefined,
-      }));
-    }
-    const active = filters.bedRanges;
-    let entries = list.flatMap((p) => {
-      const ranges = p.availableRanges ?? [];
-      if (!ranges.length) {
-        return [{ product: p, rangeId: p.bedRangeId ?? undefined }];
-      }
-      return ranges
-        .filter((r) => !active?.length || active.includes(r.id))
-        .map((r) => ({ product: p, rangeId: r.id as string | undefined }));
-    });
-
-    // Per-card price / discount (product-level already kept if any range fits).
-    entries = entries.filter(({ product, rangeId }) =>
-      cardMatchesPriceDiscount(product, filters, rangeId),
-    );
-
-    if (sort === "price_asc" || sort === "price_desc") {
-      const dir = sort === "price_asc" ? 1 : -1;
-      entries.sort(
-        (a, b) =>
-          dir *
-          (startingPrice(a.product, a.rangeId) -
-            startingPrice(b.product, b.rangeId)),
-      );
-    } else if (sort === "discount") {
-      entries.sort(
-        (a, b) =>
-          maxDiscount(b.product, b.rangeId) -
-          maxDiscount(a.product, a.rangeId),
-      );
-    }
-    return entries;
-  }, [list, isBeds, filters, sort]);
-
-  const filterPanel = (
-    <FilterPanel
-      filters={filters}
-      onChange={setFilters}
-      colours={plpColours}
-      collections={collections}
-      bedRanges={bedRanges}
-      widths={widths}
-      attrFacets={attrFacets}
-      onClear={() => setFilters({})}
-    />
-  );
+  const panel = <FilterPanel filters={filters} options={options} onChange={updateFilters} />;
 
   return (
     <div className="mx-auto max-w-7xl px-3 py-5 sm:px-4 md:px-6 md:py-8">
-      <div className="mb-5 space-y-3 md:mb-6">
-        <h1 className="font-heading text-2xl sm:text-3xl md:text-4xl">
-          {category.name}
-        </h1>
-        {isBeds && bedRanges.length > 0 ? (
-          <div className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-1 scrollbar-none">
-            <Badge
-              variant={!filters.bedRanges?.length ? "default" : "outline"}
-              className="shrink-0 cursor-pointer"
-              onClick={() =>
-                setFilters((f) => ({ ...f, bedRanges: undefined }))
-              }
-            >
-              All ranges
-            </Badge>
-            {bedRanges.map((r) => {
-              const on = filters.bedRanges?.includes(r.id);
-              return (
-                <Badge
-                  key={r.id}
-                  variant={on ? "default" : "outline"}
-                  className="shrink-0 cursor-pointer"
-                  onClick={() =>
-                    setFilters((f) => ({
-                      ...f,
-                      bedRanges: on ? undefined : [r.id],
-                    }))
-                  }
-                >
-                  {r.label}
-                </Badge>
-              );
-            })}
-          </div>
-        ) : category.subCategories.length > 0 ? (
-          <div className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-1 scrollbar-none">
-            <Badge
-              variant={!filters.subCategory ? "default" : "outline"}
-              className="shrink-0 cursor-pointer"
-              onClick={() =>
-                setFilters((f) => ({ ...f, subCategory: undefined }))
-              }
-            >
-              All
-            </Badge>
-            {category.subCategories.map((sc) => (
-              <Badge
-                key={sc.id}
-                variant={filters.subCategory === sc.id ? "default" : "outline"}
-                className="shrink-0 cursor-pointer"
-                onClick={() =>
-                  setFilters((f) => ({ ...f, subCategory: sc.id }))
-                }
-              >
-                {sc.name}
-              </Badge>
-            ))}
-          </div>
-        ) : null}
-      </div>
-
-      <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
-        <input
-          value={filters.q ?? ""}
-          onChange={(e) =>
-            setFilters((f) => ({ ...f, q: e.target.value || undefined }))
-          }
-          placeholder="Search in category…"
-          className="h-9 w-full rounded-lg border border-input bg-card px-3 text-sm sm:min-w-[12rem] sm:flex-1 md:max-w-xs"
-        />
-        <div className="flex flex-wrap items-center gap-2">
-          <Select
-            items={SORT_ITEMS}
-            value={sort}
-            onValueChange={(v) => {
-              if (typeof v === "string") setSort(v as SortKey);
-            }}
-          >
-            <SelectTrigger className="w-full min-w-[10rem] flex-1 sm:w-44 sm:flex-none">
-              <SelectValue placeholder="Sort" />
-            </SelectTrigger>
-            <SelectContent>
-              {SORT_ITEMS.map((item) => (
-                <SelectItem key={item.value} value={item.value}>
-                  {item.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <Sheet>
-            <SheetTrigger
-              className={cn(
-                buttonVariants({ variant: "outline" }),
-                "inline-flex items-center gap-2 md:hidden",
-              )}
-            >
-              <SlidersHorizontal className="size-4" /> Filters
-            </SheetTrigger>
-            <SheetContent side="bottom" className="h-[85vh] overflow-y-auto">
-              <SheetHeader>
-                <SheetTitle>Filters</SheetTitle>
-              </SheetHeader>
-              <div className="mt-4 px-1 pb-6">{filterPanel}</div>
-            </SheetContent>
-          </Sheet>
-          <p className="ml-auto text-sm text-muted-foreground sm:ml-0">
-            {cards.length} results
-          </p>
-        </div>
-      </div>
+      <h1 className="mb-5 font-heading text-2xl sm:text-3xl md:text-4xl">{category.name}</h1>
+      <PlpToolbar filters={filters} qualities={facets.qualities} resultCount={results.length} onChange={updateFilters}>
+        <Sheet>
+          <SheetTrigger className={cn(buttonVariants({ variant: "outline" }), "gap-2 md:hidden")}>
+            <SlidersHorizontal className="size-4" /> Filters
+            {countActiveFilters(filters) ? ` (${countActiveFilters(filters)})` : ""}
+          </SheetTrigger>
+          <SheetContent side="bottom" className="h-[85vh] overflow-y-auto">
+            <SheetHeader>
+              <SheetTitle>Filters</SheetTitle>
+            </SheetHeader>
+            <div className="px-4 pb-6">{panel}</div>
+          </SheetContent>
+        </Sheet>
+      </PlpToolbar>
 
       <div className="grid gap-8 md:grid-cols-[240px_1fr]">
         <aside className="hidden md:block">
-          <div className="sticky top-20 max-h-[calc(100dvh-5.5rem)] overflow-y-auto overscroll-contain rounded-xl bg-card p-4 ring-1 ring-border">
-            {filterPanel}
+          <div className="sticky top-20 max-h-[calc(100dvh-5.5rem)] overflow-y-auto rounded-xl bg-card p-4 ring-1 ring-border">
+            {panel}
           </div>
         </aside>
-        <div>
-          {cards.length === 0 ? (
-            <p className="rounded-xl border border-dashed border-border p-8 text-center text-muted-foreground">
-              No products match these filters.
-            </p>
-          ) : (
-            <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-3">
-              {cards.map(({ product, rangeId }) => (
-                <ProductCard
-                  key={`${product.id}:${rangeId ?? ""}`}
-                  product={product}
-                  rangeId={rangeId}
-                />
-              ))}
-            </div>
-          )}
-        </div>
+        {results.length === 0 ? (
+          <div className="rounded-xl border border-dashed p-8 text-center text-muted-foreground">
+            <p>No products match these filters.</p>
+            <Button variant="outline" className="mt-4" onClick={() => updateFilters({ ...EMPTY_FILTERS })}>
+              Clear filters
+            </Button>
+          </div>
+        ) : (
+          <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-3">
+            {results.map(({ card, price }) => (
+              <ProductCard key={card.id} card={card} price={price} qualityId={linkQualityId} />
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );

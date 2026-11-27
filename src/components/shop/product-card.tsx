@@ -1,57 +1,32 @@
-"use client";
-
 import Image from "next/image";
 import Link from "next/link";
-import { Heart } from "lucide-react";
-import { ProductCardCart } from "@/components/shop/product-card-cart";
+import { ImageOff } from "lucide-react";
+import { ShortlistButton } from "@/components/shop/shortlist-button";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { ROUTES } from "@/constants/routes";
-import { useShortlist } from "@/hooks/use-shortlist";
-import { discountPercent, formatPrice, stockLabel } from "@/lib/format";
+import { formatPrice } from "@/lib/format";
+import { EMPTY_FILTERS, getCardPrice, type CardPrice } from "@/lib/product-filters";
 import { cn } from "@/lib/utils";
-import {
-  displayProductName,
-  maxDiscount,
-  productColours,
-  startingMrp,
-  startingPrice,
-  worstStock,
-} from "@/lib/catalogue-utils";
-import type { Product } from "@/types";
+import type { ProductCardItem } from "@/types/catalogue";
 
-export function ProductCard({
-  product,
-  className,
-  rangeId,
-}: {
-  product: Product;
+const MAX_SWATCHES = 4;
+const MIN_BADGE_DISCOUNT = 10;
+
+type ProductCardProps = {
+  card: ProductCardItem;
+  /** Price for the current filters. Defaults to the cheapest variant. */
+  price?: CardPrice | null;
+  /** Opens the product page on this quality. */
+  qualityId?: string | null;
   className?: string;
-  /** Cots PLP: this card’s quality/range (drives price, link, cart). */
-  rangeId?: string;
-}) {
-  const { has, toggle } = useShortlist();
-  const price = startingPrice(product, rangeId);
-  const mrp = startingMrp(product, rangeId);
-  const range = rangeId
-    ? product.availableRanges?.find((r) => r.id === rangeId)
-    : undefined;
-  const rangeSlug = range?.slug;
-  const href = ROUTES.product(product.slug, rangeSlug);
-  const off = maxDiscount(product, rangeId);
-  const allColours = productColours(product);
-  const swatches = allColours.slice(0, 4);
-  const extra = allColours.length - swatches.length;
-  const stock = worstStock(product);
-  const img =
-    (rangeId
-      ? product.variants.find((v) => v.bedRangeId === rangeId)?.images[0]
-      : undefined) ?? product.variants[0]?.images[0] ?? undefined;
-  const liked = has(product.id);
-  const title = displayProductName(
-    product.name,
-    range?.name ?? product.bedRangeName,
-  );
+  refreshOnShortlistChange?: boolean;
+};
+
+export function ProductCard({ card, price, qualityId, className, refreshOnShortlistChange }: ProductCardProps) {
+  const shown = price ?? getCardPrice(card, EMPTY_FILTERS);
+  const href = ROUTES.product(card.slug, qualityId);
+  const swatches = card.colours.slice(0, MAX_SWATCHES);
+  const extraColours = card.colours.length - swatches.length;
 
   return (
     <article
@@ -60,75 +35,51 @@ export function ProductCard({
         className,
       )}
     >
-      <Link
-        href={href}
-        prefetch={false}
-        className="relative block aspect-[4/5] overflow-hidden bg-muted"
-      >
-        {img && (
+      <Link href={href} prefetch={false} className="relative block aspect-[4/5] overflow-hidden bg-muted">
+        {card.imageUrl ? (
           <Image
-            src={img}
-            alt={title}
+            src={card.imageUrl}
+            alt={card.name}
             fill
             className="object-cover transition duration-500 group-hover:scale-[1.03]"
             sizes="(max-width:768px) 50vw, 25vw"
           />
+        ) : (
+          <ImageOff className="absolute left-1/2 top-1/2 size-8 -translate-x-1/2 -translate-y-1/2 text-muted-foreground/50" />
         )}
-        {off >= 10 && (
+        {shown && shown.discount >= MIN_BADGE_DISCOUNT ? (
           <Badge className="absolute left-2 top-2 bg-primary text-primary-foreground hover:bg-primary">
-            Up to {off}% off
+            Up to {shown.discount}% off
           </Badge>
-        )}
+        ) : null}
       </Link>
-      <Button
-        type="button"
-        size="icon"
-        variant="secondary"
-        className="absolute right-2 top-2 z-10 size-8 rounded-full"
-        aria-label={liked ? "Remove from shortlist" : "Add to shortlist"}
-        onClick={() => toggle(product.id)}
-      >
-        <Heart className={cn("size-4", liked && "fill-destructive text-destructive")} />
-      </Button>
+      <ShortlistButton productId={card.id} className="absolute right-2 top-2 z-10 size-8" refreshOnChange={refreshOnShortlistChange} />
       <div className="flex flex-1 flex-col gap-1.5 p-3">
-        <Link
-          href={href}
-          prefetch={false}
-          className="font-medium leading-snug hover:text-brass"
-        >
-          {title}
+        {card.brandName ? <p className="text-xs text-muted-foreground">{card.brandName}</p> : null}
+        <Link href={href} prefetch={false} className="font-medium leading-snug hover:text-brass">
+          {card.name}
         </Link>
-        <div className="flex flex-wrap items-baseline gap-2">
-          <span className="text-base font-semibold">from {formatPrice(price)}</span>
-          {mrp > price ? (
-            <span className="text-sm text-muted-foreground line-through">
-              {formatPrice(mrp)}
-            </span>
-          ) : null}
-        </div>
-        <div className="mt-1 flex items-center gap-1.5">
-          {swatches.map((c) => (
-            <span
-              key={c.id}
-              title={c.name}
-              className="size-3.5 rounded-full ring-1 ring-border"
-              style={{ backgroundColor: c.hex }}
-            />
-          ))}
-          {extra > 0 && (
-            <span className="text-xs text-muted-foreground">+{extra} colours</span>
-          )}
-        </div>
-        <Badge variant="outline" className="mt-auto w-fit text-[10px] uppercase tracking-wide">
-          {stockLabel(
-            stock,
-            product.variants.find((v) => v.stockStatus === stock)?.stockQty ?? 0,
-          )}
-        </Badge>
-        <ProductCardCart product={product} bedRangeId={rangeId ?? null} />
-        <span className="sr-only">
-          Discount {discountPercent(mrp, price)} percent
-        </span>
+        {shown ? (
+          <div className="flex flex-wrap items-baseline gap-2">
+            <span className="text-base font-semibold">from {formatPrice(shown.price)}</span>
+            {shown.mrp && shown.mrp > shown.price ? (
+              <span className="text-sm text-muted-foreground line-through">{formatPrice(shown.mrp)}</span>
+            ) : null}
+          </div>
+        ) : null}
+        {swatches.length ? (
+          <div className="mt-auto flex items-center gap-1.5 pt-1">
+            {swatches.map((colour) => (
+              <span
+                key={colour.id}
+                title={colour.name}
+                className="size-3.5 rounded-full ring-1 ring-border"
+                style={{ backgroundColor: colour.hex }}
+              />
+            ))}
+            {extraColours > 0 ? <span className="text-xs text-muted-foreground">+{extraColours}</span> : null}
+          </div>
+        ) : null}
       </div>
     </article>
   );

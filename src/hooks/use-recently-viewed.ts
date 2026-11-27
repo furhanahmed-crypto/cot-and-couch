@@ -2,7 +2,7 @@
 
 import { useCallback, useSyncExternalStore } from "react";
 import { STORAGE_KEYS } from "@/constants/routes";
-import { getCachedJson, subscribeKey, writeJson } from "@/services/storage";
+import { getCachedJson, subscribeKey, writeJson } from "@/lib/local-storage";
 
 const KEY = STORAGE_KEYS.recentlyViewed;
 const EMPTY: string[] = [];

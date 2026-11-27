@@ -1,18 +1,15 @@
 "use client";
 
 import { useEffect } from "react";
-import { useCartStore } from "@/stores/cart-store";
-import { useWishlistStore } from "@/stores/wishlist-store";
+import { useShopStore } from "@/stores/shop-store";
 
-/** Loads cart + wishlist once for the shop shell (no React Context). */
+/** Loads the cart count and shortlist once for the shop shell. */
 export function ShopStoresBoot() {
-  const loadCart = useCartStore((s) => s.load);
-  const loadWishlist = useWishlistStore((s) => s.load);
+  const load = useShopStore((state) => state.load);
 
   useEffect(() => {
-    void loadCart();
-    void loadWishlist();
-  }, [loadCart, loadWishlist]);
+    void load();
+  }, [load]);
 
   return null;
 }

@@ -9,25 +9,20 @@ import { buttonVariants } from "@/components/ui/button";
 import { ROUTES } from "@/constants/routes";
 import { formatPrice } from "@/lib/format";
 import { cn } from "@/lib/utils";
-import { listCartItems } from "@/services/cart";
-import { getStoreInfo } from "@/services/ops";
+import { redirect } from "next/navigation";
+import { getCurrentProfile } from "@/lib/auth/profile";
+import { getCartSubtotal, listCartLines } from "@/services/cart/queries";
+import { getStoreInfo } from "@/services/settings/queries";
 
 async function CartContent() {
   await connection();
-  const [lines, storeInfo] = await Promise.all([
-    listCartItems(),
-    getStoreInfo(),
-  ]);
+  const profile = await getCurrentProfile();
+  if (!profile) redirect(ROUTES.login);
+  const [lines, storeInfo] = await Promise.all([listCartLines(profile.id), getStoreInfo()]);
 
   const lineCount = lines.length;
   const unitCount = lines.reduce((sum, line) => sum + line.quantity, 0);
-  const subtotal = lines.reduce(
-    (sum, line) => {
-      const addons = line.addons.reduce((s, a) => s + a.price, 0);
-      return sum + (line.unitPrice + addons) * line.quantity;
-    },
-    0,
-  );
+  const subtotal = getCartSubtotal(lines);
 
   const whatsappText = encodeURIComponent(
     `Hi Cot & Couch, I'd like help with items in my cart (${lineCount} product${lineCount === 1 ? "" : "s"}).`,

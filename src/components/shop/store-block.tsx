@@ -1,10 +1,11 @@
 import { Clock, MapPin, MessageCircle, Phone } from "lucide-react";
 import { buttonVariants } from "@/components/ui/button";
-import { getStoreInfo } from "@/services/ops";
+import { getStoreInfo } from "@/services/settings/queries";
 import { cn } from "@/lib/utils";
 
 export async function StoreBlock() {
   const storeInfo = await getStoreInfo();
+  if (!storeInfo.address) return null;
   const wa = `https://wa.me/${storeInfo.whatsapp}?text=${encodeURIComponent("Hi Cot & Couch, I'd like to visit the Lingampally showroom.")}`;
 
   return (

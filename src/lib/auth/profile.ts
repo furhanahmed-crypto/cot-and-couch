@@ -2,62 +2,46 @@ import { cache } from "react";
 import { connection } from "next/server";
 import { eq } from "drizzle-orm";
 import { db } from "@/db";
-import { profiles, type Profile } from "@/db";
+import { profiles } from "@/db/schema";
 import { auth } from "@/lib/auth/server";
-import { ensureLeadForProfile } from "@/services/leads";
+import { ensureLeadForProfile } from "@/services/leads/mutations";
+import type { ProfileRow } from "@/types/db";
 
-/** Create profile if missing. Safe to call after every sign-up / sign-in. */
-export async function ensureProfile(input: {
+type NewProfileInput = {
   authUserId: string;
   email: string;
   name?: string | null;
   address?: string | null;
-}): Promise<Profile> {
-  const existing = await db
-    .select()
-    .from(profiles)
-    .where(eq(profiles.authUserId, input.authUserId))
-    .limit(1);
+};
 
-  if (existing[0]) {
-    if (existing[0].role === "customer") {
-      await ensureLeadForProfile(existing[0], { touchLastSeen: true });
-    }
-    return existing[0];
-  }
+async function findProfileByAuthUserId(authUserId: string): Promise<ProfileRow | null> {
+  const [row] = await db.select().from(profiles).where(eq(profiles.authUserId, authUserId)).limit(1);
+  return row ?? null;
+}
 
-  const inserted = await db
+/** Profile for a Neon Auth user, created on first sign-in. Safe to call on every sign-in. */
+export async function ensureProfile(input: NewProfileInput): Promise<ProfileRow> {
+  await db
     .insert(profiles)
     .values({
       authUserId: input.authUserId,
       email: input.email,
-      name: input.name ?? null,
-      role: "customer",
+      name: input.name?.trim() || null,
       address: input.address?.trim() || null,
     })
-    .returning();
-
-  const profile = inserted[0];
-  await ensureLeadForProfile(profile, { touchLastSeen: true });
+    .onConflictDoNothing({ target: profiles.authUserId });
+  const profile = await findProfileByAuthUserId(input.authUserId);
+  if (!profile) throw new Error("Profile could not be created");
+  await ensureLeadForProfile(profile);
   return profile;
 }
 
-export const getCurrentProfile = cache(async (): Promise<Profile | null> => {
+/** The signed-in person's profile, or null for guests. One DB read per request. */
+export const getCurrentProfile = cache(async (): Promise<ProfileRow | null> => {
   await connection();
   const { data: session } = await auth.getSession();
   if (!session?.user) return null;
-
-  const rows = await db
-    .select()
-    .from(profiles)
-    .where(eq(profiles.authUserId, session.user.id))
-    .limit(1);
-
-  if (rows[0]) return rows[0];
-
-  return ensureProfile({
-    authUserId: session.user.id,
-    email: session.user.email,
-    name: session.user.name,
-  });
+  const profile = await findProfileByAuthUserId(session.user.id);
+  if (profile) return profile;
+  return ensureProfile({ authUserId: session.user.id, email: session.user.email, name: session.user.name });
 });

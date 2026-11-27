@@ -2,51 +2,68 @@
 
 import { revalidatePath } from "next/cache";
 import { ROUTES } from "@/constants/routes";
-import {
-  addToCart,
-  clearCart,
-  decreaseCartQuantity,
-  increaseCartQuantity,
-  listCartSummary,
-  removeFromCart,
-  type AddToCartInput,
-} from "@/services/cart";
+import { actionOk, toActionError, validationError } from "@/lib/action-result";
+import { getCurrentProfile } from "@/lib/auth/profile";
+import { requireProfile } from "@/services/auth/require-profile";
+import { addToCart, clearCart, removeCartItem, setCartQuantity } from "@/services/cart/mutations";
+import { countCartLines } from "@/services/cart/queries";
+import type { ActionResult } from "@/types/action";
+import { addToCartSchema, cartQuantitySchema, idSchema, type AddToCartInput } from "@/validation/shop";
 
-function refreshCartPages() {
+type CartCount = { cartCount: number };
+
+export async function addToCartAction(input: AddToCartInput): Promise<ActionResult<CartCount>> {
+  const parsed = addToCartSchema.safeParse(input);
+  if (!parsed.success) return validationError(parsed.error);
+  try {
+    const profile = await requireProfile();
+    await addToCart(profile.id, parsed.data);
+    revalidatePath(ROUTES.cart);
+    return actionOk({ cartCount: await countCartLines(profile.id) });
+  } catch (error) {
+    return toActionError(error, "Could not add to cart");
+  }
+}
+
+export async function setCartQuantityAction(cartItemId: string, quantity: number): Promise<ActionResult> {
+  const parsed = cartQuantitySchema.safeParse({ cartItemId, quantity });
+  if (!parsed.success) return validationError(parsed.error);
+  try {
+    const profile = await requireProfile();
+    await setCartQuantity(profile.id, parsed.data.cartItemId, parsed.data.quantity);
+  } catch (error) {
+    return toActionError(error, "Could not change the quantity");
+  }
   revalidatePath(ROUTES.cart);
+  return actionOk();
 }
 
-export async function addToCartAction(input: AddToCartInput) {
-  const result = await addToCart(input);
-  if (result.ok) refreshCartPages();
-  return result;
+export async function removeCartItemAction(cartItemId: string): Promise<ActionResult<CartCount>> {
+  const parsed = idSchema.safeParse(cartItemId);
+  if (!parsed.success) return validationError(parsed.error);
+  try {
+    const profile = await requireProfile();
+    await removeCartItem(profile.id, parsed.data);
+    revalidatePath(ROUTES.cart);
+    return actionOk({ cartCount: await countCartLines(profile.id) });
+  } catch (error) {
+    return toActionError(error, "Could not remove the item");
+  }
 }
 
-export async function increaseCartQuantityAction(cartId: string) {
-  const result = await increaseCartQuantity(cartId);
-  if (result.ok) refreshCartPages();
-  return result;
+export async function clearCartAction(): Promise<ActionResult> {
+  try {
+    const profile = await requireProfile();
+    await clearCart(profile.id);
+  } catch (error) {
+    return toActionError(error, "Could not clear the cart");
+  }
+  revalidatePath(ROUTES.cart);
+  return actionOk();
 }
 
-export async function decreaseCartQuantityAction(cartId: string) {
-  const result = await decreaseCartQuantity(cartId);
-  if (result.ok) refreshCartPages();
-  return result;
-}
-
-export async function removeFromCartAction(cartId: string) {
-  const result = await removeFromCart(cartId);
-  if (result.ok) refreshCartPages();
-  return result;
-}
-
-export async function clearCartAction() {
-  const result = await clearCart();
-  if (result.ok) refreshCartPages();
-  return result;
-}
-
-/** One action for header/PDP/cards — returns line rows, not a heavy product hydrate. */
-export async function getCartSummaryAction() {
-  return listCartSummary();
+/** Header badge. Guests have 0. */
+export async function getCartCountAction(): Promise<number> {
+  const profile = await getCurrentProfile();
+  return profile ? countCartLines(profile.id) : 0;
 }

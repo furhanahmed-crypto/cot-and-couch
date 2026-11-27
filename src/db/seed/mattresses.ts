@@ -77,6 +77,7 @@ export async function seedMattresses(categoryId: string): Promise<SeededCategory
       products.map((product, index) => ({
         id: product.id, categoryId, brandId: product.brandId, name: product.name, slug: product.slug,
         status: "published" as const, sortOrder: index + 1,
+        isFeatured: index === 0, // demo: the first product of each category is featured
       })),
     ),
     db.insert(schema.productSpecs).values(

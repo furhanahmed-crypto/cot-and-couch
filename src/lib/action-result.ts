@@ -21,6 +21,11 @@ export function actionError(message: string): ActionResult<never> {
   return { ok: false, error: message };
 }
 
+/** First Zod issue as the message, e.g. "Quantity can be at most 20". */
+export function validationError(error: { issues: { message: string }[] }): ActionResult<never> {
+  return actionError(error.issues[0]?.message ?? "Please check the details and try again");
+}
+
 /**
  * Turns any thrown error into a safe result.
  * AppError messages are shown as they are; anything else is logged and

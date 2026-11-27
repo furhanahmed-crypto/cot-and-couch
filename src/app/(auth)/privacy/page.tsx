@@ -1,5 +1,5 @@
 import { Suspense } from "react";
-import { getStoreInfo } from "@/services/ops";
+import { getStoreInfo } from "@/services/settings/queries";
 
 async function PrivacyContent() {
   const storeInfo = await getStoreInfo();
@@ -21,7 +21,7 @@ async function PrivacyContent() {
           Marketing WhatsApp is opt-in only; service messages are separate.
         </li>
         <li>
-          Catalogue and favourites are stored in Neon Postgres for your signed-in
+          Your shortlist and cart are stored in Neon Postgres for your signed-in
           account.
         </li>
         <li>

@@ -10,25 +10,11 @@ import { BrandMark } from "@/components/shared/brand-mark";
 import { BRAND } from "@/constants/brand";
 import { ROUTES } from "@/constants/routes";
 import { cn } from "@/lib/utils";
-import type { GalleryItem, Product } from "@/types";
+import type { GalleryPhoto } from "@/types/shop";
 
-function resolveProduct(products: Product[], productId: string) {
-  return products.find(
-    (p) =>
-      p.id === productId ||
-      p.slug === productId ||
-      p.slug === productId.replace(/^prod-/, ""),
-  );
-}
-
-export function HomeHero({
-  products,
-  gallery,
-}: {
-  products: Product[];
-  gallery: GalleryItem[];
-}) {
-  const slides = gallery.filter((g) => g.approved);
+/** Delivered-home photos (published gallery), each linking to its product. */
+export function HomeHero({ photos }: { photos: GalleryPhoto[] }) {
+  const slides = photos;
   const [selected, setSelected] = useState(0);
 
   const plugins = useMemo(
@@ -62,7 +48,6 @@ export function HomeHero({
   if (!slides.length) return null;
 
   const active = slides[selected] ?? slides[0];
-  const product = resolveProduct(products, active.productId);
 
   return (
     <section
@@ -73,7 +58,6 @@ export function HomeHero({
       <div ref={emblaRef} className="absolute inset-0">
         <div className="flex h-full touch-pan-y">
           {slides.map((slide, idx) => {
-            const slideProduct = resolveProduct(products, slide.productId);
             return (
               <div
                 key={slide.id}
@@ -83,8 +67,8 @@ export function HomeHero({
                 aria-label={`${idx + 1} of ${slides.length}`}
               >
                 <Image
-                  src={slide.image}
-                  alt={slideProduct?.name ?? "Recent delivery"}
+                  src={slide.imageUrl}
+                  alt={slide.productName ?? "Recent delivery"}
                   fill
                   priority={idx === 0}
                   className="object-cover"
@@ -108,14 +92,14 @@ export function HomeHero({
         <p className="fade-up-delay mt-3 max-w-md text-sm text-white/80 md:text-base">
           {BRAND.tagline}
         </p>
-        {product && (
+        {active.productSlug && (
           <Link
-            href={ROUTES.product(product.slug)}
+            href={ROUTES.product(active.productSlug)}
             prefetch={false}
             className="fade-up-delay mt-5 inline-flex w-fit items-center gap-2 rounded-full bg-white/10 px-4 py-2 text-sm backdrop-blur transition hover:bg-white/20"
           >
-            Delivered in {active.area} · {active.deliveryMonth}
-            <span className="text-brass">View {product.name}</span>
+            {[active.area && `Delivered in ${active.area}`, active.deliveryMonth].filter(Boolean).join(" · ")}
+            <span className="text-brass">View {active.productName}</span>
           </Link>
         )}
         <div className="mt-6 flex gap-2" role="tablist" aria-label="Hero slides">

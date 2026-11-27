@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth/server";
 import { ensureProfile } from "@/lib/auth/profile";
 import { ROUTES } from "@/constants/routes";
+import { recordLeadEvent } from "@/services/leads/mutations";
 
 export async function signInWithEmail(
   _prev: { error: string } | null,
@@ -23,11 +24,12 @@ export async function signInWithEmail(
 
   const { data: session } = await auth.getSession();
   if (session?.user) {
-    await ensureProfile({
+    const profile = await ensureProfile({
       authUserId: session.user.id,
       email: session.user.email,
       name: session.user.name,
     });
+    await recordLeadEvent({ profile, type: "login" });
   }
 
   redirect(ROUTES.home);

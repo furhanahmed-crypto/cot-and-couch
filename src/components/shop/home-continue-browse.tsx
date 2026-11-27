@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useSyncExternalStore } from "react";
 import { STORAGE_KEYS } from "@/constants/routes";
 import { useIsClient } from "@/hooks/use-is-client";
-import { getCachedJson, subscribeKey } from "@/services/storage";
+import { getCachedJson, subscribeKey } from "@/lib/local-storage";
 
 type LastBrowse = { path?: string } | null;
 

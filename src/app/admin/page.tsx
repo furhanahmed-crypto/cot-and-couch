@@ -1,64 +1,21 @@
-import { Suspense } from "react";
-import { AdminDashboard } from "@/components/admin/admin-dashboard";
-import { getAdminCategories, getAllProducts } from "@/services/catalogue";
-import {
-  getAdminDashboardData,
-  type AdminDashboardRange,
-} from "@/services/admin-dashboard";
-import { getStaffProfile } from "@/services/profile";
+import Link from "next/link";
+import { Hammer } from "lucide-react";
+import { buttonVariants } from "@/components/ui/button";
+import { ROUTES } from "@/constants/routes";
+import { cn } from "@/lib/utils";
 
-export const instant = false;
-
-type PageProps = { searchParams: Promise<{ range?: string }> };
-
-function parseRange(raw: string | undefined): AdminDashboardRange {
-  return raw === "30" ? 30 : 7;
-}
-
-async function DashboardContent({ rangeDays }: { rangeDays: AdminDashboardRange }) {
-  const [products, categories, staff] = await Promise.all([
-    getAllProducts(),
-    getAdminCategories({ includeHidden: true }),
-    getStaffProfile(),
-  ]);
-
-  const data = await getAdminDashboardData({
-    rangeDays,
-    products,
-    categories: categories.map((c) => ({ id: c.id, name: c.name })),
-  });
-
-  const todayLabel = new Date().toLocaleDateString("en-IN", {
-    weekday: "long",
-    day: "numeric",
-    month: "long",
-  });
-
-  const first = (staff?.name ?? "there").split(/\s+/)[0] || "there";
-  const hour = new Date().getHours();
-  const hello =
-    hour < 12 ? "Good morning" : hour < 17 ? "Good afternoon" : "Good evening";
-
+/** Placeholder while the admin is rebuilt on the new database (refactor Phases 4–7). */
+export default function AdminPage() {
   return (
-    <AdminDashboard
-      greeting={`${hello}, ${first}`}
-      subtitle={`${todayLabel} · metrics for the last ${rangeDays} days`}
-      rangeDays={rangeDays}
-      {...data}
-    />
-  );
-}
-
-export default async function AdminDashboardPage({ searchParams }: PageProps) {
-  const rangeDays = parseRange((await searchParams).range);
-
-  return (
-    <Suspense
-      fallback={
-        <p className="text-sm text-muted-foreground">Loading dashboard…</p>
-      }
-    >
-      <DashboardContent rangeDays={rangeDays} />
-    </Suspense>
+    <div className="mx-auto flex min-h-dvh max-w-md flex-col items-center justify-center gap-4 p-6 text-center">
+      <Hammer className="size-10 text-brass" />
+      <h1 className="font-heading text-2xl">Being rebuilt</h1>
+      <p className="text-sm text-muted-foreground">
+        The team console is moving to the new database. It will be back soon.
+      </p>
+      <Link href={ROUTES.home} className={cn(buttonVariants({ variant: "outline" }))}>
+        Back to the shop
+      </Link>
+    </div>
   );
 }

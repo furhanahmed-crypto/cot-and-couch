@@ -1,58 +1,40 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { getProductCardsByIdsAction } from "@/app/(shop)/actions";
 import { ProductCard } from "@/components/shop/product-card";
 import { useRecentlyViewed } from "@/hooks/use-recently-viewed";
-import { getProductsByIdsAction } from "@/app/(shop)/catalogue/actions";
-import type { Product } from "@/types";
+import type { ProductCardItem } from "@/types/catalogue";
 
-export function HomeRecentSections({ featured }: { featured: Product[] }) {
-  const { ids: recentIds } = useRecentlyViewed();
-  const [recent, setRecent] = useState<Product[]>([]);
+/** Products this browser viewed recently (ids kept in localStorage). */
+export function HomeRecentSections() {
+  const { ids } = useRecentlyViewed();
+  const idsKey = ids.join(",");
+  const [loaded, setLoaded] = useState<{ key: string; cards: ProductCardItem[] }>({ key: "", cards: [] });
 
   useEffect(() => {
-    if (!recentIds.length) {
-      setRecent([]);
-      return;
-    }
-    let cancelled = false;
-    getProductsByIdsAction(recentIds.slice(0, 8)).then((products) => {
-      if (!cancelled) setRecent(products);
+    if (!idsKey) return;
+    let isCancelled = false;
+    getProductCardsByIdsAction(idsKey.split(",")).then((cards) => {
+      if (!isCancelled) setLoaded({ key: idsKey, cards });
     });
     return () => {
-      cancelled = true;
+      isCancelled = true;
     };
-  }, [recentIds]);
+  }, [idsKey]);
 
-  const inspired = featured
-    .filter((p) => !recentIds.includes(p.id))
-    .slice(0, 4);
+  // Cards for an older id list are not shown.
+  const cards = loaded.key === idsKey ? loaded.cards : [];
+  if (!cards.length) return null;
 
   return (
-    <>
-      {recent.length > 0 && (
-        <section>
-          <h2 className="font-heading mb-4 text-2xl">Recently viewed</h2>
-          <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
-            {recent.map((p) => (
-              <ProductCard key={p.id} product={p} />
-            ))}
-          </div>
-        </section>
-      )}
-
-      {inspired.length > 0 && recentIds.length > 0 && (
-        <section>
-          <h2 className="font-heading mb-4 text-2xl">
-            Inspired by your browsing
-          </h2>
-          <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
-            {inspired.map((p) => (
-              <ProductCard key={p.id} product={p} />
-            ))}
-          </div>
-        </section>
-      )}
-    </>
+    <section>
+      <h2 className="mb-4 font-heading text-2xl">Recently viewed</h2>
+      <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+        {cards.map((card) => (
+          <ProductCard key={card.id} card={card} />
+        ))}
+      </div>
+    </section>
   );
 }

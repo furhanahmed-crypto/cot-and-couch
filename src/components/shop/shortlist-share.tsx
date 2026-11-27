@@ -3,9 +3,9 @@
 import { Share2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ROUTES } from "@/constants/routes";
-import type { Product } from "@/types";
+import type { ProductCardItem } from "@/types/catalogue";
 
-export function ShortlistShare({ products }: { products: Product[] }) {
+export function ShortlistShare({ products }: { products: ProductCardItem[] }) {
   const share = () => {
     if (!products.length) return;
     const origin = typeof window !== "undefined" ? window.location.origin : "";

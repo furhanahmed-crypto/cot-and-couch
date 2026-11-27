@@ -1,53 +1,45 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Trash2 } from "lucide-react";
-import { toast } from "sonner";
 import { clearCartAction } from "@/app/(shop)/cart/actions";
-import { ConfirmationModal } from "@/components/ui/confirmation-modal";
 import { Button } from "@/components/ui/button";
-import { useCart } from "@/hooks/use-cart";
+import { ConfirmationModal } from "@/components/ui/confirmation-modal";
+import { useActionToast } from "@/hooks/use-action-toast";
+import { useShopStore } from "@/stores/shop-store";
 
 export function CartClearButton() {
   const router = useRouter();
-  const { refreshLines } = useCart();
-  const [open, setOpen] = useState(false);
-  const [pending, startTransition] = useTransition();
+  const setCartCount = useShopStore((state) => state.setCartCount);
+  const [isOpen, setIsOpen] = useState(false);
+  const { run, isPending } = useActionToast();
 
   function confirmClear() {
-    startTransition(async () => {
-      const result = await clearCartAction();
-      if (!result.ok) {
-        toast.error(result.error ?? "Could not clear cart");
-        return;
-      }
-      await refreshLines();
-      router.refresh();
-      setOpen(false);
-      toast.success("Cart cleared");
-    });
+    run(
+      () => clearCartAction(),
+      { loading: "Clearing cart…", success: "Cart cleared", error: "Could not clear the cart" },
+      () => {
+        setCartCount(0);
+        setIsOpen(false);
+        router.refresh();
+      },
+    );
   }
 
   return (
     <>
-      <Button
-        type="button"
-        variant="outline"
-        size="sm"
-        disabled={pending}
-        onClick={() => setOpen(true)}
-      >
+      <Button type="button" variant="outline" size="sm" disabled={isPending} onClick={() => setIsOpen(true)}>
         <Trash2 className="size-4" />
         Clear cart
       </Button>
       <ConfirmationModal
-        open={open}
-        onOpenChange={setOpen}
+        open={isOpen}
+        onOpenChange={setIsOpen}
         title="Clear cart?"
         description="All items will be removed from your cart. This cannot be undone."
         confirmLabel="Clear cart"
-        pending={pending}
+        pending={isPending}
         onConfirm={confirmClear}
       />
     </>

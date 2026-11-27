@@ -5,8 +5,9 @@ export const ROUTES = {
   register: "/register",
   catalogue: "/catalogue",
   category: (slug: string) => `/catalogue/${slug}`,
-  product: (slug: string, rangeSlug?: string | null) =>
-    rangeSlug ? `/product/${slug}?range=${rangeSlug}` : `/product/${slug}`,
+  /** With a quality id, the product page opens on that quality. */
+  product: (slug: string, qualityId?: string | null) =>
+    qualityId ? `/product/${slug}?quality=${qualityId}` : `/product/${slug}`,
   collection: (slug: string) => `/collections/${slug}`,
   shortlist: "/shortlist",
   cart: "/cart",
@@ -15,17 +16,6 @@ export const ROUTES = {
   privacy: "/privacy",
   admin: {
     root: "/admin",
-    dashboard: "/admin",
-    categories: "/admin/categories",
-    brands: "/admin/brands",
-    products: "/admin/products",
-    productEdit: (id: string) => `/admin/products/${id}`,
-    gallery: "/admin/gallery",
-    reels: "/admin/reels",
-    orders: "/admin/orders",
-    leads: "/admin/leads",
-    team: "/admin/team",
-    settings: "/admin/settings",
   },
 } as const;
 

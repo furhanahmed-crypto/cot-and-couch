@@ -1,46 +1,29 @@
-import type { Product, Variant } from "@/types";
-
-export type CartLineAddon = {
-  addonId: string;
-  label: string;
-  price: number;
-};
-
-export type AddToCartInput = {
-  productId: string;
-  variantId: string;
-  quantity?: number;
-  customLengthIn?: number | null;
-  customWidthIn?: number | null;
-  /** Selected category addon ids (beds: storage / cushion extras). */
-  addonIds?: string[];
-  /** Selected bed quality/range for sheet pricing. */
-  bedRangeId?: string | null;
-};
-
-export type CartSummaryLine = {
-  id: string;
-  productId: string;
-  variantId: string;
-  quantity: number;
-  customLengthIn: number | null;
-  customWidthIn: number | null;
-  bedRangeId: string | null;
-  addonIds: string[];
-};
+export type CartLineAddon = { id: string; name: string; unitPrice: number };
 
 export type CartLine = {
   id: string;
   quantity: number;
   customLengthIn: number | null;
   customWidthIn: number | null;
-  bedRangeId: string | null;
-  bedRangeName: string | null;
-  bedRangeSlug: string | null;
-  /** Unit body price after range sheet (before addons). */
-  unitPrice: number;
-  unitMrp: number;
+  /** False when the variant was deactivated or the product unpublished. */
+  isAvailable: boolean;
+  productName: string;
+  productSlug: string;
+  imageUrl: string | null;
+  variantId: string;
+  sku: string;
+  sizeLabel: string;
+  lengthIn: number | null;
+  widthIn: number | null;
+  thicknessIn: number | null;
+  qualityId: string | null;
+  qualityName: string | null;
+  colourName: string | null;
+  mrp: number | null;
+  price: number;
   addons: CartLineAddon[];
-  product: Product;
-  variant: Variant;
+  /** Add-ons dropped because they are no longer offered for this line. */
+  removedAddonNames: string[];
+  unitTotal: number;
+  lineTotal: number;
 };

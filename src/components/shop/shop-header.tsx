@@ -8,7 +8,6 @@ import { BrandMark } from "@/components/shared/brand-mark";
 import { ThemeToggle } from "@/components/shared/theme-toggle";
 import { ShopNavLink } from "@/components/shop/shop-nav-link";
 import { buttonVariants } from "@/components/ui/button";
-import { useCart } from "@/hooks/use-cart";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -25,16 +24,16 @@ import {
 } from "@/components/ui/sheet";
 import { ROUTES } from "@/constants/routes";
 import { useRecentlyViewed } from "@/hooks/use-recently-viewed";
-import { useShortlist } from "@/hooks/use-shortlist";
 import { authClient } from "@/lib/auth/client";
 import { cn } from "@/lib/utils";
-import type { Category } from "@/types";
+import { useShopStore } from "@/stores/shop-store";
+import type { CategoryItem } from "@/types/catalogue";
 
-export function ShopHeader({ categories }: { categories: Category[] }) {
+export function ShopHeader({ categories }: { categories: CategoryItem[] }) {
   const cats = categories;
   const { data: session } = authClient.useSession();
-  const { count } = useShortlist();
-  const { count: cartCount } = useCart();
+  const count = useShopStore((state) => state.shortlistIds.length);
+  const cartCount = useShopStore((state) => state.cartCount);
   const { clear } = useRecentlyViewed();
   const router = useRouter();
   const [open, setOpen] = useState(false);
@@ -190,7 +189,7 @@ export function ShopHeader({ categories }: { categories: Category[] }) {
               </DropdownMenuItem>
               <DropdownMenuItem
                 nativeButton={false}
-                render={<Link href={ROUTES.admin.dashboard} prefetch />}
+                render={<Link href={ROUTES.admin.root} prefetch />}
               >
                 Staff console
               </DropdownMenuItem>

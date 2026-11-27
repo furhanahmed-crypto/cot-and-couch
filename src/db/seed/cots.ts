@@ -100,6 +100,7 @@ export async function seedCots(categoryId: string, colours: SeededColour[]): Pro
       products.map((product, index) => ({
         id: product.id, categoryId, name: product.name, slug: toSlug(product.name),
         status: "published" as const, sortOrder: index + 1,
+        isFeatured: index === 0, // demo: the first product of each category is featured
       })),
     ),
     db.insert(schema.productVariants).values(variants.map((variant, index) => toVariantRow(variant, index + 1))),

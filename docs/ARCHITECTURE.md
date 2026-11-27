@@ -11,20 +11,23 @@ This page describes the code **as it is today**. Planned changes are in [refacto
 | UI | React 19, Tailwind 4, shadcn/ui |
 | Database | Neon Postgres + Drizzle ORM (`neon-http` driver) |
 | Auth | Neon Auth (email + password, cookie sessions) |
-| Client state | Zustand (`src/stores/`) for cart and shortlist |
+| Validation | Zod (`src/validation/`) |
+| Client state | One Zustand store (`src/stores/shop-store.ts`): cart count and shortlist ids |
 
 ## Folders
 
 ```
 src/
-  app/          (shop) pages, (auth) login/register, admin/ staff console
-  components/   ui/ (shadcn), shop/, admin/, shared/
-  services/     DB reads and writes
-  constants/    routes, nav, category and cot config, cot price sheet
-  data/         seed input (mattress brands, models, demo prices)
-  db/           schema/ (new tables), seed/ (seed script + data), old coc_* schema until Phase 3
-  stores/       Zustand stores
-  hooks/  lib/  types/
+  app/          (shop) pages + actions.ts, (auth) login/register, admin/ (placeholder until Phase 4)
+  components/   ui/ (shadcn), shop/, shared/
+  services/     <area>/queries.ts, mutations.ts, mappers.ts (catalogue, cart, shortlist, orders, leads, settings, media, collections, auth)
+  validation/   Zod schemas for user input
+  types/        DTOs (catalogue, cart, shop), action.ts, db.ts (row types inferred from the schema)
+  constants/    routes, categories, enum value lists (products, orders, leads, media, users)
+  db/           index.ts (client), schema/, seed/
+  lib/          pure helpers: format, money, pricing, variant-picker, product-filters (unit tested)
+  stores/  hooks/
+  proxy.ts      Next.js request proxy (auth)
   proxy.ts      Next.js request proxy (auth)
 drizzle/        SQL migrations
 docs/           see docs/README.md
@@ -32,24 +35,29 @@ docs/           see docs/README.md
 
 ## Catalogue today
 
-- **Live categories:** Mattresses, Cots. The shop shows Cots as "Beds".
-- **Mattresses:** product belongs to a brand. Variants = size x thickness.
-- **Cots:** product belongs to a range (Ideal, Optimum, …). Variants = width x colour x range.
-- **Sofas:** not built yet.
-- Cot prices are read from `src/constants/bed-pricing.ts` in some places, and from the DB in others. This is being fixed (refactor Phase 3).
+- **Categories:** Mattresses, Cots, Sofas. The shop shows Cots as "Beds".
+- Every price is in `product_variants` (and `addon_prices`). Nothing is priced in code.
+- **Mattresses:** product = brand + model. Variants = size x thickness.
+- **Cots:** product = style. Variants = quality x size (75 and 78 in) x colour. Add-ons are category-wide, priced per quality.
+- **Sofas:** product = range. Variants = model x quality. Add-ons and recliners belong to the product. They show in the shop with the generic product page; the sofa-specific polish is Phase 8.
+- **Product page:** `lib/variant-picker.ts` picks one variant from quality, size, thickness and colour. A choice the current quality does not have is shown disabled.
+- **Product cards** have no "add to cart" button: cots and sofas need choices first, so adding happens on the product page.
+- **Category filters** live in the URL (`lib/product-filter-params.ts`) and run in the browser over the category's cards.
+- **Customer activity** (views, shortlist, call / WhatsApp / visit / callback taps, logins) is saved as lead events for staff.
 
 ## Database
 
 - New design: 24 tables, no prefix, schema in `src/db/schema/`, one migration `drizzle/0000_init.sql`. Full design: [refactor/database.md](./refactor/database.md).
 - Seed: `src/db/seed/` (client price lists + dummy people, orders, leads, media).
-- **Until refactor Phase 3**, the app code still reads the old `coc_*` schema files (`src/db/schema-coc*.ts`, `src/db/app-schema.ts`), whose tables no longer exist. Pages that read the DB fail and `bun run build` fails until Phase 3.
+- Public shop reads are cached (`"use cache"` + `tagShopCache()`); cart, shortlist and orders are read per request.
 - The DB holds seed data only. There are no real customers or orders.
 
 ## Auth and roles
 
 - One login page, `/login`, for customers and staff.
 - `profiles.role` is `admin`, `team` or `customer`.
-- `/admin` checks the role on the server (`getStaffProfile()`) and redirects everyone else to `/`.
+- `/admin` checks the role on the server (`getStaffProfile()` in `services/auth/require-profile.ts`) and redirects everyone else to `/`. It shows "Being rebuilt" until refactor Phase 4.
+- Shop actions call `requireProfile()`; an expired session returns "Please sign in again".
 - Authorise by `profile.id` and `role`, never by comparing email strings.
 - Secrets live in `.env.local` (git-ignored). Never commit them.
 

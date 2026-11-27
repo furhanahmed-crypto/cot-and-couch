@@ -1,8 +1,7 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
-import { AdminShell } from "@/components/admin/admin-shell";
 import { ROUTES } from "@/constants/routes";
-import { getStaffProfile } from "@/services/profile";
+import { getStaffProfile } from "@/services/auth/require-profile";
 
 export const metadata: Metadata = {
   title: "Team console",
@@ -11,20 +10,9 @@ export const metadata: Metadata = {
 /** Staff console is request-time (auth + live DB); skip instant-nav validation. */
 export const instant = false;
 
-export default async function AdminLayout({
-  children,
-}: LayoutProps<"/admin">) {
+/** Non-staff are sent to the shop before anything renders. */
+export default async function AdminLayout({ children }: LayoutProps<"/admin">) {
   const profile = await getStaffProfile();
-  if (!profile) {
-    redirect(ROUTES.home);
-  }
-
-  return (
-    <AdminShell
-      staffName={profile.name?.trim() || profile.email}
-      isAdmin={profile.role === "admin"}
-    >
-      {children}
-    </AdminShell>
-  );
+  if (!profile) redirect(ROUTES.home);
+  return <div className="min-h-dvh bg-background">{children}</div>;
 }

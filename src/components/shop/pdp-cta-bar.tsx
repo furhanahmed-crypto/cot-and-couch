@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { Clock, MapPin, MessageCircle, Phone, Store } from "lucide-react";
-import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -15,23 +14,26 @@ import {
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import type { StoreInfo } from "@/types";
+import { recordCtaAction } from "@/app/(shop)/actions";
+import { useActionToast } from "@/hooks/use-action-toast";
+import type { StoreInfo } from "@/types/shop";
 
-export function PdpCtaBar({
-  productName,
-  productUrl,
-  storeInfo,
-}: {
-  productName: string;
-  productUrl: string;
-  storeInfo: StoreInfo;
-}) {
+type PdpCtaBarProps = { productId: string; productName: string; productUrl: string; storeInfo: StoreInfo };
+
+/** Visit, call, WhatsApp and callback. Each tap is saved on the customer's lead for staff follow-up. */
+export function PdpCtaBar({ productId, productName, productUrl, storeInfo }: PdpCtaBarProps) {
+  const { run, isPending } = useActionToast();
   const [visitOpen, setVisitOpen] = useState(false);
   const [contactOpen, setContactOpen] = useState(false);
   const [slotNote, setSlotNote] = useState("");
   const [callbackNote, setCallbackNote] = useState("");
 
+  function track(action: "whatsapp" | "call" | "maps") {
+    void recordCtaAction({ action, productId });
+  }
+
   function openWhatsApp() {
+    track("whatsapp");
     const url = `${window.location.origin}${productUrl}`;
     const href = `https://wa.me/${storeInfo.whatsapp}?text=${encodeURIComponent(
       `Hi Cot & Couch, I'm interested in ${productName}.\n${url}`,
@@ -39,17 +41,27 @@ export function PdpCtaBar({
     window.open(href, "_blank", "noopener,noreferrer");
   }
 
-  const submitVisit = () => {
-    toast.success("Visit request noted — our team will confirm on WhatsApp.");
-    setSlotNote("");
-    setVisitOpen(false);
-  };
+  function submitVisit() {
+    run(
+      () => recordCtaAction({ action: "visit", productId, note: slotNote }),
+      { loading: "Sending visit request…", success: "Visit request sent. The showroom will contact you.", error: "Could not send your request" },
+      () => {
+        setSlotNote("");
+        setVisitOpen(false);
+      },
+    );
+  }
 
-  const submitCallback = () => {
-    toast.success("Callback request received. We'll call you shortly.");
-    setCallbackNote("");
-    setContactOpen(false);
-  };
+  function submitCallback() {
+    run(
+      () => recordCtaAction({ action: "callback", productId, note: callbackNote }),
+      { loading: "Sending callback request…", success: "Callback request sent", error: "Could not send your request" },
+      () => {
+        setCallbackNote("");
+        setContactOpen(false);
+      },
+    );
+  }
 
   return (
     <div className="fixed inset-x-0 bottom-0 z-40 border-t border-border/80 bg-background/95 p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] backdrop-blur supports-backdrop-filter:bg-background/80">
@@ -77,7 +89,7 @@ export function PdpCtaBar({
                 className="w-full"
                 nativeButton={false}
                 render={
-                  <a href={storeInfo.mapUrl} target="_blank" rel="noreferrer" />
+                  <a href={storeInfo.mapUrl} target="_blank" rel="noreferrer" onClick={() => track("maps")} />
                 }
               >
                 <MapPin className="size-4" /> Open in Maps
@@ -94,7 +106,7 @@ export function PdpCtaBar({
               </div>
             </div>
             <DialogFooter>
-              <Button onClick={submitVisit}>
+              <Button onClick={submitVisit} disabled={isPending}>
                 Request visit slot
               </Button>
             </DialogFooter>
@@ -118,7 +130,7 @@ export function PdpCtaBar({
               <Button
                 variant="secondary"
                 nativeButton={false}
-                render={<a href={`tel:${storeInfo.phone.replace(/\s/g, "")}`} />}
+                render={<a href={`tel:${storeInfo.phone.replace(/\s/g, "")}`} onClick={() => track("call")} />}
               >
                 <Phone className="size-4" /> Call {storeInfo.phone}
               </Button>
@@ -137,7 +149,7 @@ export function PdpCtaBar({
                   placeholder="Best time to call, questions about this product…"
                   rows={3}
                 />
-                <Button onClick={submitCallback} className="w-full">
+                <Button onClick={submitCallback} className="w-full" disabled={isPending}>
                   Send callback request
                 </Button>
               </div>
