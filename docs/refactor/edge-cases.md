@@ -45,7 +45,8 @@ Each case says what must happen. Tests or browser checks cover every line before
 ## Staff and auth
 - Non-staff opening `/admin/*` → redirected to `/` before anything renders.
 - Team user calling an admin-only action directly → action returns "Not allowed"; button not shown in the UI either.
-- Changing your own role or removing the last admin → blocked.
+- Changing your own role or removing the last admin → blocked ("You cannot change your own role", "Keep at least one admin").
+- Staff access removed → the person becomes a customer again and keeps their shop account.
 - Session expired mid-action → action returns "Please sign in again"; toast links to `/login`.
 
 ## Lists and URLs

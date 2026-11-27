@@ -51,7 +51,7 @@ Built once in Phase 4, used by every screen. URL changes go through `hooks/use-u
 | `TableSkeleton`, `FormSkeleton` | shadcn `Skeleton` | `loading.tsx` states (`skeletons.tsx`) |
 
 Shell: `components/admin/admin-shell.tsx` + `admin-sidebar.tsx`, nav from `constants/admin-nav.ts`. `app/admin/error.tsx` is the error boundary with a retry button.
-Until Phase 7, `app/admin/[...rest]/page.tsx` shows "Being rebuilt" for screens not built yet; real routes take priority. Delete it in Phase 7.
+The temporary "Being rebuilt" catch-all (`app/admin/[...rest]`) was deleted in Phase 7: every admin screen is real now.
 
 TanStack Table is **not** added: server-side filters and pagination through the URL keep the table a plain component.
 
@@ -131,11 +131,14 @@ Fixes today's issue: layout changes per category, range-tabbed variant grid, hid
 ### Media `/admin/media`
 - Tabs: Gallery · Reels. Card grid: image, title, Published switch, move up / down, Edit, Delete.
 - Dialog form: gallery (image URL, title, area, delivery month, product) / reel (title, cover URL, video URL, Instagram URL, tags).
+- Done as: new items go last and start unpublished unless switched on in the form. Move up / down swaps with the neighbour and renumbers the list. Reel tags are comma separated: `home` shows a reel on the home page; a category, product or collection slug shows it on that page. Team users may manage media.
 
 ### Store `/admin/settings`
 - One form in three cards: Store (name, address, map link, timings) · Contact (phone, WhatsApp) · Privacy notice. One Save.
+- Done as: the Save bar appears with unsaved changes. Phone is kept as typed (10–12 digits); WhatsApp is stored as digits with 91 (what `wa.me` needs). The shop shows the new details straight away.
 
 ### Team `/admin/team`
 - Table: Name, Email, Role, Joined. Role select per row (admin only, confirm).
 - "Add staff": search a registered customer by email, choose role.
 - Blocked with a clear message: changing your own role, removing the last admin.
+- Done as: "Remove access" (row menu) sets the person back to customer; they keep their shop account. Your own row shows your role read-only. "Add staff" uses the same customer search as New order (name, email or phone).

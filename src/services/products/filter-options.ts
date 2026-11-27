@@ -1,7 +1,7 @@
 import { asc, eq } from "drizzle-orm";
 import { db } from "@/db";
-import { brands, categories, collections, qualities } from "@/db/schema";
-import type { ProductFilterOptions } from "@/types/admin-products";
+import { brands, categories, collections, products, qualities } from "@/db/schema";
+import type { OptionItem, ProductFilterOptions } from "@/types/admin-products";
 
 /** Brand and quality filters only make sense once a category is chosen. */
 export async function getProductFilterOptions(categoryId: string | null): Promise<ProductFilterOptions> {
@@ -33,4 +33,15 @@ export async function getNewProductChoices() {
     brandsByCategory[brand.categoryId] = [...(brandsByCategory[brand.categoryId] ?? []), { id: brand.id, name: brand.name }];
   }
   return { categories: categoryRows, brandsByCategory, collections: collectionRows };
+}
+
+/** Published products, "Category · Name", for pickers (order items, gallery photos). */
+export async function listPublishedProductOptions(): Promise<OptionItem[]> {
+  const rows = await db
+    .select({ id: products.id, name: products.name, categoryName: categories.name })
+    .from(products)
+    .innerJoin(categories, eq(categories.id, products.categoryId))
+    .where(eq(products.status, "published"))
+    .orderBy(asc(categories.sortOrder), asc(products.name));
+  return rows.map((row) => ({ id: row.id, name: `${row.categoryName} · ${row.name}` }));
 }

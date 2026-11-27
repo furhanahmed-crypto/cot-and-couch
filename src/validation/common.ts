@@ -79,3 +79,11 @@ export const optionalUrlSchema = z.preprocess(
   (value) => (typeof value === "string" ? value.trim() || null : value ?? null),
   z.url({ protocol: /^https?$/, error: "Enter a link starting with https://" }).max(2000).nullable(),
 );
+
+/** A site image ("/images/…") or an https link. */
+export const imageUrlSchema = z
+  .string({ error: "Enter an image link" })
+  .trim()
+  .min(1, { error: "Enter an image link" })
+  .max(2000)
+  .refine((url) => url.startsWith("/") || /^https:\/\//.test(url), { error: "Image URL must start with / or https://" });

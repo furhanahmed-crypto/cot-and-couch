@@ -1,11 +1,10 @@
 import { and, asc, eq, ilike, inArray, or } from "drizzle-orm";
 import { db } from "@/db";
-import { addonPrices, addons, categories, colours, productVariants, products, profiles, qualities } from "@/db/schema";
+import { addonPrices, addons, colours, productVariants, products, profiles, qualities } from "@/db/schema";
 import { toRupees } from "@/lib/money";
 import { belongsToProduct, getAddonUnitPrice } from "@/lib/pricing";
 import { escapeLikePattern } from "@/services/catalogue/product-card-queries";
 import type { CustomerMatch, OrderVariantOption } from "@/types/admin-orders";
-import type { OptionItem } from "@/types/admin-products";
 
 const CUSTOMER_MATCHES = 8;
 
@@ -25,17 +24,6 @@ export async function searchCustomers(query: string): Promise<CustomerMatch[]> {
     .orderBy(asc(profiles.name))
     .limit(CUSTOMER_MATCHES);
   return rows.map((row) => ({ ...row, name: row.name ?? row.email }));
-}
-
-/** Published products, "Category · Name", for the item picker. */
-export async function listOrderProducts(): Promise<OptionItem[]> {
-  const rows = await db
-    .select({ id: products.id, name: products.name, categoryName: categories.name })
-    .from(products)
-    .innerJoin(categories, eq(categories.id, products.categoryId))
-    .where(eq(products.status, "published"))
-    .orderBy(asc(categories.sortOrder), asc(products.name));
-  return rows.map((row) => ({ id: row.id, name: `${row.categoryName} · ${row.name}` }));
 }
 
 function variantLabel(row: { sizeLabel: string; qualityName: string | null; colourName: string | null; thicknessIn: number | null }) {

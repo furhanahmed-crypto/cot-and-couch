@@ -59,6 +59,7 @@ The app is not live, so admin screens may show "Being rebuilt" between Phase 3 a
 ## Phase 7 — Admin content and settings
 - Media (Gallery, Reels), Store settings, Team.
 - **Check:** publish / reorder media and see it in the shop; edit store info; role change with confirm; last-admin and self-change blocked.
+- **Done as:** validation in `validation/{media,settings,team}.ts` (tested in `content.test.ts`); services in `services/media/admin-*.ts`, `services/settings/admin-mutations.ts`, `services/users/team.ts`. The "Being rebuilt" catch-all is deleted. Every rule above was run against the seeded DB.
 
 ## Phase 8 — Sofas in the shop
 - Sofa PDP: size + quality switch, recliners and additional options (fixed and per-seat), seed images.

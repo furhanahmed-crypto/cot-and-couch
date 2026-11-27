@@ -2,6 +2,7 @@ import { z } from "zod";
 import { PRODUCT_STATUSES } from "@/constants/products";
 import {
   idSchema,
+  imageUrlSchema,
   optionalCountSchema,
   optionalIdSchema,
   optionalInchesSchema,
@@ -30,11 +31,6 @@ export const productBasicsSchema = z.object({
 export type ProductBasicsInput = z.input<typeof productBasicsSchema>;
 
 export const productStatusSchema = z.object({ productId: idSchema, status: z.enum(PRODUCT_STATUSES) });
-
-const imageUrlSchema = z
-  .string()
-  .trim()
-  .refine((url) => url.startsWith("/") || /^https:\/\//.test(url), { error: "Image URL must start with / or https://" });
 
 export const productImagesSchema = z.object({
   productId: idSchema,

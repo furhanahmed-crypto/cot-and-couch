@@ -7,17 +7,24 @@ import { searchCustomersAction } from "@/app/admin/orders/actions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { formatPhone } from "@/lib/format";
+import type { ActionResult } from "@/types/action";
 import type { CustomerMatch } from "@/types/admin-orders";
 
-/** Finds a customer account; picking one fills the customer fields and links the order to it. */
-export function CustomerSearch({ onPick }: { onPick: (customer: CustomerMatch) => void }) {
+type CustomerSearchProps = {
+  onPick: (customer: CustomerMatch) => void;
+  /** The server action that searches; the Team screen passes its admin-only one. */
+  search?: (query: string) => Promise<ActionResult<CustomerMatch[]>>;
+};
+
+/** Finds a registered customer account by name, email or phone. */
+export function CustomerSearch({ onPick, search: searchAction = searchCustomersAction }: CustomerSearchProps) {
   const [query, setQuery] = useState("");
   const [matches, setMatches] = useState<CustomerMatch[] | null>(null);
   const [isSearching, startSearch] = useTransition();
 
   function search() {
     startSearch(async () => {
-      const result = await searchCustomersAction(query);
+      const result = await searchAction(query);
       if (result.ok) setMatches(result.data);
       else toast.error(result.error);
     });
@@ -42,7 +49,7 @@ export function CustomerSearch({ onPick }: { onPick: (customer: CustomerMatch) =
           <Search className="size-4" /> Search
         </Button>
       </div>
-      {matches?.length === 0 ? <p className="text-xs text-muted-foreground">No customer found. Type the details below.</p> : null}
+      {matches?.length === 0 ? <p className="text-xs text-muted-foreground">No customer found.</p> : null}
       {matches?.length ? (
         <ul className="divide-y divide-border/60 rounded-md ring-1 ring-border/60">
           {matches.map((customer) => (

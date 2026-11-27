@@ -3,10 +3,10 @@ import { ChevronLeft } from "lucide-react";
 import { AdminPageHeader } from "@/components/admin/common/admin-page-header";
 import { NewOrderForm } from "@/components/admin/orders/new-order-form";
 import { ROUTES } from "@/constants/routes";
-import { listOrderProducts } from "@/services/orders/new-order-queries";
+import { listPublishedProductOptions } from "@/services/products/filter-options";
 
 export default async function NewOrderPage() {
-  const products = await listOrderProducts();
+  const products = await listPublishedProductOptions();
 
   return (
     <div className="space-y-6">

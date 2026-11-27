@@ -18,7 +18,7 @@ This page describes the code **as it is today**. Planned changes are in [refacto
 
 ```
 src/
-  app/          (shop) pages + actions.ts, (auth) login/register, admin/ (dashboard, products, categories, colours, collections, orders, leads; media, settings, team "Being rebuilt" until Phase 7)
+  app/          (shop) pages + actions.ts, (auth) login/register, admin/ (dashboard, products, categories, colours, collections, orders, leads, media, settings, team)
   components/   ui/ (shadcn), shop/, admin/ (shell, common/, one folder per screen), shared/
   services/     <area>/queries.ts, mutations.ts, mappers.ts (catalogue, cart, shortlist, orders, leads, users, settings, media, collections, auth); admin-only files are named admin-queries.ts / admin-mutations.ts
   validation/   Zod schemas for user input (common, shop, catalogue, products)
