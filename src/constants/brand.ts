@@ -26,6 +26,8 @@ export const DEMO = {
   customerOtp: "123456",
   /** Admin console — use these exact values while testing */
   adminMobile: "9391360138",
+  /** Neon Auth email login (same password) */
+  adminEmail: "test@cotandcouch.com",
   adminPassword: "cotandcouch2026",
   /** Optional second role for Team vs Admin UI demo */
   teamMobile: "9876543211",

@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Cot &amp; Couch Mattress Price List</title>
+<style>
+  @page { size: A4; margin: 12mm; }
+  * { box-sizing: border-box; }
+  body { font-family: Arial, Helvetica, sans-serif; color: #222; font-size: 10px; margin: 0; }
+  header { display: flex; justify-content: space-between; align-items: flex-end; border-bottom: 2px solid #8a5a2b; padding-bottom: 6px; margin-bottom: 10px; }
+  header h1 { font-size: 18px; margin: 0; color: #8a5a2b; }
+  header .sub { font-size: 10px; color: #666; margin-top: 2px; }
+  header .brand { font-size: 12px; font-weight: bold; text-align: right; }
+  h2 { font-size: 12px; color: #5a3a1c; margin: 14px 0 6px; }
+  .warn { background: #fff6cc; border: 1px solid #e6d48a; padding: 6px 8px; font-size: 9.5px; margin-bottom: 8px; }
+  table { width: 100%; border-collapse: collapse; table-layout: fixed; }
+  th, td { border: 1px solid #cfc3b6; padding: 4px 6px; vertical-align: middle; }
+  th { background: #8a5a2b; color: #fff; font-size: 9.5px; text-align: left; }
+  th.num, td.num { text-align: right; white-space: nowrap; }
+  td.center, th.center { text-align: center; }
+  td.range { background: #faf6f1; font-weight: bold; color: #5a3a1c; }
+  .mrp { color: #999; text-decoration: line-through; }
+  .price { font-weight: bold; }
+  tr.notes td { background: #faf6f1; font-size: 9px; color: #555; line-height: 1.6; }
+  tr { page-break-inside: avoid; }
+</style>
+</head>
+<body>
+
+<header>
+  <div>
+    <h1>Mattress Price List</h1>
+    <div class="sub">As implemented in the website seed data &middot; All prices in INR (&#8377;)</div>
+  </div>
+  <div class="brand">Cot &amp; Couch<br><span class="sub">Blend your Comfort</span></div>
+</header>
+
+<div class="warn">
+  These are demo prices from the website seed data, not from a client price sheet. Every brand and every model uses the same prices. Model names are placeholders. Replace with the client's mattress sheet when available.
+</div>
+
+<h2>1. Mattress prices by size and thickness</h2>
+<table>
+  <colgroup>
+    <col style="width:20%"><col style="width:25%"><col style="width:15%"><col style="width:20%"><col style="width:20%">
+  </colgroup>
+  <thead>
+    <tr>
+      <th>Size</th>
+      <th>Dimensions (L x W)</th>
+      <th class="center">Thickness</th>
+      <th class="num">MRP (&#8377;)</th>
+      <th class="num">Selling price (&#8377;)</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr><td class="range" rowspan="2">Single</td><td rowspan="2">72 x 36 in</td><td class="center">6 inch</td><td class="num mrp">12,999</td><td class="num price">9,999</td></tr>
+    <tr><td class="center">8 inch</td><td class="num mrp">16,999</td><td class="num price">13,999</td></tr>
+    <tr><td class="range" rowspan="2">Diwan</td><td rowspan="2">75 x 48 in</td><td class="center">6 inch</td><td class="num mrp">16,999</td><td class="num price">13,999</td></tr>
+    <tr><td class="center">8 inch</td><td class="num mrp">20,999</td><td class="num price">17,999</td></tr>
+    <tr><td class="range" rowspan="2">Queen</td><td rowspan="2">78 x 60 in</td><td class="center">6 inch</td><td class="num mrp">24,999</td><td class="num price">19,999</td></tr>
+    <tr><td class="center">8 inch</td><td class="num mrp">28,999</td><td class="num price">23,999</td></tr>
+    <tr><td class="range" rowspan="2">King</td><td rowspan="2">78 x 72 in</td><td class="center">6 inch</td><td class="num mrp">29,999</td><td class="num price">23,999</td></tr>
+    <tr><td class="center">8 inch</td><td class="num mrp">33,999</td><td class="num price">27,999</td></tr>
+    <tr class="notes">
+      <td colspan="5">
+        &bull; 8 inch = 6 inch price + &#8377;4,000 (added to both MRP and selling price).<br>
+        &bull; The code also defines 4 inch (+&#8377;0) and 5 inch (+&#8377;800), but no product is sold in those thicknesses.<br>
+        &bull; Custom size is listed as a size group with no fixed price.
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+<h2>2. Brands</h2>
+<table>
+  <thead>
+    <tr><th>Brand</th></tr>
+  </thead>
+  <tbody>
+    <tr><td>Wake Fit</td></tr>
+    <tr><td>Sleepwell</td></tr>
+    <tr><td>Livpure Smart</td></tr>
+    <tr><td>Centuary Mattresses</td></tr>
+    <tr><td>SleepyHug</td></tr>
+    <tr><td>The Sleep Company</td></tr>
+  </tbody>
+</table>
+
+<h2>3. Models (each brand sells all 5)</h2>
+<table>
+  <colgroup>
+    <col style="width:25%"><col style="width:20%"><col style="width:20%"><col style="width:15%"><col style="width:20%">
+  </colgroup>
+  <thead>
+    <tr><th>Model</th><th>Purpose</th><th>Comfort</th><th>Filling</th><th>Cover</th></tr>
+  </thead>
+  <tbody>
+    <tr><td>Ortho Support</td><td>Pain relief</td><td>Firm</td><td>Coir</td><td>Cotton</td></tr>
+    <tr><td>Cloud Soft</td><td>Sleeping</td><td>Soft</td><td>Polyfoam</td><td>Polycotton</td></tr>
+    <tr><td>Dual Feel</td><td>Sleeping</td><td>Dual Comfort</td><td>Cotton</td><td>Polyester Blend</td></tr>
+    <tr><td>Everyday Medium</td><td>Sleeping</td><td>Medium</td><td>Polyfoam</td><td>Polyester</td></tr>
+    <tr><td>Spine Care</td><td>Pain relief</td><td>Firm</td><td>Coir</td><td>Cotton</td></tr>
+    <tr class="notes">
+      <td colspan="5">Product name on the site = Brand + Model, for example &quot;Sleepwell Ortho Support&quot;. 6 brands x 5 models = 30 mattress products.</td>
+    </tr>
+  </tbody>
+</table>
+
+</body>
+</html>
