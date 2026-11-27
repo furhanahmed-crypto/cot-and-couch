@@ -41,9 +41,10 @@ docs/           see docs/README.md
 - **Categories:** Mattresses, Cots, Sofas. The shop shows Cots as "Beds".
 - Every price is in `product_variants` (and `addon_prices`). Nothing is priced in code.
 - **Mattresses:** product = brand + model. Variants = size x thickness.
-- **Cots:** product = style. Variants = quality x size (75 and 78 in) x colour. Add-ons are category-wide, priced per quality.
-- **Sofas:** product = range. Variants = model x quality. Add-ons and recliners belong to the product. They use the generic product page; sofa pages title the size "Model", show the seat count and the notes from the client's sofa sheet.
+- **Cots:** product = range (8, one per range on the two client sheets). Variants = size (75 and 78 in) x wood finish. Each product's quality is its range, which holds the warranty, the construction and the add-on prices (Affordable sheet or All Categories sheet). Add-ons are category-wide.
+- **Sofas:** product = range (12, one per row of the client sheet). Variants = model (3+1+1 / 3+2, 3-Seater, Bed + Lounger…). Each product's quality is its range; its add-ons and recliners belong to the product (fixed or per seat). Sofa pages title the size "Model", show the seat count and the notes from the client's sofa sheet.
 - **Product page:** `lib/variant-picker.ts` picks one variant from quality, size, thickness and colour. A choice the current quality does not have is shown disabled.
+- **Order:** products show in `products.sort_order` order (shop "Recommended" and the admin default). The seed numbers each category by lowest price, cheapest first; staff can change it per product.
 - **Product cards** have no "add to cart" button: cots and sofas need choices first, so adding happens on the product page.
 - **Category filters** live in the URL (`lib/product-filter-params.ts`) and run in the browser over the category's cards.
 - **Customer activity** (views, shortlist, call / WhatsApp / visit / callback taps, logins) is saved as lead events for staff.

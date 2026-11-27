@@ -1,20 +1,12 @@
 import * as schema from "@/db/schema";
 import type { SeededColour } from "./catalogue";
-import {
-  COT_ADDONS,
-  COT_LONG_LENGTH_IN,
-  COT_QUALITIES,
-  COT_SIZES,
-  COT_STYLES,
-  type CotQualitySeed,
-  type CotSizePrice,
-} from "./data/cots";
+import { COT_ADDONS, COT_LONG_LENGTH_IN, COT_QUALITIES, COT_SIZES, type CotQualitySeed, type CotSizePrice } from "./data/cots";
 import { db } from "./db";
-import { newId, toMoney, toMoneyOrNull, toSkuPart, toSlug } from "./helpers";
+import { lowestPriceOf, newId, rankByLowestPrice, toMoney, toMoneyOrNull, toSkuPart, toSlug } from "./helpers";
 import type { SeededAddon, SeededCategory, SeededVariant } from "./types";
 
-type CotQuality = CotQualitySeed & { id: string };
-type CotProduct = { id: string; name: string; style: string };
+/** One product per range on the client sheets; its quality is that range. */
+type CotRange = CotQualitySeed & { qualityId: string; productId: string; productName: string };
 type CotVariant = SeededVariant & { lengthIn: number | null; widthIn: number | null; colourId: string };
 type LengthOption = { lengthIn: number | null; mrp: number | null; price: number };
 
@@ -28,79 +20,75 @@ function toLengthOptions(sizePrice: CotSizePrice): LengthOption[] {
   return options;
 }
 
-function buildVariants(product: CotProduct, qualities: CotQuality[], colours: SeededColour[]): CotVariant[] {
-  const variants: CotVariant[] = [];
-  for (const quality of qualities) {
-    for (const sizePrice of quality.prices) {
-      for (const option of toLengthOptions(sizePrice)) {
-        for (const colour of colours) {
-          const skuParts = ["COT", product.style, quality.slug, sizePrice.size, option.lengthIn ?? "", colour.name];
-          variants.push({
-            id: newId(),
-            productId: product.id,
-            productName: product.name,
-            sku: skuParts.filter(Boolean).map(String).map(toSkuPart).join("-"),
-            sizeLabel: sizePrice.size,
-            lengthIn: option.lengthIn,
-            widthIn: COT_SIZES[sizePrice.size].widthIn,
-            seats: null,
-            qualityId: quality.id,
-            qualityName: quality.name,
-            colourId: colour.id,
-            colourName: colour.name,
-            mrp: option.mrp,
-            price: option.price,
-          });
-        }
-      }
-    }
-  }
-  return variants;
+/** Every size, length and wood finish of one range. */
+function buildVariants(range: CotRange, colours: SeededColour[]): CotVariant[] {
+  return range.prices.flatMap((sizePrice) =>
+    toLengthOptions(sizePrice).flatMap((option) =>
+      colours.map((colour) => ({
+        id: newId(),
+        productId: range.productId,
+        productName: range.productName,
+        sku: ["COT", range.slug, sizePrice.size, option.lengthIn ?? "", colour.name].filter(Boolean).map(String).map(toSkuPart).join("-"),
+        sizeLabel: sizePrice.size,
+        lengthIn: option.lengthIn,
+        widthIn: COT_SIZES[sizePrice.size].widthIn,
+        seats: null,
+        qualityId: range.qualityId,
+        qualityName: range.name,
+        colourId: colour.id,
+        colourName: colour.name,
+        mrp: option.mrp,
+        price: option.price,
+      })),
+    ),
+  );
 }
 
 function toVariantRow(variant: CotVariant, sortOrder: number) {
   return {
-    id: variant.id,
-    productId: variant.productId,
-    sku: variant.sku,
-    sizeLabel: variant.sizeLabel,
-    lengthIn: variant.lengthIn,
-    widthIn: variant.widthIn,
-    qualityId: variant.qualityId,
-    colourId: variant.colourId,
-    mrp: toMoneyOrNull(variant.mrp),
-    price: toMoney(variant.price),
-    sortOrder,
+    id: variant.id, productId: variant.productId, sku: variant.sku, sizeLabel: variant.sizeLabel,
+    lengthIn: variant.lengthIn, widthIn: variant.widthIn, qualityId: variant.qualityId, colourId: variant.colourId,
+    mrp: toMoneyOrNull(variant.mrp), price: toMoney(variant.price), sortOrder,
   };
 }
 
-function buildAddons(qualities: CotQuality[]): SeededAddon[] {
+/** Category-wide add-ons, priced from the sheet each range is on. No price = not offered for that range. */
+function buildAddons(ranges: CotRange[]): SeededAddon[] {
   return COT_ADDONS.map((addon) => ({
     id: newId(),
     name: addon.name,
     priceUnit: "fixed",
-    prices: Object.fromEntries(qualities.map((quality) => [quality.id, addon.prices[quality.priceList]])),
+    prices: Object.fromEntries(
+      ranges.flatMap((range) => {
+        const price = addon.prices[range.priceList];
+        const isOffered = price !== undefined && (!addon.qualitySlug || addon.qualitySlug === range.slug);
+        return isOffered ? [[range.qualityId, price]] : [];
+      }),
+    ),
   }));
 }
 
 export async function seedCots(categoryId: string, colours: SeededColour[]): Promise<SeededCategory> {
-  const qualities: CotQuality[] = COT_QUALITIES.map((quality) => ({ ...quality, id: newId() }));
-  const products: CotProduct[] = COT_STYLES.map((style) => ({ id: newId(), name: `${style} Cot`, style }));
-  const variants = products.flatMap((product) => buildVariants(product, qualities, colours));
-  const addons = buildAddons(qualities);
+  const ranges: CotRange[] = COT_QUALITIES.map((quality) => ({
+    ...quality, qualityId: newId(), productId: newId(), productName: `${quality.name} Cot`,
+  }));
+  const variants = ranges.flatMap((range) => buildVariants(range, colours));
+  const addons = buildAddons(ranges);
+
+  const sortOrders = rankByLowestPrice(lowestPriceOf(ranges.map((range) => range.productId), variants));
 
   await db.batch([
     db.insert(schema.qualities).values(
-      qualities.map((quality, index) => ({
-        id: quality.id, categoryId, name: quality.name, slug: quality.slug,
-        description: quality.description, warrantyYears: quality.warrantyYears, sortOrder: index + 1,
+      ranges.map((range, index) => ({
+        id: range.qualityId, categoryId, name: range.name, slug: range.slug,
+        description: range.description, warrantyYears: range.warrantyYears, sortOrder: sortOrders[index],
       })),
     ),
     db.insert(schema.products).values(
-      products.map((product, index) => ({
-        id: product.id, categoryId, name: product.name, slug: toSlug(product.name),
-        status: "published" as const, sortOrder: index + 1,
-        isFeatured: index === 0, // demo: the first product of each category is featured
+      ranges.map((range, index) => ({
+        id: range.productId, categoryId, name: range.productName, slug: toSlug(range.productName),
+        status: "published" as const, sortOrder: sortOrders[index],
+        isFeatured: sortOrders[index] === 1, // demo: the cheapest product of each category is featured
       })),
     ),
     db.insert(schema.productVariants).values(variants.map((variant, index) => toVariantRow(variant, index + 1))),
@@ -116,5 +104,5 @@ export async function seedCots(categoryId: string, colours: SeededColour[]): Pro
     ),
   ]);
 
-  return { productIds: products.map((product) => product.id), variants, addons };
+  return { productIds: ranges.map((range) => range.productId), variants, addons };
 }

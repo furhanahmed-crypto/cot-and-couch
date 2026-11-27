@@ -1,6 +1,6 @@
-// Source: docs/pricelist/cot-pricelist (from the client's two price list photos).
-// Not seeded until the client confirms: Range 7, Range 8, the Cushion Back
-// "Premium / Royal / Heavy cushion" extras, and an MRP for 78-inch sizes.
+// Source: docs/pricelist/cot-pricelist (from the client's two price list photos:
+// "Affordable Cots Price List" and "Cots Price List - All Categories").
+// Each range on the sheets is one product. The sheets give no MRP for 78-inch sizes.
 
 type CotPriceList = "affordable" | "allCategories";
 
@@ -32,9 +32,6 @@ export const COT_SIZES = {
 type CotSize = keyof typeof COT_SIZES;
 
 export const COT_LONG_LENGTH_IN = 78;
-
-/** Cot styles carried over from the current site (not on the client sheets). */
-export const COT_STYLES = ["Classic", "Storage", "Platform"] as const;
 
 function price(size: CotSize, mrp: number | null, sale: number, extraFor78?: number): CotSizePrice {
   return { size, mrp, price: sale, extraFor78 };
@@ -87,7 +84,10 @@ type CotAddonSeed = {
   name: string;
   /** Only offered for this size. */
   sizeLabel: CotSize | null;
-  prices: Record<CotPriceList, number>;
+  /** Price on each sheet. */
+  prices: Partial<Record<CotPriceList, number>>;
+  /** Only offered for this range (quality slug). */
+  qualitySlug?: string;
 };
 
 export const COT_ADDONS: CotAddonSeed[] = [
@@ -100,4 +100,8 @@ export const COT_ADDONS: CotAddonSeed[] = [
   { name: "Cushion foot", sizeLabel: null, prices: { affordable: 2800, allCategories: 4800 } },
   { name: "Full body cushion, King (extra)", sizeLabel: "King", prices: { affordable: 6800, allCategories: 6800 } },
   { name: "Full body cushion, Queen (extra)", sizeLabel: "Queen", prices: { affordable: 4800, allCategories: 4800 } },
+  // Cushion Back Range rows: written on the sheet in place of a 78-inch extra.
+  { name: "Premium (extra)", sizeLabel: null, prices: { allCategories: 2800 }, qualitySlug: "cushion-back-range" },
+  { name: "Royal (extra)", sizeLabel: null, prices: { allCategories: 6800 }, qualitySlug: "cushion-back-range" },
+  { name: "Heavy cushion (extra)", sizeLabel: null, prices: { allCategories: 6800 }, qualitySlug: "cushion-back-range" },
 ];

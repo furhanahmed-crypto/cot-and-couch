@@ -1,4 +1,4 @@
-import { eq } from "drizzle-orm";
+import { eq, max } from "drizzle-orm";
 import type { z } from "zod";
 import { db } from "@/db";
 import { productCollections, products } from "@/db/schema";
@@ -9,14 +9,21 @@ import { assertBrandInCategory, assertCanPublish, isProductOrdered, pickProductS
 
 type BasicsData = z.output<typeof productBasicsSchema>;
 
+/** The next free position in a category, so a new product goes last. */
+async function getNextSortOrder(categoryId: string): Promise<number> {
+  const [row] = await db.select({ last: max(products.sortOrder) }).from(products).where(eq(products.categoryId, categoryId));
+  return (row?.last ?? 0) + 1;
+}
+
 /** New products start as drafts: they have no variants (prices) yet. */
 export async function createProduct(data: BasicsData): Promise<{ id: string; slug: string }> {
   await assertBrandInCategory(data.brandId, data.categoryId);
   const id = crypto.randomUUID();
   const slug = await pickProductSlug(data.slug, data.name);
+  const sortOrder = data.sortOrder ?? (await getNextSortOrder(data.categoryId));
   const insertProduct = db.insert(products).values({
     id, slug, categoryId: data.categoryId, brandId: data.brandId, name: data.name,
-    description: data.description, status: "draft", isFeatured: data.isFeatured,
+    description: data.description, status: "draft", isFeatured: data.isFeatured, sortOrder,
   });
   if (!data.collectionIds.length) {
     await insertProduct;
@@ -42,7 +49,10 @@ export async function updateProductBasics(id: string, data: BasicsData): Promise
   const links = data.collectionIds.map((collectionId) => ({ productId: id, collectionId }));
   const update = db
     .update(products)
-    .set({ slug, name: data.name, brandId: data.brandId, description: data.description, status: data.status, isFeatured: data.isFeatured })
+    .set({
+      slug, name: data.name, brandId: data.brandId, description: data.description, status: data.status, isFeatured: data.isFeatured,
+      ...(data.sortOrder ? { sortOrder: data.sortOrder } : {}),
+    })
     .where(eq(products.id, id));
   const clearLinks = db.delete(productCollections).where(eq(productCollections.productId, id));
   if (links.length) await db.batch([update, clearLinks, db.insert(productCollections).values(links)]);

@@ -26,6 +26,8 @@ type ProductBasicsValues = {
   status: ProductStatus;
   isFeatured: boolean;
   collectionIds: string[];
+  /** Shop position as typed; "" = last. */
+  sortOrder: string;
 };
 
 type ProductBasicsFormProps = {
@@ -69,9 +71,8 @@ export function ProductBasicsForm({ productId, initial, categories, brandsByCate
       () => updateProductBasicsAction(productId, form),
       { loading: "Saving…", success: "Product saved", error: "Could not save the product" },
       ({ slug }) => {
-        const next = { ...form, slug };
-        setForm(next);
-        setSaved(next);
+        setForm({ ...form, slug });
+        setSaved({ ...form, slug });
         setErrors({});
       },
       setErrors,
@@ -102,6 +103,9 @@ export function ProductBasicsForm({ productId, initial, categories, brandsByCate
           <OptionSelect id="product-status" value={form.status} options={PRODUCT_STATUSES.map((status) => ({ value: status, label: PRODUCT_STATUS_LABELS[status] }))} onChange={(status) => update({ status: status as ProductStatus })} />
         </FormField>
       )}
+      <FormField id="product-order" label="Order in the shop" help="1 shows first in its category. Leave empty to add it last." error={errors.sortOrder}>
+        <Input id="product-order" type="number" min={1} className="w-32" value={form.sortOrder} aria-invalid={Boolean(errors.sortOrder)} onChange={(event) => update({ sortOrder: event.target.value })} />
+      </FormField>
       <ActiveSwitchField id="product-featured" label="Featured" help="Shown in the Featured section of the home page." checked={form.isFeatured} onCheckedChange={(isFeatured) => update({ isFeatured })} />
       <CollectionPicker collections={collections} selectedIds={form.collectionIds} onChange={(collectionIds) => update({ collectionIds })} />
       {isNew ? (

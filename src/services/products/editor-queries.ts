@@ -49,7 +49,7 @@ export async function getProductEditorData(id: string): Promise<ProductEditorDat
   return {
     product: {
       id: product.id, name: product.name, slug: product.slug, description: product.description, status: product.status,
-      isFeatured: product.isFeatured, brandId: product.brandId, updatedAt: product.updatedAt.toISOString(),
+      isFeatured: product.isFeatured, sortOrder: product.sortOrder, brandId: product.brandId, updatedAt: product.updatedAt.toISOString(),
     },
     category,
     brands: brandRows,

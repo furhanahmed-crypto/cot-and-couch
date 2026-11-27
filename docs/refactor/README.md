@@ -26,10 +26,10 @@ Beginner-friendly code, real data only, every edge case handled. Theme, colours 
 
 ## Open questions
 
-1. Sofa range name for the first rows ("Classic Sofa" is a placeholder).
+1. ~~Sofa range name~~ Resolved: sofas follow the sheet, one product per range row; the first two rows are "Affordable Sofa" and "Premium Sofa".
 2. Range 7 and Range 8 cots are on no client sheet → not seeded. OK?
-3. Cushion Back Range: what do "Premium 2,800 / Royal 6,800 / Heavy cushion 6,800 extra" mean?
+3. Cushion Back Range: what do "Premium 2,800 / Royal 6,800 / Heavy cushion 6,800 extra" mean? (Seeded as add-ons on that cot, named as on the sheet.)
 4. 78-inch sizes: sheets give only the extra on the discounted price. Seeded with no MRP. OK, or base MRP + extra?
 5. Mattress prices: wait for the client sheet, or launch with the demo prices?
 6. Product images: download from the Google Drive folder into `public/images/`, or use a storage service? (Seeded: mattress images only; cots and sofas have none yet. Only the category covers are kept in `public/images/cots/` and `public/images/sofas/`.)
-7. Cot styles Classic / Storage / Platform come from the old site, not the client sheets, and "Storage" overlaps the storage add-ons. Which cot designs should be products?
+7. ~~Cot styles~~ Resolved: the old Classic / Storage / Platform styles are gone; each range on the client sheets is one cot product.

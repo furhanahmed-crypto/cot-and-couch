@@ -1,3 +1,4 @@
+import { connection } from "next/server";
 import { and, count, desc, eq, gte, inArray, type SQL } from "drizzle-orm";
 import { db } from "@/db";
 import { leads, orders, products } from "@/db/schema";
@@ -21,6 +22,7 @@ async function countRows(table: typeof orders | typeof leads | typeof products, 
 
 /** The four numbers on the dashboard. All are real counts. */
 export async function getDashboardStats(range: DashboardRange): Promise<DashboardStats> {
+  await connection(); // the range counts back from now: read the clock per request, never at build time
   const since = getRangeStart(range);
   const [openOrders, ordersInRange, newLeadsInRange, publishedProducts] = await Promise.all([
     countRows(orders, inArray(orders.status, OPEN_ORDER_STATUSES)),

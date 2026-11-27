@@ -41,8 +41,8 @@ async function seed() {
   console.log("Seeding people, orders, leads and media…");
   const { staff, customers } = await seedPeople();
   const staffId = staff[0]?.id ?? null;
-  const cotKing = findVariant(cots.variants, "COT-CLASSIC-IDEAL-RANGE-KING-75-TEAK");
-  const sofaHighBack = findVariant(sofas.variants, "SOFA-LUXURY-HIGH-BACK-3-1-1-3-2-AFFORDABLE");
+  const cotKing = findVariant(cots.variants, "COT-IDEAL-RANGE-KING-75-TEAK");
+  const sofaHighBack = findVariant(sofas.variants, "SOFA-LUXURY-HIGH-BACK-3-1-1-3-2");
   const mattressQueen = findVariant(mattresses.variants, "MAT-WAKE-FIT-ORTHO-SUPPORT-QUEEN-6IN");
 
   await seedDemoContent([cots.productIds.slice(0, 2), [sofas.productIds[1], mattresses.productIds[0]]]);

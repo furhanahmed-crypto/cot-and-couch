@@ -8,6 +8,7 @@ import { PRODUCT_FILTER_PARAMS } from "@/lib/product-admin-params";
 import type { OptionItem, ProductFilterOptions } from "@/types/admin-products";
 
 const SORT_OPTIONS = [
+  { value: "updated", label: "Sort: Recently updated" },
   { value: "name", label: "Sort: Name" },
   { value: "price", label: "Sort: Price" },
 ];
@@ -29,7 +30,7 @@ export function ProductsToolbar({ options }: { options: ProductFilterOptions }) 
       />
       {options.brands.length ? <FilterSelect paramName="brand" allLabel="All brands" options={toOptions(options.brands)} /> : null}
       {options.qualities.length ? <FilterSelect paramName="quality" allLabel="All qualities" options={toOptions(options.qualities)} /> : null}
-      <FilterSelect paramName="sort" allLabel="Sort: Recently updated" options={SORT_OPTIONS} />
+      <FilterSelect paramName="sort" allLabel="Sort: Shop order" options={SORT_OPTIONS} />
     </TableToolbar>
   );
 }

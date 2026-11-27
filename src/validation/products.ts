@@ -27,6 +27,8 @@ export const productBasicsSchema = z.object({
   status: z.enum(PRODUCT_STATUSES).default("draft"),
   isFeatured: z.boolean().default(false),
   collectionIds: z.array(idSchema).max(50).default([]),
+  /** Position in the shop (1 = first). Empty on a new product = last in its category. */
+  sortOrder: optionalCountSchema.default(null),
 });
 export type ProductBasicsInput = z.input<typeof productBasicsSchema>;
 

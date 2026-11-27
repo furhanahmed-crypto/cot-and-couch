@@ -1,7 +1,7 @@
 import * as schema from "@/db/schema";
 import { MATTRESS_BRANDS, MATTRESS_MODELS, MATTRESS_PRICES, MATTRESS_SIZES } from "./data/mattresses";
 import { db } from "./db";
-import { newId, toMoney, toMoneyOrNull, toSkuPart } from "./helpers";
+import { lowestPriceOf, newId, rankByLowestPrice, toMoney, toMoneyOrNull, toSkuPart } from "./helpers";
 import type { SeededCategory, SeededVariant } from "./types";
 
 type MattressProduct = {
@@ -71,13 +71,15 @@ export async function seedMattresses(categoryId: string): Promise<SeededCategory
   const products = buildProducts(Object.fromEntries(brandRows.map((row) => [row.slug, row.id])));
   const variants = products.flatMap(buildVariants);
 
+  const sortOrders = rankByLowestPrice(lowestPriceOf(products.map((product) => product.id), variants));
+
   await db.batch([
     db.insert(schema.brands).values(brandRows),
     db.insert(schema.products).values(
       products.map((product, index) => ({
         id: product.id, categoryId, brandId: product.brandId, name: product.name, slug: product.slug,
-        status: "published" as const, sortOrder: index + 1,
-        isFeatured: index === 0, // demo: the first product of each category is featured
+        status: "published" as const, sortOrder: sortOrders[index],
+        isFeatured: sortOrders[index] === 1, // demo: the cheapest product of each category is featured
       })),
     ),
     db.insert(schema.productSpecs).values(

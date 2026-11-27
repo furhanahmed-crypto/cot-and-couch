@@ -21,7 +21,7 @@ export function parseProductAdminFilters(params: SearchParams): ProductAdminFilt
     status: PRODUCT_STATUSES.find((item) => item === status) ?? null,
     brandId: readId(params.brand),
     qualityId: readId(params.quality),
-    sort: readChoice(params.sort, PRODUCT_SORTS, "updated"),
+    sort: readChoice(params.sort, PRODUCT_SORTS, "order"),
     page: parsePage(params.page),
   };
 }

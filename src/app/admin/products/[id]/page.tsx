@@ -39,7 +39,7 @@ export default async function ProductEditorPage({ params }: PageProps<"/admin/pr
       content: (
         <ProductBasicsForm
           productId={product.id}
-          initial={{ ...product, categoryId: category.id, brandId: product.brandId ?? "", description: product.description ?? "", collectionIds: data.collectionIds }}
+          initial={{ ...product, categoryId: category.id, brandId: product.brandId ?? "", description: product.description ?? "", collectionIds: data.collectionIds, sortOrder: String(product.sortOrder) }}
           categories={[{ id: category.id, name: category.name }]}
           brandsByCategory={{ [category.id]: data.brands }}
           collections={data.collections}

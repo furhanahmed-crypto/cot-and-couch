@@ -30,7 +30,9 @@ const minPrice = min(productVariants.price);
 function orderFor(sort: ProductAdminSort) {
   if (sort === "name") return [asc(products.name)];
   if (sort === "price") return [sql`${minPrice} asc nulls last`, asc(products.name)];
-  return [desc(products.updatedAt)];
+  if (sort === "updated") return [desc(products.updatedAt)];
+  // Shop order: category by category, then each product's order number.
+  return [asc(categories.sortOrder), asc(products.sortOrder), asc(products.name)];
 }
 
 async function listFirstImages(productIds: string[]): Promise<Map<string, string>> {
@@ -62,7 +64,7 @@ export async function listProductsForAdmin(filters: ProductAdminFilters): Promis
     .leftJoin(brands, eq(brands.id, products.brandId))
     .leftJoin(productVariants, eq(productVariants.productId, products.id))
     .where(where)
-    .groupBy(products.id, categories.name, brands.name)
+    .groupBy(products.id, categories.name, categories.sortOrder, brands.name)
     .orderBy(...orderFor(filters.sort))
     .limit(PAGE_SIZE)
     .offset(getPageOffset(page));

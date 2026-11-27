@@ -86,7 +86,8 @@ Team role: Dashboard, Products (no delete), Orders, Leads, Media. Admin: everyth
 - Fixes today's issue: a 395-line component with mixed fake and real metrics.
 
 ### Products `/admin/products`
-- Toolbar: search (name or SKU) · Category · Status · Brand or Quality (options depend on category) · Sort (Recently updated, Name, Price).
+- Toolbar: search (name or SKU) · Category · Status · Brand or Quality (options depend on category) · Sort (Shop order = default, Recently updated, Name, Price).
+- Shop order is `products.sort_order` (1 = first in its category); the shop's "Recommended" sort uses the same number. The seed numbers each category cheapest first; staff change it with "Order in the shop" on the Basics tab. A new product with no number goes last.
 - Columns: Image, Name (+ category · brand), Status, Variants, Price range, Updated, actions.
 - The name links to the editor. Row menu: Edit, View in shop, Publish / Unpublish (confirm), Archive (confirm), Delete (admin, only if never ordered).
 - Choosing a category clears the brand and quality filters. The price column is the product's whole range.
@@ -97,7 +98,7 @@ Same tabs for every category. Each tab is its own form with its own Save.
 
 | Tab | Content |
 |---|---|
-| Basics | Name, slug (auto from name, editable), category (fixed after create), brand (shown only if the category has brands), description, status, featured, collections |
+| Basics | Name, slug (auto from name, editable), category (fixed after create), brand (shown only if the category has brands), description, status, order in the shop, featured, collections |
 | Images | List of image URLs with alt text; move up / down; remove; first image is the cover |
 | Specs | Label / value rows (e.g. Comfort: Firm, Warranty: 5 years); add / remove |
 | Variants & prices | Table: Size, Quality, Thickness, Seats, Colour, MRP, Price, Active. Columns follow the category (`getVariantFields`). Active is an inline switch; Edit opens a dialog. Filter by quality and size inside the tab. "Add many" dialog: sizes × qualities × colours × thicknesses with one price for all, skips existing rows. SKUs are made automatically. Delete: admin only, never for ordered variants |

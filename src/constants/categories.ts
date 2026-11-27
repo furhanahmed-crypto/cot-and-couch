@@ -47,6 +47,12 @@ export function getSizeAxisLabel(categorySlug: string): string {
 
 /** Notes printed on the client's price list, shown on that category's product pages. */
 const CATEGORY_NOTES: Record<string, string[]> = {
+  // Source: docs/pricelist/cot-pricelist (notes on both client cot sheets).
+  [CATEGORY_SLUGS.cots]: [
+    "Any modern designs can be manufactured in the Ideal, Optimum and Cushion ranges, and in the Prime, Premium and Royal ranges.",
+    "Prices for Pandiri cots and heavy carving make teakwood will be given as per design selected.",
+    "After service available.",
+  ],
   // Source: docs/pricelist/sofa-pricelist (footer of the client's sofa sheet).
   [CATEGORY_SLUGS.sofas]: [
     "Any design and any customisation in size, fabric or design pattern will be manufactured.",

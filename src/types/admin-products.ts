@@ -1,7 +1,8 @@
 import type { ProductStatus } from "@/constants/products";
 import type { AddonAdminRow, QualityAdminRow } from "@/types/admin-catalogue";
 
-export const PRODUCT_SORTS = ["updated", "name", "price"] as const;
+/** "order" = the shop order (`products.sort_order`), the default. */
+export const PRODUCT_SORTS = ["order", "updated", "name", "price"] as const;
 export type ProductAdminSort = (typeof PRODUCT_SORTS)[number];
 
 export type ProductAdminFilters = {
@@ -60,6 +61,7 @@ export type ProductEditorData = {
     description: string | null;
     status: ProductStatus;
     isFeatured: boolean;
+    sortOrder: number;
     brandId: string | null;
     updatedAt: string;
   };

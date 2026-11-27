@@ -18,7 +18,7 @@ export default async function NewProductPage() {
       <ProductBasicsForm
         initial={{
           name: "", slug: "", categoryId: choices.categories[0]?.id ?? "", brandId: "", description: "",
-          status: "draft", isFeatured: false, collectionIds: [],
+          status: "draft", isFeatured: false, collectionIds: [], sortOrder: "",
         }}
         categories={choices.categories}
         brandsByCategory={choices.brandsByCategory}

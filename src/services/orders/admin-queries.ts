@@ -1,3 +1,4 @@
+import { connection } from "next/server";
 import { and, asc, count, desc, eq, gte, ilike, inArray, or, type SQL } from "drizzle-orm";
 import { alias } from "drizzle-orm/pg-core";
 import { db } from "@/db";
@@ -27,6 +28,7 @@ function buildWhere(filters: OrderAdminFilters): SQL | undefined {
 }
 
 export async function listOrdersForAdmin(filters: OrderAdminFilters): Promise<Page<OrderAdminRow>> {
+  await connection(); // the date filter counts back from now: read the clock per request
   const where = buildWhere(filters);
   const [totalRow] = await db.select({ total: count() }).from(orders).where(where);
   const total = totalRow?.total ?? 0;

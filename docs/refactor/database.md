@@ -56,12 +56,12 @@ How each category fits the same tables:
 
 | | Mattress | Cot | Sofa |
 |---|---|---|---|
-| product | Brand + model | Style (Classic, Storage…) | Range (Luxury High Back…) |
+| product | Brand + model | Range (Ideal Range Cot … Cushion Back Range Cot): one per range on the client sheets | Range (Affordable Sofa … 3-Step Extend Sofa – Premium): one per row of the client sheet |
 | `brand_id` | Wake Fit… | null | null |
 | variant `size_label` | Single, Queen… | King, Queen, Double, Singles-Jodi, Single | Model column: 3+1+1 / 3+2, 3-Seater… |
 | variant `length_in` x `width_in` | 72 x 36… | 75 x 72 and 78 x 72 (two variants), null for Single | null |
 | variant `seats` | null | null | 5, 3; null for "3 + lounger" |
-| variant `quality_id` | null | Ideal Range … Cushion Back Range | Affordable, Premium |
+| variant `quality_id` | null | the product's own range (one per product; holds warranty, construction and add-on prices) | the product's own range (one per product; holds its add-on prices) |
 | variant `thickness_in` | 6, 8 | null | null |
 | variant `colour_id` | null | Teak, Walnut… | null |
 | add-ons | none | category-wide, priced per quality | per product, priced per quality; recliners are `kind = recliner` |
@@ -143,9 +143,8 @@ Files in `src/db/seed/`, one per area, data in `src/db/seed/data/`. Ids are made
 |---|---|
 | Categories: Mattresses, Cots, Sofas | client |
 | Cot qualities, prices, add-ons | `docs/pricelist/cot-pricelist` (from client photos) |
-| Sofa qualities, ranges, prices, recliners, additional options | `docs/pricelist/sofa-pricelist` (client PDF) |
+| Sofa ranges, prices, recliners, additional options | `docs/client/sofa-price-list-nov-2026.pdf` (clean copy: `docs/pricelist/sofa-pricelist`) |
 | Mattress brands, models, prices | current code (demo, flagged) |
-| Cot styles: Classic, Storage, Platform | current code (not on the client sheets) |
 | Colours: Teak, Walnut, Honey, Natural | requirements PDF |
 | Staff profiles | Neon Auth users whose email is in `SEED_STAFF_EMAILS` (default `test@cotandcouch.com`) become admin |
 | Profiles, orders, leads, media, collections | dummy, clearly fake names (e.g. "Test Customer 1") |
@@ -154,11 +153,11 @@ Seeded counts (checked after `db:seed`):
 
 | | Count |
 |---|---|
-| Cot variants | 684 = 3 styles x 4 colours x 57 size/quality rows (6 ranges x 8, Royal 6, Cushion Back 3) |
-| Sofa variants | 15 (every row of the sofa price list) |
+| Cot products / variants | 8 (one per range) / 228 = 4 finishes x 57 size rows (6 ranges x 8, Royal 6, Cushion Back 3) |
+| Sofa products / variants | 12 (one per range row) / 15 (every model row of the sofa price list) |
 | Mattress variants | 240 = 30 products x 4 sizes x 2 thicknesses |
-| Qualities | 10 (8 cot, 2 sofa) |
-| Add-ons / prices | 20 / 92 (9 cot x 8 qualities; 11 sofa) |
+| Qualities | 20 (8 cot ranges, 12 sofa ranges) |
+| Add-ons / prices | 34 / 97 (cot: 12 add-ons, 75 prices = 9 x 8 ranges + 3 Cushion Back extras; sofa: 22 add-ons, 22 prices) |
 | Orders | 3 (CC-00001 to CC-00003), 5 history rows written by the trigger |
 
-Not seeded until the client confirms: Range 7, Range 8, Cushion Back "Premium / Royal / Heavy cushion" extras. 78-inch variants have no MRP (price = base price + the sheet's extra). The sofa "per seat" column is not stored (it is information, not a price anyone pays).
+Not seeded: Range 7, Range 8 (on no client sheet). The Cushion Back "Premium 2,800 / Royal 6,800 / Heavy cushion 6,800" extras are seeded as add-ons offered only on the Cushion Back Range Cot, named as on the sheet; their meaning is still to confirm. 78-inch variants have no MRP (price = base price + the sheet's extra). The sofa "per seat" column is not stored (it is information, not a price anyone pays).

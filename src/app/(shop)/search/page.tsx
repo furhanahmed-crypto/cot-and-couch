@@ -18,7 +18,7 @@ async function SearchForm({ searchParams }: { searchParams: SearchParams }) {
   return (
     <form action="" className="relative mb-8 flex max-w-xl gap-2" role="search">
       <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-      <Input name="q" defaultValue={query} placeholder="Try Wake Fit, Classic Cot, Teak Sofa…" className="pl-9" aria-label="Search products" autoFocus />
+      <Input name="q" defaultValue={query} placeholder="Try Wake Fit, Prime Range, Teak Sofa…" className="pl-9" aria-label="Search products" autoFocus />
       <Button type="submit">Search</Button>
     </form>
   );
