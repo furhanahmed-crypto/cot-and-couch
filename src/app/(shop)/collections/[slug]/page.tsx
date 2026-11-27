@@ -2,7 +2,7 @@ import { Suspense } from "react";
 import { notFound } from "next/navigation";
 import { ProductCard } from "@/components/shop/product-card";
 import { ReelsStrip } from "@/components/shop/reels-strip";
-import { CollectionPageSkeleton, ReelsStripSkeleton } from "@/components/shop/shop-skeletons";
+import { CollectionPageSkeleton, ReelsStripSkeleton } from "@/components/shop/shop-page-skeletons";
 import { listProductCardsByCollection } from "@/services/catalogue/product-card-queries";
 import { getCollectionBySlug, listCollections } from "@/services/collections/queries";
 

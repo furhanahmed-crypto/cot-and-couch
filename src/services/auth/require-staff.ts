@@ -5,11 +5,11 @@ import { getCurrentProfile } from "@/lib/auth/profile";
 import type { ProfileRow } from "@/types/db";
 import { SIGN_IN_AGAIN_MESSAGE } from "./require-profile";
 
-export const NOT_ALLOWED_MESSAGE = "Not allowed";
+const NOT_ALLOWED_MESSAGE = "Not allowed";
 
 type StaffRole = "admin" | "team";
 
-export function isStaff(profile: Pick<ProfileRow, "role">): boolean {
+function isStaff(profile: Pick<ProfileRow, "role">): boolean {
   return profile.role === "admin" || profile.role === "team";
 }
 

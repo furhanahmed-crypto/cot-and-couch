@@ -22,6 +22,7 @@ src/
   components/ui/                     shadcn primitives (do not edit for one screen)
   services/<area>/queries.ts         reads
   services/<area>/mutations.ts       writes
+  services/<area>/admin-*.ts         admin-only reads and writes, when the area also serves the shop
   services/<area>/mappers.ts         DB row -> DTO
   validation/<area>.ts               Zod schemas for user input
   types/<area>.ts                    shared DTOs and types

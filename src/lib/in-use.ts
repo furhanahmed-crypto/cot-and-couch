@@ -1,7 +1,7 @@
 import { AppError } from "@/lib/action-result";
 
 /** "Used by 3 products. Deactivate it instead." */
-export function inUseMessage(count: number, noun = "product"): string {
+function inUseMessage(count: number, noun = "product"): string {
   const label = count === 1 ? noun : `${noun}s`;
   return `Used by ${count} ${label}. Deactivate it instead.`;
 }

@@ -4,7 +4,7 @@ import Link from "next/link";
 import { MessageCircle, ShoppingCart } from "lucide-react";
 import { CartClearButton } from "@/components/shop/cart-clear-button";
 import { CartLineCard } from "@/components/shop/cart-line-card";
-import { ShortlistPageSkeleton } from "@/components/shop/shop-skeletons";
+import { ShortlistPageSkeleton } from "@/components/shop/shop-page-skeletons";
 import { buttonVariants } from "@/components/ui/button";
 import { ROUTES } from "@/constants/routes";
 import { formatPrice } from "@/lib/format";

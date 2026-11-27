@@ -1,7 +1,7 @@
 import type { LeadEventType, LeadIntent } from "@/constants/leads";
 
 export const LEAD_FOLLOW_UP_FILTERS = ["pending", "done"] as const;
-export type LeadFollowUpFilter = (typeof LEAD_FOLLOW_UP_FILTERS)[number];
+type LeadFollowUpFilter = (typeof LEAD_FOLLOW_UP_FILTERS)[number];
 
 /** `?assigned=none` lists leads nobody is following up. */
 export const UNASSIGNED = "none";

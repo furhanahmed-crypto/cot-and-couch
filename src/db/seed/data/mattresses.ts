@@ -25,7 +25,7 @@ export const MATTRESS_SIZES = [
   { sizeLabel: "Queen", lengthIn: 78, widthIn: 60 },
   { sizeLabel: "King", lengthIn: 78, widthIn: 72 },
 ] as const;
-export type MattressSize = (typeof MATTRESS_SIZES)[number]["sizeLabel"];
+type MattressSize = (typeof MATTRESS_SIZES)[number]["sizeLabel"];
 
 /** MRP and selling price by size, for 6-inch and 8-inch thickness. */
 export const MATTRESS_PRICES: { size: MattressSize; thicknessIn: number; mrp: number; price: number }[] = [

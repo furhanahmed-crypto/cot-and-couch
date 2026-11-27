@@ -5,7 +5,7 @@ import { PdpDetails } from "@/components/shop/pdp-details";
 import { PdpMain } from "@/components/shop/pdp-main";
 import { ProductViewTracker } from "@/components/shop/product-view-tracker";
 import { ReelsStrip } from "@/components/shop/reels-strip";
-import { ProductPageSkeleton, ReelsStripSkeleton } from "@/components/shop/shop-skeletons";
+import { ProductPageSkeleton, ReelsStripSkeleton } from "@/components/shop/shop-page-skeletons";
 import { ROUTES } from "@/constants/routes";
 import { getProductDetailBySlug } from "@/services/catalogue/product-detail-queries";
 import { getStoreInfo } from "@/services/settings/queries";

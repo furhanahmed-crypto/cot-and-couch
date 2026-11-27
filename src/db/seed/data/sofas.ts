@@ -8,7 +8,7 @@ export const SOFA_QUALITIES = [
 ] as const;
 export type SofaQualitySlug = (typeof SOFA_QUALITIES)[number]["slug"];
 
-export type SofaVariantSeed = {
+type SofaVariantSeed = {
   /** The "Model" column of the price list. */
   sizeLabel: string;
   /** Null when the sheet gives no whole number (e.g. "3 + lounger"). */
@@ -17,7 +17,7 @@ export type SofaVariantSeed = {
   price: number;
 };
 
-export type SofaAddonSeed = {
+type SofaAddonSeed = {
   name: string;
   kind: AddonKind;
   priceUnit: PriceUnit;

@@ -1,6 +1,6 @@
 import { cacheLife, cacheTag, updateTag } from "next/cache";
 
-/** Tag on every cached shop read (catalogue, masters, store, gallery, reels). */
+/** Tag on every cached shop read (catalogue, qualities, store, gallery, reels). */
 export const SHOP_CACHE_TAG = "shop";
 
 /** Call inside `"use cache"` functions that read public shop data. */

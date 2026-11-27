@@ -6,8 +6,9 @@ import { EmptyState } from "@/components/admin/common/empty-state";
 import { SectionCard } from "@/components/admin/common/section-card";
 import { Button } from "@/components/ui/button";
 import { formatPrice } from "@/lib/format";
+import type { DraftOrderItem } from "@/types/admin-orders";
 import type { OptionItem } from "@/types/admin-products";
-import { AddOrderItemDialog, type DraftOrderItem } from "./add-order-item-dialog";
+import { AddOrderItemDialog } from "./add-order-item-dialog";
 
 type OrderItemsEditorProps = {
   items: DraftOrderItem[];

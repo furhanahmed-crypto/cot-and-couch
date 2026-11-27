@@ -5,7 +5,7 @@ import { useUrlParams } from "@/hooks/use-url-params";
 
 const ALL_VALUE = "__all__";
 
-export type FilterSelectOption = { value: string; label: string };
+type FilterSelectOption = { value: string; label: string };
 
 type FilterSelectProps = {
   /** URL key, e.g. "status" for `?status=`. */

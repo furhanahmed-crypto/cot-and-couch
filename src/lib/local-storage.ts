@@ -7,7 +7,7 @@ function notify(key: string) {
   listeners.get(key)?.forEach((fn) => fn());
 }
 
-export function readJson<T>(key: string, fallback: T): T {
+function readJson<T>(key: string, fallback: T): T {
   if (typeof window === "undefined") return fallback;
   try {
     const raw = localStorage.getItem(key);
@@ -22,13 +22,6 @@ export function writeJson<T>(key: string, value: T) {
   if (typeof window === "undefined") return;
   localStorage.setItem(key, JSON.stringify(value));
   cache.set(key, value);
-  notify(key);
-}
-
-export function removeKey(key: string) {
-  if (typeof window === "undefined") return;
-  localStorage.removeItem(key);
-  cache.delete(key);
   notify(key);
 }
 

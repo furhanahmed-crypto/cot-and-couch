@@ -21,7 +21,7 @@ export type OrderLineVariant = {
 
 export type OrderLineAddon = AddonOption & { categoryId: string; productId: string | null; isActive: boolean };
 
-export type OrderLineRequest = {
+type OrderLineRequest = {
   variantId: string;
   quantity: number;
   addonIds: string[];

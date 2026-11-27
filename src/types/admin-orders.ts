@@ -2,7 +2,7 @@ import type { OrderStatus } from "@/constants/orders";
 import type { PriceUnit } from "@/constants/products";
 
 export const ORDER_DATE_RANGES = ["7d", "30d", "all"] as const;
-export type OrderDateRange = (typeof ORDER_DATE_RANGES)[number];
+type OrderDateRange = (typeof ORDER_DATE_RANGES)[number];
 
 export type OrderAdminFilters = {
   q: string;
@@ -83,4 +83,18 @@ export type OrderVariantOption = {
   sku: string;
   price: number;
   addons: { id: string; name: string; unitPrice: number }[];
+};
+
+/** One line in the "New order" form. `unitPrice` is for display; the server works out the real one. */
+export type DraftOrderItem = {
+  key: string;
+  productName: string;
+  variantId: string;
+  variantLabel: string;
+  quantity: number;
+  addonIds: string[];
+  addonNames: string[];
+  customLengthIn: string;
+  customWidthIn: string;
+  unitPrice: number;
 };

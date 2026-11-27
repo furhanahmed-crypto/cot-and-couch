@@ -5,7 +5,7 @@ import { db } from "./db";
 import { newId, toMoney, toMoneyOrNull } from "./helpers";
 import type { SeededAddon, SeededVariant } from "./types";
 
-export type DemoOrderInput = {
+type DemoOrderInput = {
   profileId: string | null;
   customerName: string;
   customerPhone: string;

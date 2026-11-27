@@ -30,7 +30,7 @@ Staff sign in at `/login` like customers. Sign up once, then either:
 update profiles set role = 'admin' where email = 'you@example.com';
 ```
 
-Use `team` instead of `admin` for limited access.
+Use `team` instead of `admin` for limited access. After that, an admin can give other people access from **Team** in the staff console.
 
 ## Docs
 

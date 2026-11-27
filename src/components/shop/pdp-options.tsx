@@ -21,7 +21,7 @@ type PdpOptionsProps = {
 };
 
 /** "King · 78 x 72 in", or for sofas "3+1+1 / 3+2 · 5 seats". */
-export function formatSizeLabel(variant: Pick<VariantOption, "sizeLabel" | "lengthIn" | "widthIn" | "seats">): string {
+function formatSizeLabel(variant: Pick<VariantOption, "sizeLabel" | "lengthIn" | "widthIn" | "seats">): string {
   if (variant.lengthIn && variant.widthIn) return `${variant.sizeLabel} · ${variant.lengthIn} x ${variant.widthIn} in`;
   if (variant.seats) return `${variant.sizeLabel} · ${variant.seats} seats`;
   return variant.sizeLabel;

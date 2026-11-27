@@ -4,7 +4,7 @@ import type { ReactNode } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useUrlParams } from "@/hooks/use-url-params";
 
-export type UrlTab = { value: string; label: string; content: ReactNode };
+type UrlTab = { value: string; label: string; content: ReactNode };
 
 /** Tabs whose choice is kept in `?tab=`, so reloads and links open the same tab. */
 export function UrlTabs({ tabs }: { tabs: UrlTab[] }) {

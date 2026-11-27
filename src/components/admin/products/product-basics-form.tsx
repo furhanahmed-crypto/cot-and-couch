@@ -17,7 +17,7 @@ import { toSlug } from "@/lib/slug";
 import type { OptionItem } from "@/types/admin-products";
 import { CollectionPicker } from "./collection-picker";
 
-export type ProductBasicsValues = {
+type ProductBasicsValues = {
   name: string;
   slug: string;
   categoryId: string;

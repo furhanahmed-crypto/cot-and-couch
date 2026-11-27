@@ -2,7 +2,7 @@ import { Suspense } from "react";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Package } from "lucide-react";
-import { OrdersPageSkeleton } from "@/components/shop/shop-skeletons";
+import { OrdersPageSkeleton } from "@/components/shop/shop-page-skeletons";
 import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
 import { ORDER_STATUS_LABELS } from "@/constants/orders";

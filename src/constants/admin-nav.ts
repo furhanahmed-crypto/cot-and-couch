@@ -13,7 +13,7 @@ import {
 } from "lucide-react";
 import { ROUTES } from "@/constants/routes";
 
-export type AdminNavItem = {
+type AdminNavItem = {
   label: string;
   href: string;
   icon: LucideIcon;
@@ -21,10 +21,10 @@ export type AdminNavItem = {
   isAdminOnly?: boolean;
 };
 
-export type AdminNavSection = { title: string; items: AdminNavItem[] };
+type AdminNavSection = { title: string; items: AdminNavItem[] };
 
 /** Sidebar of the team console. Team users see everything not marked admin-only. */
-export const ADMIN_NAV: AdminNavSection[] = [
+const ADMIN_NAV: AdminNavSection[] = [
   { title: "Overview", items: [{ label: "Dashboard", href: ROUTES.admin.root, icon: LayoutDashboard }] },
   {
     title: "Catalogue",

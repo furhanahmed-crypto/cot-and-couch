@@ -11,8 +11,8 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { ROUTES } from "@/constants/routes";
 import { useActionToast } from "@/hooks/use-action-toast";
+import type { DraftOrderItem } from "@/types/admin-orders";
 import type { OptionItem } from "@/types/admin-products";
-import type { DraftOrderItem } from "./add-order-item-dialog";
 import { CustomerSearch } from "./customer-search";
 import { OrderItemsEditor } from "./order-items-editor";
 

@@ -2,7 +2,7 @@
 // Not seeded until the client confirms: Range 7, Range 8, the Cushion Back
 // "Premium / Royal / Heavy cushion" extras, and an MRP for 78-inch sizes.
 
-export type CotPriceList = "affordable" | "allCategories";
+type CotPriceList = "affordable" | "allCategories";
 
 export type CotSizePrice = {
   size: CotSize;
@@ -29,7 +29,7 @@ export const COT_SIZES = {
   "Singles-Jodi": { lengthIn: 75, widthIn: 36 },
   Single: { lengthIn: null, widthIn: null },
 } as const;
-export type CotSize = keyof typeof COT_SIZES;
+type CotSize = keyof typeof COT_SIZES;
 
 export const COT_LONG_LENGTH_IN = 78;
 
@@ -83,7 +83,7 @@ export const COT_QUALITIES: CotQualitySeed[] = [
   },
 ];
 
-export type CotAddonSeed = {
+type CotAddonSeed = {
   name: string;
   /** Only offered for this size. */
   sizeLabel: CotSize | null;

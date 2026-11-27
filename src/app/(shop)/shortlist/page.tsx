@@ -5,7 +5,7 @@ import { redirect } from "next/navigation";
 import { MessageCircle } from "lucide-react";
 import { ProductCard } from "@/components/shop/product-card";
 import { ShortlistShare } from "@/components/shop/shortlist-share";
-import { ShortlistPageSkeleton } from "@/components/shop/shop-skeletons";
+import { ShortlistPageSkeleton } from "@/components/shop/shop-page-skeletons";
 import { buttonVariants } from "@/components/ui/button";
 import { ROUTES } from "@/constants/routes";
 import { getCurrentProfile } from "@/lib/auth/profile";

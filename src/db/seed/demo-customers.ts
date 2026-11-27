@@ -5,7 +5,7 @@ import { newId } from "./helpers";
 import type { SeededPerson } from "./people";
 import type { SeededAddon, SeededVariant } from "./types";
 
-export type DemoCustomerInput = {
+type DemoCustomerInput = {
   customers: SeededPerson[];
   staffId: string | null;
   /** Products the first customer viewed and shortlisted. */

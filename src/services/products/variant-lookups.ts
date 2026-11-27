@@ -4,7 +4,7 @@ import { colours, productVariants, products, qualities } from "@/db/schema";
 import { AppError } from "@/lib/action-result";
 import { makeUniqueSlug, toSlug } from "@/lib/slug";
 
-export type VariantProduct = { id: string; slug: string; categoryId: string; status: string };
+type VariantProduct = { id: string; slug: string; categoryId: string; status: string };
 
 export async function getVariantProduct(productId: string): Promise<VariantProduct> {
   const [row] = await db

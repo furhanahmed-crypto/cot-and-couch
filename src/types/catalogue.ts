@@ -79,8 +79,8 @@ export type AddonOption = {
   prices: Record<string, number>;
 };
 
-export type ProductImage = { url: string; alt: string | null };
-export type ProductSpec = { label: string; value: string };
+type ProductImage = { url: string; alt: string | null };
+type ProductSpec = { label: string; value: string };
 
 export type ProductDetail = {
   id: string;

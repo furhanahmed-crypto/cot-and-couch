@@ -11,7 +11,7 @@ import { assertKeepsActiveVariant, buildSku, getChoiceNames, getVariantProduct, 
 
 type VariantData = z.output<typeof variantFormSchema>;
 
-export const DUPLICATE_VARIANT_MESSAGE = "This variant already exists";
+const DUPLICATE_VARIANT_MESSAGE = "This variant already exists";
 const CHOICE_CONSTRAINT = "product_variants_choice_key";
 
 function toColumns(data: VariantData) {

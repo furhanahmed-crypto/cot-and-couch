@@ -12,23 +12,35 @@ import { ROUTES } from "@/constants/routes";
 import { cn } from "@/lib/utils";
 import type { GalleryPhoto } from "@/types/shop";
 
+const SLIDE_DELAY_MS = 5000;
+
+type HeroDotsProps = { count: number; selected: number; onPick: (index: number) => void };
+
+function HeroDots({ count, selected, onPick }: HeroDotsProps) {
+  return (
+    <div className="mt-6 flex gap-2" role="tablist" aria-label="Hero slides">
+      {Array.from({ length: count }, (_, index) => (
+        <button
+          key={index}
+          type="button"
+          role="tab"
+          aria-selected={index === selected}
+          aria-label={`Go to slide ${index + 1}`}
+          className={cn("h-1 rounded-full transition-all duration-500", index === selected ? "w-8 bg-brass" : "w-4 bg-white/40 hover:bg-white/70")}
+          onClick={() => onPick(index)}
+        />
+      ))}
+    </div>
+  );
+}
+
 /** Delivered-home photos (published gallery), each linking to its product. */
 export function HomeHero({ photos }: { photos: GalleryPhoto[] }) {
   const slides = photos;
   const [selected, setSelected] = useState(0);
 
-  const plugins = useMemo(
-    () => [
-      Fade(),
-      Autoplay({ delay: 5000, stopOnInteraction: false, stopOnMouseEnter: true }),
-    ],
-    [],
-  );
-
-  const [emblaRef, emblaApi] = useEmblaCarousel(
-    { loop: true, duration: 40 },
-    plugins,
-  );
+  const plugins = useMemo(() => [Fade(), Autoplay({ delay: SLIDE_DELAY_MS, stopOnInteraction: false, stopOnMouseEnter: true })], []);
+  const [emblaRef, emblaApi] = useEmblaCarousel({ loop: true, duration: 40 }, plugins);
 
   const onSelect = useCallback(() => {
     if (!emblaApi) return;
@@ -57,26 +69,24 @@ export function HomeHero({ photos }: { photos: GalleryPhoto[] }) {
     >
       <div ref={emblaRef} className="absolute inset-0">
         <div className="flex h-full touch-pan-y">
-          {slides.map((slide, idx) => {
-            return (
-              <div
-                key={slide.id}
-                className="relative min-w-0 shrink-0 grow-0 basis-full"
-                role="group"
-                aria-roledescription="slide"
-                aria-label={`${idx + 1} of ${slides.length}`}
-              >
-                <Image
-                  src={slide.imageUrl}
-                  alt={slide.productName ?? "Recent delivery"}
-                  fill
-                  priority={idx === 0}
-                  className="object-cover"
-                  sizes="100vw"
-                />
-              </div>
-            );
-          })}
+          {slides.map((slide, idx) => (
+            <div
+              key={slide.id}
+              className="relative min-w-0 shrink-0 grow-0 basis-full"
+              role="group"
+              aria-roledescription="slide"
+              aria-label={`${idx + 1} of ${slides.length}`}
+            >
+              <Image
+                src={slide.imageUrl}
+                alt={slide.productName ?? "Recent delivery"}
+                fill
+                priority={idx === 0}
+                className="object-cover"
+                sizes="100vw"
+              />
+            </div>
+          ))}
         </div>
       </div>
 
@@ -102,22 +112,7 @@ export function HomeHero({ photos }: { photos: GalleryPhoto[] }) {
             <span className="text-brass">View {active.productName}</span>
           </Link>
         )}
-        <div className="mt-6 flex gap-2" role="tablist" aria-label="Hero slides">
-          {slides.map((slide, idx) => (
-            <button
-              key={slide.id}
-              type="button"
-              role="tab"
-              aria-selected={idx === selected}
-              aria-label={`Go to slide ${idx + 1}`}
-              className={cn(
-                "h-1 rounded-full transition-all duration-500",
-                idx === selected ? "w-8 bg-brass" : "w-4 bg-white/40 hover:bg-white/70",
-              )}
-              onClick={() => emblaApi?.scrollTo(idx)}
-            />
-          ))}
-        </div>
+        <HeroDots count={slides.length} selected={selected} onPick={(index) => emblaApi?.scrollTo(index)} />
       </div>
     </section>
   );

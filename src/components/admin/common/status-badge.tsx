@@ -5,7 +5,7 @@ import { cn } from "@/lib/utils";
  * Badge tones from the brand palette only (espresso, terracotta, sand, red).
  * Which status gets which tone lives in constants/ next to the status list.
  */
-export type BadgeTone = "neutral" | "outline" | "accent" | "strong" | "danger";
+type BadgeTone = "neutral" | "outline" | "accent" | "strong" | "danger";
 
 const TONE_CLASSES: Record<BadgeTone, string> = {
   neutral: "bg-muted text-muted-foreground",

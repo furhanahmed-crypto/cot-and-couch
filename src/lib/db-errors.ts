@@ -1,7 +1,7 @@
 import { AppError } from "@/lib/action-result";
 
 /** Postgres error codes the admin turns into friendly messages. */
-export const PG_UNIQUE_VIOLATION = "23505";
+const PG_UNIQUE_VIOLATION = "23505";
 
 type PgErrorLike = { code?: unknown; constraint?: unknown; cause?: unknown };
 

@@ -12,13 +12,13 @@ import {
 } from "./common";
 import { CART_QUANTITY_MAX, customInchesSchema } from "./shop";
 
-export const ORDER_ITEMS_MAX = 30;
+const ORDER_ITEMS_MAX = 30;
 
 /** "" from an empty input -> null. */
 const optionalInches = z.preprocess((value) => (value === "" || value === undefined ? null : value), customInchesSchema.nullable());
 
 /** One line of a new order. Prices are not sent: the server works them out. */
-export const orderItemSchema = z
+const orderItemSchema = z
   .object({
     variantId: idSchema,
     quantity: z.coerce
@@ -34,7 +34,6 @@ export const orderItemSchema = z
     error: "Enter both length and width for a custom size",
     path: ["customLengthIn"],
   });
-export type OrderItemInput = z.input<typeof orderItemSchema>;
 
 export const newOrderSchema = z.object({
   /** The customer's account, when picked from the search. */

@@ -27,7 +27,7 @@ export type ReelItem = {
   instagramUrl: string | null;
 };
 
-export type OrderSummaryItem = {
+type OrderSummaryItem = {
   productName: string;
   sizeLabel: string;
   qualityName: string | null;

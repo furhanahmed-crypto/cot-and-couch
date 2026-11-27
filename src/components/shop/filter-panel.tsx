@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { formatPrice } from "@/lib/format";
 import { EMPTY_FILTERS, type ProductFilters } from "@/lib/product-filters";
 
-export type FilterOption = { value: string; label: string; hex?: string };
+type FilterOption = { value: string; label: string; hex?: string };
 export type FilterOptions = {
   qualities: FilterOption[];
   brands: FilterOption[];

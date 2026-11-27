@@ -1,6 +1,7 @@
 # Refactor
 
 Rebuild Cot & Couch on a simple database and a clean admin, then add Sofas.
+**Status: done** (Phases 0–9). `audit.md` describes the old code; the other pages describe the code as it is now.
 Beginner-friendly code, real data only, every edge case handled. Theme, colours and fonts stay.
 
 | File | What it decides |
@@ -30,5 +31,5 @@ Beginner-friendly code, real data only, every edge case handled. Theme, colours 
 3. Cushion Back Range: what do "Premium 2,800 / Royal 6,800 / Heavy cushion 6,800 extra" mean?
 4. 78-inch sizes: sheets give only the extra on the discounted price. Seeded with no MRP. OK, or base MRP + extra?
 5. Mattress prices: wait for the client sheet, or launch with the demo prices?
-6. Product images: download from the Google Drive folder into `public/images/`, or use a storage service? (Seeded: mattress images only; cots and sofas have none yet. The old files in `public/images/sofas/` are stock photos that do not show sofas, apart from `cover.jpg`.)
+6. Product images: download from the Google Drive folder into `public/images/`, or use a storage service? (Seeded: mattress images only; cots and sofas have none yet. Only the category covers are kept in `public/images/cots/` and `public/images/sofas/`.)
 7. Cot styles Classic / Storage / Platform come from the old site, not the client sheets, and "Storage" overlaps the storage add-ons. Which cot designs should be products?

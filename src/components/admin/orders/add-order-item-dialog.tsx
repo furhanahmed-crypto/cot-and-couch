@@ -9,23 +9,9 @@ import { OptionSelect } from "@/components/admin/common/option-select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { formatPrice } from "@/lib/format";
-import type { OrderVariantOption } from "@/types/admin-orders";
+import type { DraftOrderItem, OrderVariantOption } from "@/types/admin-orders";
 import type { OptionItem } from "@/types/admin-products";
 import { CART_QUANTITY_MAX, CUSTOM_SIZE_MAX_IN, CUSTOM_SIZE_MIN_IN } from "@/validation/shop";
-
-/** One line in the "New order" form. `unitPrice` is for display; the server works out the real one. */
-export type DraftOrderItem = {
-  key: string;
-  productName: string;
-  variantId: string;
-  variantLabel: string;
-  quantity: number;
-  addonIds: string[];
-  addonNames: string[];
-  customLengthIn: string;
-  customWidthIn: string;
-  unitPrice: number;
-};
 
 type AddOrderItemDialogProps = {
   open: boolean;

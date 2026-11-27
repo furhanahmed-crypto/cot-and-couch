@@ -2,16 +2,16 @@ import type { VariantOption } from "@/types/catalogue";
 
 /** The four things a customer chooses on the product page. */
 export type VariantAxis = "quality" | "size" | "thickness" | "colour";
-export type VariantChoice = Record<VariantAxis, string>;
+type VariantChoice = Record<VariantAxis, string>;
 
 const AXES: VariantAxis[] = ["quality", "size", "thickness", "colour"];
 
 /** "King|78" — size label plus length, so 75 in and 78 in are different sizes. */
-export function getSizeKey(variant: Pick<VariantOption, "sizeLabel" | "lengthIn">): string {
+function getSizeKey(variant: Pick<VariantOption, "sizeLabel" | "lengthIn">): string {
   return `${variant.sizeLabel}|${variant.lengthIn ?? ""}`;
 }
 
-export function getAxisValue(variant: VariantOption, axis: VariantAxis): string {
+function getAxisValue(variant: VariantOption, axis: VariantAxis): string {
   if (axis === "quality") return variant.qualityId ?? "";
   if (axis === "size") return getSizeKey(variant);
   if (axis === "thickness") return String(variant.thicknessIn ?? "");

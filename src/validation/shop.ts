@@ -38,7 +38,7 @@ export const cartQuantitySchema = z.object({
 
 export const shortlistSchema = z.object({ productId: idSchema, isShortlisted: z.boolean() });
 
-export const CTA_ACTIONS = ["whatsapp", "call", "visit", "callback", "maps"] as const;
+const CTA_ACTIONS = ["whatsapp", "call", "visit", "callback", "maps"] as const;
 export const ctaSchema = z.object({
   action: z.enum(CTA_ACTIONS),
   productId: idSchema.nullable().default(null),

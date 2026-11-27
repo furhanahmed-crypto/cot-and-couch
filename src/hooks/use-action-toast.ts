@@ -4,7 +4,7 @@ import { useTransition } from "react";
 import { toast } from "sonner";
 import type { ActionResult } from "@/types/action";
 
-export type ActionToastMessages = {
+type ActionToastMessages = {
   loading: string;
   success: string;
   /** Shown when the action fails without its own message. */

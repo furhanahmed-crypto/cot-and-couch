@@ -1,7 +1,7 @@
 # Architecture
 
 Showroom website for Cot & Couch: a shop for customers and a staff console at `/admin`.
-This page describes the code **as it is today**. Planned changes are in [refactor/](./refactor/README.md).
+This page describes the code as it is. How it got here (the 2026 refactor, Phases 0–9) is in [refactor/](./refactor/README.md).
 
 ## Stack
 
@@ -18,22 +18,25 @@ This page describes the code **as it is today**. Planned changes are in [refacto
 
 ```
 src/
-  app/          (shop) pages + actions.ts, (auth) login/register, admin/ (dashboard, products, categories, colours, collections, orders, leads, media, settings, team)
+  app/          (shop) pages + actions.ts, (auth) login/register, admin/<screen>/ page.tsx + actions.ts
+                (dashboard, products, categories, colours, collections, orders, leads, media, settings, team)
   components/   ui/ (shadcn), shop/, admin/ (shell, common/, one folder per screen), shared/
-  services/     <area>/queries.ts, mutations.ts, mappers.ts (catalogue, cart, shortlist, orders, leads, users, settings, media, collections, auth); admin-only files are named admin-queries.ts / admin-mutations.ts
-  validation/   Zod schemas for user input (common, shop, catalogue, products)
-  types/        DTOs (catalogue, cart, shop), action.ts, db.ts (row types inferred from the schema)
-  constants/    routes, categories, enum value lists (products, orders, leads, media, users)
+  services/     one folder per area: queries.ts / mutations.ts for the shop, admin-queries.ts / admin-mutations.ts
+                for the admin (catalogue, cart, shortlist, orders, leads, products, categories, addons, colours,
+                collections, media, settings, users, dashboard, auth)
+  validation/   Zod schemas for user input, one file per area (common, shop, catalogue, products, orders, leads,
+                media, settings, team)
+  types/        DTOs per area (catalogue, cart, shop, admin-*), action.ts, pagination.ts, db.ts (row types from the schema)
+  constants/    routes, categories, admin-nav, enum value lists with labels and badge tones (products, orders, leads, media, users)
   db/           index.ts (client), schema/, seed/
-  lib/          pure helpers: format, money, pricing, variant-picker, product-filters (unit tested)
+  lib/          pure helpers: format, money, pricing, order-lines, variant-picker, product-filters, list and URL params (unit tested)
   stores/  hooks/
   proxy.ts      Next.js request proxy (auth)
-  proxy.ts      Next.js request proxy (auth)
-drizzle/        SQL migrations
+drizzle/        SQL migration
+scripts/        db-reset, db-check (+ db-smoke.sql)
 docs/           see docs/README.md
 ```
-
-## Catalogue today
+## Catalogue
 
 - **Categories:** Mattresses, Cots, Sofas. The shop shows Cots as "Beds".
 - Every price is in `product_variants` (and `addon_prices`). Nothing is priced in code.
@@ -47,10 +50,18 @@ docs/           see docs/README.md
 
 ## Database
 
-- New design: 24 tables, no prefix, schema in `src/db/schema/`, one migration `drizzle/0000_init.sql`. Full design: [refactor/database.md](./refactor/database.md).
+- 24 tables, no prefix, schema in `src/db/schema/`, one migration `drizzle/0000_init.sql`. Full design: [refactor/database.md](./refactor/database.md).
 - Seed: `src/db/seed/` (client price lists + dummy people, orders, leads, media).
 - Public shop reads are cached (`"use cache"` + `tagShopCache()`); cart, shortlist and orders are read per request.
 - The DB holds seed data only. There are no real customers or orders.
+
+## Admin
+
+- Every list: page header, toolbar (search + filters in the URL), table, pagination (20 per page). Shared pieces are in `components/admin/common/`.
+- Every change goes through a server action: Zod check, `requireStaff()`, service, then refresh. The browser runs it with `useActionToast` (loading, then success or error toast); field errors show under the field.
+- Deletes and other hard-to-undo actions ask first (`ConfirmationModal`).
+- Order prices are worked out on the server (`lib/order-lines.ts`, same add-on rules as the cart). Order status history is written by a database trigger.
+- Full screen list and rules: [refactor/admin-ux.md](./refactor/admin-ux.md) and [refactor/edge-cases.md](./refactor/edge-cases.md).
 
 ## Auth and roles
 

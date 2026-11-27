@@ -30,7 +30,7 @@ function allows(selected: string[], value: string | null): boolean {
 }
 
 /** Variants that fit the chosen quality, size and colour. */
-export function getMatchingVariants(card: ProductCardItem, filters: ProductFilters): CardVariant[] {
+function getMatchingVariants(card: ProductCardItem, filters: ProductFilters): CardVariant[] {
   return card.variants.filter(
     (variant) =>
       allows(filters.qualityIds, variant.qualityId) &&
@@ -63,7 +63,7 @@ function matchesCard(card: ProductCardItem, filters: ProductFilters, price: Card
   return true;
 }
 
-export type PricedCard = { card: ProductCardItem; price: CardPrice };
+type PricedCard = { card: ProductCardItem; price: CardPrice };
 
 function compareCards(sort: ProductSort, a: PricedCard, b: PricedCard): number {
   if (sort === "price_asc") return a.price.price - b.price.price;

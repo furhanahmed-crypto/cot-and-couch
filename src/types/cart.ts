@@ -1,4 +1,4 @@
-export type CartLineAddon = { id: string; name: string; unitPrice: number };
+type CartLineAddon = { id: string; name: string; unitPrice: number };
 
 export type CartLine = {
   id: string;

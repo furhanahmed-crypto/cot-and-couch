@@ -1,5 +1,4 @@
 import { z } from "zod";
-import { MEDIA_TYPES } from "@/constants/media";
 import { idSchema, imageUrlSchema, optionalIdSchema, optionalTextSchema, optionalUrlSchema, requiredText } from "./common";
 
 const MAX_TAGS = 20;
@@ -33,4 +32,3 @@ export type ReelFormInput = z.input<typeof reelFormSchema>;
 
 export const mediaMoveSchema = z.object({ id: idSchema, direction: z.enum(["up", "down"]) });
 export const mediaPublishSchema = z.object({ id: idSchema, isPublished: z.boolean() });
-export const mediaTypeSchema = z.enum(MEDIA_TYPES);

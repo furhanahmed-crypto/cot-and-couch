@@ -43,7 +43,3 @@ export function discountPercent(mrp: number, price: number): number {
   if (mrp <= 0) return 0;
   return Math.round(((mrp - price) / mrp) * 100);
 }
-
-export function inchesToCm(inches: number): number {
-  return Math.round(inches * 2.54);
-}
