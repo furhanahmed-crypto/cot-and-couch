@@ -18,10 +18,10 @@ This page describes the code **as it is today**. Planned changes are in [refacto
 
 ```
 src/
-  app/          (shop) pages + actions.ts, (auth) login/register, admin/ (dashboard; other screens "Being rebuilt" until Phases 5–7)
-  components/   ui/ (shadcn), shop/, admin/ (shell, common/, dashboard/), shared/
+  app/          (shop) pages + actions.ts, (auth) login/register, admin/ (dashboard, products, categories, colours, collections; orders, leads, media, settings, team "Being rebuilt" until Phases 6–7)
+  components/   ui/ (shadcn), shop/, admin/ (shell, common/, one folder per screen), shared/
   services/     <area>/queries.ts, mutations.ts, mappers.ts (catalogue, cart, shortlist, orders, leads, settings, media, collections, auth)
-  validation/   Zod schemas for user input
+  validation/   Zod schemas for user input (common, shop, catalogue, products)
   types/        DTOs (catalogue, cart, shop), action.ts, db.ts (row types inferred from the schema)
   constants/    routes, categories, enum value lists (products, orders, leads, media, users)
   db/           index.ts (client), schema/, seed/

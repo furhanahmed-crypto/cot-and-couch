@@ -7,7 +7,7 @@ Each case says what must happen. Tests or browser checks cover every line before
 - MRP missing (client sheets give no Single MRP) → allowed; shop shows the price with no strike-through or discount badge.
 - Two variants with the same size + thickness + quality + colour → blocked by the unique constraint; admin sees "This variant already exists".
 - Quality, brand or colour renamed → nothing breaks (everything joins by id).
-- Product with no active variants → cannot be published ("Add at least one active variant first").
+- Product with no active variants → cannot be published ("Add at least one active variant first"); the last active variant of a published product cannot be switched off or deleted.
 - PDP quality switch where the chosen size does not exist in that quality → option shown disabled, not hidden.
 
 ## Add-ons
@@ -34,9 +34,9 @@ Each case says what must happen. Tests or browser checks cover every line before
 ## Admin data
 - Delete category / quality / brand / colour that is in use → blocked with "Used by N products. Deactivate it instead."
 - Delete product that appears in an order → blocked; archive instead.
-- Slug already taken → auto-suffix `-2`, `-3`, shown to the user before save.
-- Two staff editing the same product → last save wins; editor shows "Last updated <time> by <name>".
-- Leaving an editor with unsaved changes → browser and in-app warning.
+- Slug already taken → auto-suffix `-2`, `-3` on save; the form then shows the slug that was used.
+- Two staff editing the same product → last save wins; editor shows "Last updated <date>" (no `updated_by` column, so no name).
+- Leaving an editor with unsaved changes → the save bar shows "Unsaved changes" and the browser warns on close / reload (Next has no in-app route guard).
 - Double click on Save → second click ignored (button disabled while pending).
 
 ## Staff and auth

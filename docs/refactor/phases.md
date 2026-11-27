@@ -49,6 +49,7 @@ The app is not live, so admin screens may show "Being rebuilt" between Phase 3 a
 ## Phase 5 — Admin catalogue
 - Products list + editor (all 5 tabs), Categories (Details, Qualities, Brands, Add-ons price grid), Colours, Collections.
 - **Check:** create / edit / publish / archive a product in each category; add variants singly and with "Add many"; duplicate variant blocked; delete-in-use blocked; every action toasts; every destructive action confirms; shop reflects changes.
+- **Done as:** validation in `validation/{common,catalogue,products}.ts` (tested); services in `services/{colours,collections,categories,addons,products}/`; the add-on tab and price grid are shared by categories (cots) and products (sofas). Every rule above was run against the seeded DB.
 
 ## Phase 6 — Admin sales
 - Orders list, detail, new order. Leads list + side sheet.

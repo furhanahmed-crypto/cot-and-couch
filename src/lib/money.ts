@@ -24,3 +24,12 @@ export function toRupeesOrNull(
 export function lineTotal(unitPrice: number, quantity: number): number {
   return Math.round(unitPrice * quantity);
 }
+
+/** Whole rupees -> numeric column value ("18800.00"), for writes. */
+export function toMoney(rupees: number): string {
+  return rupees.toFixed(2);
+}
+
+export function toMoneyOrNull(rupees: number | null): string | null {
+  return rupees === null ? null : toMoney(rupees);
+}

@@ -41,6 +41,8 @@ Built once in Phase 4, used by every screen. URL changes go through `hooks/use-u
 | `RowActions` | shadcn `DropdownMenu` | "…" menu per row (Edit, Publish, Delete) |
 | `StatusBadge` | shadcn `Badge` | `label` + `tone` (neutral, outline, accent, strong, danger: brand colours only). Labels and tones per status live in `constants/` (`ORDER_STATUS_TONES`, …) |
 | `EmptyState` | — | Icon, sentence, optional action ("No products yet. Add product") |
+| `FormDialog` | shadcn `Dialog` | Every add / edit form: fields, Cancel, one Save; Enter submits |
+| `AddButton`, `OptionSelect`, `ActiveSwitchField`, `UrlTabs` | — | The page's "Add …" button + its dialog; a form select ("" = none); a labelled switch; tabs kept in `?tab=` |
 | `ConfirmationModal` | shadcn `Dialog` | Shared confirm with pending state. Lives in `components/ui/confirmation-modal.tsx` because the shop uses it too; there is no second confirm component |
 | `FormField` | shadcn `Label` + input | Label, input, help text, error text in one place |
 | `MoneyInput` | shadcn `Input` | `₹` prefix, digits only, no decimals |
@@ -57,7 +59,8 @@ TanStack Table is **not** added: server-side filters and pagination through the 
 - **Toasts**: every mutation goes through `useActionToast` → loading, then success or error. No silent saves, no `alert()`.
 - **Confirm first** for: delete (anything), archive product, unpublish product, deactivate quality / brand / colour, change order status to `closed` or `issue`, change a staff role, remove staff access.
 - **Buttons** are disabled while pending. Forms keep values on error.
-- **Errors in forms** show under the field, plus a toast for the overall failure.
+- **Errors in forms** show under the field, plus a toast for the overall failure. Zod issues come back as `fieldErrors` (`validationError` in `lib/action-result.ts`); `useActionToast().run(action, messages, onSuccess, onError)` hands them to the form.
+- **Duplicates** (unique violations) become a clear message through `withUniqueMessage` in `lib/db-errors.ts`; **in use** deletes through `assertNotInUse` in `lib/in-use.ts` ("Used by N products. Deactivate it instead.").
 - **Every page** has `loading.tsx` (skeleton), an empty state, and an error boundary with a retry button.
 
 ## 5. Navigation
@@ -84,7 +87,8 @@ Team role: Dashboard, Products (no delete), Orders, Leads, Media. Admin: everyth
 ### Products `/admin/products`
 - Toolbar: search (name or SKU) · Category · Status · Brand or Quality (options depend on category) · Sort (Recently updated, Name, Price).
 - Columns: Image, Name (+ category · brand), Status, Variants, Price range, Updated, actions.
-- Row click opens the editor. Row menu: Edit, Publish / Unpublish, Archive, Delete (admin, only if never ordered).
+- The name links to the editor. Row menu: Edit, View in shop, Publish / Unpublish (confirm), Archive (confirm), Delete (admin, only if never ordered).
+- Choosing a category clears the brand and quality filters. The price column is the product's whole range.
 - 20 per page.
 
 ### Product editor `/admin/products/new`, `/admin/products/[id]`
@@ -95,14 +99,16 @@ Same tabs for every category. Each tab is its own form with its own Save.
 | Basics | Name, slug (auto from name, editable), category (fixed after create), brand (shown only if the category has brands), description, status, featured, collections |
 | Images | List of image URLs with alt text; move up / down; remove; first image is the cover |
 | Specs | Label / value rows (e.g. Comfort: Firm, Warranty: 5 years); add / remove |
-| Variants & prices | Table: Size, Quality, Thickness, Colour, MRP, Price, Active. Inline edit. "Add variant" row. "Add many" dialog: pick sizes × qualities × colours, creates the missing rows, prices to fill in |
+| Variants & prices | Table: Size, Quality, Thickness, Seats, Colour, MRP, Price, Active. Columns follow the category (`getVariantFields`). Active is an inline switch; Edit opens a dialog. Filter by quality and size inside the tab. "Add many" dialog: sizes × qualities × colours × thicknesses with one price for all, skips existing rows. SKUs are made automatically. Delete: admin only, never for ordered variants |
 | Add-ons | Sofas only: this product's add-ons and recliners, price per quality, fixed or per seat |
 
+Rules: publishing needs an active variant; the last active variant of a published product cannot be switched off; slug gets `-2` if taken (the saved slug is shown after save); "Last updated" shows the date only (there is no `updated_by` column).
 Fixes today's issue: layout changes per category, range-tabbed variant grid, hidden placeholder prices.
 
 ### Categories `/admin/categories` → `/admin/categories/[id]`
 - List: Name, Products, Active, actions.
-- Detail tabs: **Details** (name, slug, active, order) · **Qualities** (table + side sheet form: name, description, warranty years) · **Brands** (table + sheet) · **Add-ons** (category-wide add-ons; price grid: rows = add-ons, columns = qualities, empty cell = not offered).
+- Detail tabs: **Details** (name, active, order; the slug is fixed because code depends on it; categories are not created or deleted in the admin) · **Qualities** (table + dialog: name, body / construction, warranty years) · **Brands** (table + dialog) · **Add-ons** (category-wide add-ons, optionally for one size; price grid: rows = add-ons, columns = qualities, empty cell = not offered; one Save for the grid).
+- Admin only. Sofa add-ons live on the product (Add-ons tab), and the team may edit those; who may change an add-on is checked from the database.
 - Fixes today's issue: brands, ranges, widths and templates mixed in one 936-line screen; brands editable from two places.
 
 ### Colours `/admin/colours` and Collections `/admin/collections`

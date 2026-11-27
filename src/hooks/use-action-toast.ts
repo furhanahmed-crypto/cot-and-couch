@@ -23,12 +23,14 @@ export function useActionToast() {
     action: () => Promise<ActionResult<T>>,
     messages: ActionToastMessages,
     onSuccess?: (data: T) => void,
+    onError?: (fieldErrors: Record<string, string>) => void,
   ) {
     startTransition(async () => {
       const toastId = toast.loading(messages.loading);
       const result = await runSafely(action, messages.error);
       if (!result.ok) {
         toast.error(result.error, { id: toastId });
+        onError?.(result.fieldErrors ?? {});
         return;
       }
       toast.success(messages.success, { id: toastId });

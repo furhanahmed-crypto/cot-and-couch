@@ -1,11 +1,12 @@
 import { z } from "zod";
+import { idSchema } from "./common";
+
+export { idSchema };
 
 export const CUSTOM_SIZE_MIN_IN = 24;
 export const CUSTOM_SIZE_MAX_IN = 96;
 export const CART_QUANTITY_MAX = 20;
 const NOTE_MAX_LENGTH = 500;
-
-export const idSchema = z.uuid({ error: "Invalid id" });
 
 const customInchesSchema = z.coerce
   .number({ error: "Enter a size in inches" })

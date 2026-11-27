@@ -95,7 +95,7 @@ export async function deleteProductAction(id: string): Promise<ActionResult> {
 }
 ```
 
-**Client mutation**: always through `useActionToast`.
+**Client mutation**: always through `useActionToast`. The optional 4th argument receives `fieldErrors` for the form.
 ```ts
 const { run, isPending } = useActionToast();
 run(() => deleteProductAction(id), {
@@ -118,6 +118,10 @@ run(() => deleteProductAction(id), {
 | `formatPrice`, `formatDate` | `lib/format.ts` | ₹ with Indian grouping; dates in IST |
 | `Page<T>` | `types/pagination.ts` | `{ items: T[]; total: number; page: number; pageSize: number }` |
 | `parsePage`, `clampPage`, `formatPageRange`, `readChoice` | `lib/list-params.ts` | Safe `?page=` and `?filter=` reading for admin lists |
+| `validationError` (+ `fieldErrors`) | `lib/action-result.ts` | Zod issues -> toast message + one message per form field |
+| `withUniqueMessage`, `assertNotInUse` | `lib/db-errors.ts`, `lib/in-use.ts` | Duplicate -> clear message; delete of something in use -> "Used by N…" |
+| `toSlug`, `makeUniqueSlug` | `lib/slug.ts` | Slugs from names, `-2` when taken |
+| `toMoney` | `lib/money.ts` | Whole rupees -> numeric column value for writes |
 
 ## 7. Validation and errors
 

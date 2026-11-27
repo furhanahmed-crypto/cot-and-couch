@@ -19,3 +19,23 @@ export function getShopCategoryName(slug: string, name: string): string {
 export function getCategoryCoverImage(slug: string): string {
   return `/images/${slug}/cover.jpg`;
 }
+
+/** Which variant fields a category uses in the admin. Unknown categories get all of them. */
+export type VariantFields = { dimensions: boolean; thickness: boolean; seats: boolean; colour: boolean };
+
+const ALL_VARIANT_FIELDS: VariantFields = { dimensions: true, thickness: true, seats: true, colour: true };
+
+const VARIANT_FIELDS: Record<string, VariantFields> = {
+  [CATEGORY_SLUGS.mattresses]: { dimensions: true, thickness: true, seats: false, colour: false },
+  [CATEGORY_SLUGS.cots]: { dimensions: true, thickness: false, seats: false, colour: true },
+  [CATEGORY_SLUGS.sofas]: { dimensions: false, thickness: false, seats: true, colour: false },
+};
+
+export function getVariantFields(categorySlug: string): VariantFields {
+  return VARIANT_FIELDS[categorySlug] ?? ALL_VARIANT_FIELDS;
+}
+
+/** Sofas have add-ons per product; cots have them per category. */
+export function hasProductAddons(categorySlug: string): boolean {
+  return categorySlug === CATEGORY_SLUGS.sofas;
+}

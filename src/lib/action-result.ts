@@ -21,9 +21,20 @@ export function actionError(message: string): ActionResult<never> {
   return { ok: false, error: message };
 }
 
-/** First Zod issue as the message, e.g. "Quantity can be at most 20". */
-export function validationError(error: { issues: { message: string }[] }): ActionResult<never> {
-  return actionError(error.issues[0]?.message ?? "Please check the details and try again");
+type ValidationIssue = { message: string; path: PropertyKey[] };
+
+/** Zod issues -> the first message as the toast, plus one message per field. */
+export function validationError(error: { issues: ValidationIssue[] }): ActionResult<never> {
+  const fieldErrors: Record<string, string> = {};
+  for (const issue of error.issues) {
+    const field = issue.path.map(String).join(".");
+    if (field && !fieldErrors[field]) fieldErrors[field] = issue.message;
+  }
+  return {
+    ok: false,
+    error: error.issues[0]?.message ?? "Please check the details and try again",
+    fieldErrors,
+  };
 }
 
 /**
