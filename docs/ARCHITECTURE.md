@@ -1,7 +1,7 @@
 # Architecture
 
 Showroom website for Cot & Couch: a shop for customers and a staff console at `/admin`.
-This page describes the code **as it is today**. Planned changes are in [refactor/REFACTOR-PLAN.md](./refactor/REFACTOR-PLAN.md).
+This page describes the code **as it is today**. Planned changes are in [refactor/](./refactor/README.md).
 
 ## Stack
 
@@ -36,7 +36,7 @@ docs/           see docs/README.md
 - **Mattresses:** product belongs to a brand. Variants = size x thickness.
 - **Cots:** product belongs to a range (Ideal, Optimum, …). Variants = width x colour x range.
 - **Sofas:** not built yet.
-- Cot prices are read from `src/constants/bed-pricing.ts` in some places, and from the DB in others. This is being fixed (refactor plan, Phase 2).
+- Cot prices are read from `src/constants/bed-pricing.ts` in some places, and from the DB in others. This is being fixed (refactor Phase 3).
 
 ## Database
 
