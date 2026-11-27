@@ -12,6 +12,7 @@ import type {
   SubCategory,
   Variant,
 } from "@/types";
+import { CATEGORY_SLUGS } from "@/constants/categories";
 import type {
   Category as DbCategory,
   MattressBrand as DbBrand,
@@ -34,7 +35,7 @@ const COVER_BY_SLUG = Object.fromEntries(
 );
 
 function subCategoriesFor(slug: string): SubCategory[] {
-  if (slug === "mattresses") {
+  if (slug === CATEGORY_SLUGS.mattresses) {
     return [
       { id: "sc-ortho", name: "Orthopaedic", slug: "ortho" },
       { id: "sc-foam", name: "Foam", slug: "foam" },
@@ -145,7 +146,7 @@ function mattressSubCategory(purposeSlug: string | undefined): string {
 
 /** Fallback only — real collection UUID hydrated from product_collections. */
 function collectionFor(categorySlug: string, featured: boolean): string {
-  if (featured && categorySlug === "cots") {
+  if (featured && categorySlug === CATEGORY_SLUGS.cots) {
     return "royal-range";
   }
   return "";
@@ -200,7 +201,7 @@ export function mapProduct(
   const warrantyFromAttr = Number(attributes.warrantyYears);
   const warrantyYears = Number.isFinite(warrantyFromAttr)
     ? warrantyFromAttr
-    : categorySlug === "mattresses"
+    : categorySlug === CATEGORY_SLUGS.mattresses
       ? 5
       : 2;
 
@@ -210,7 +211,7 @@ export function mapProduct(
     name: row.name,
     categoryId: row.categoryId,
     subCategoryId:
-      categorySlug === "mattresses"
+      categorySlug === CATEGORY_SLUGS.mattresses
         ? mattressSubCategory(purpose?.slug)
         : "sc-queen",
     collectionId: collectionFor(categorySlug, row.isFeatured),
@@ -227,7 +228,7 @@ export function mapProduct(
     attributes,
     highlights: highlights.length
       ? highlights
-      : categorySlug === "cots"
+      : categorySlug === CATEGORY_SLUGS.cots
         ? []
         : ["Showroom exclusive"],
     description: row.description ?? row.name,
@@ -236,7 +237,7 @@ export function mapProduct(
     finish: cover?.label ?? "Standard",
     warrantyYears,
     warrantyExclusions: "Misuse, stains, water damage",
-    assembly: categorySlug === "mattresses" ? "none" : "carpenter",
+    assembly: categorySlug === CATEGORY_SLUGS.mattresses ? "none" : "carpenter",
     deliveryDays: "2–12 days within Hyderabad",
     care: "Follow care guidance at the showroom.",
     specs,

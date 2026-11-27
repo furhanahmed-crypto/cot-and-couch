@@ -7,6 +7,7 @@ import {
   BED_WIDTH_GROUP_KEY,
   BED_WIDTH_OPTIONS,
 } from "@/constants/bed-model";
+import { CATEGORY_SLUGS } from "@/constants/categories";
 
 export type CategoryConfigGroup = {
   key: string;
@@ -33,7 +34,7 @@ export type CategoryConfigDef = {
 /** Live category templates only (mattresses use brand sheets, not this list). */
 export const CATEGORY_CONFIGS: CategoryConfigDef[] = [
   {
-    slug: "cots",
+    slug: CATEGORY_SLUGS.cots,
     title: "Cots",
     subtitle:
       "Range masters · 2–3 products per range · shared widths · colour on variants",

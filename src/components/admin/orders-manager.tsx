@@ -32,7 +32,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Textarea } from "@/components/ui/textarea";
-import { formatINR } from "@/lib/format";
+import { formatPrice } from "@/lib/format";
 import type { OrderStatus, SaleOrder } from "@/types";
 
 export type OrderProductOption = {
@@ -287,9 +287,9 @@ export function OrdersManager({
                   </Badge>
                 </TableCell>
                 <TableCell className="whitespace-nowrap">
-                  {formatINR(o.agreedPrice)}
+                  {formatPrice(o.agreedPrice)}
                   <div className="text-xs text-muted-foreground">
-                    Adv. {formatINR(o.advancePaid)}
+                    Adv. {formatPrice(o.advancePaid)}
                   </div>
                 </TableCell>
                 <TableCell className="whitespace-nowrap">

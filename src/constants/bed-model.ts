@@ -4,8 +4,9 @@ import {
   BED_RANGE_PRICING,
   bedWidthSeedOptions,
 } from "@/constants/bed-pricing";
+import { CATEGORY_SLUGS } from "@/constants/categories";
 
-export const BED_CATEGORY_SLUG = "cots";
+export const BED_CATEGORY_SLUG = CATEGORY_SLUGS.cots;
 
 export const BED_WIDTH_GROUP_KEY = "cot_width";
 

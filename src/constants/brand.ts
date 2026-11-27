@@ -21,15 +21,3 @@ export const LOGOS = {
   markDark: "/images/logo/logo-mark-dark.png?v=1",
   markWhite: "/images/logo/logo-mark-white.png?v=1",
 } as const;
-
-export const DEMO = {
-  customerOtp: "123456",
-  /** Admin console — use these exact values while testing */
-  adminMobile: "9391360138",
-  /** Neon Auth email login (same password) */
-  adminEmail: "test@cotandcouch.com",
-  adminPassword: "cotandcouch2026",
-  /** Optional second role for Team vs Admin UI demo */
-  teamMobile: "9876543211",
-  teamPassword: "team123",
-} as const;

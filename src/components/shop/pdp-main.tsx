@@ -13,7 +13,7 @@ import { PdpBedAddons } from "@/components/shop/pdp-bed-addons";
 import { PdpQualitySwitch } from "@/components/shop/pdp-quality-switch";
 import { useCart } from "@/hooks/use-cart";
 import { useShortlist } from "@/hooks/use-shortlist";
-import { discountPercent, formatINR, stockLabel } from "@/lib/format";
+import { discountPercent, formatPrice, stockLabel } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { displayProductName, productColours } from "@/lib/catalogue-utils";
 import {
@@ -391,10 +391,10 @@ export function PdpMain({
         <div className="space-y-1">
           <div className="flex flex-wrap items-baseline gap-2">
             <span className="text-2xl font-semibold text-brass">
-              {formatINR(displayPrice)}
+              {formatPrice(displayPrice)}
             </span>
             <span className="text-lg text-muted-foreground line-through">
-              {formatINR(displayMrp)}
+              {formatPrice(displayMrp)}
             </span>
             {off > 0 && (
               <Badge className="bg-brass/15 text-ink hover:bg-brass/15">
@@ -404,7 +404,7 @@ export function PdpMain({
           </div>
           {addonExtra > 0 ? (
             <p className="text-xs text-muted-foreground">
-              Includes {formatINR(addonExtra)} in selected add-ons
+              Includes {formatPrice(addonExtra)} in selected add-ons
             </p>
           ) : null}
           <p className="text-xs text-muted-foreground">

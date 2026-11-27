@@ -15,8 +15,6 @@ export const ROUTES = {
   privacy: "/privacy",
   admin: {
     root: "/admin",
-    /** @deprecated Use ROUTES.login — staff use the same sign-in as the shop. */
-    login: "/login",
     dashboard: "/admin",
     categories: "/admin/categories",
     brands: "/admin/brands",
@@ -25,29 +23,13 @@ export const ROUTES = {
     gallery: "/admin/gallery",
     reels: "/admin/reels",
     orders: "/admin/orders",
-    /** @deprecated use orders */
-    sales: "/admin/orders",
     leads: "/admin/leads",
     team: "/admin/team",
-    /** @deprecated use team */
-    users: "/admin/team",
     settings: "/admin/settings",
-    /** Removed screens — revalidate / redirect targets */
-    masters: "/admin/brands",
-    attributes: "/admin/categories",
-    pricing: "/admin/products",
-    stock: "/admin/products",
-    audit: "/admin",
-    segments: "/admin/leads",
   },
 } as const;
 
 export const STORAGE_KEYS = {
-  customerSession: "cc_customer_session",
-  staffSession: "cc_staff_session",
-  shortlist: "cc_shortlist",
   recentlyViewed: "cc_recently_viewed",
   lastBrowse: "cc_last_browse",
-  pendingMobile: "cc_pending_mobile",
-  mockOtp: "cc_mock_otp",
 } as const;

@@ -1,7 +1,7 @@
 "use client";
 
 import { Checkbox } from "@/components/ui/checkbox";
-import { formatINR } from "@/lib/format";
+import { formatPrice } from "@/lib/format";
 
 export function PdpAddonRow({
   label,
@@ -20,7 +20,7 @@ export function PdpAddonRow({
       <span className="min-w-0 flex-1">
         <span className="font-medium">{label}</span>
         <span className="mt-0.5 block text-muted-foreground">
-          +{formatINR(price)}
+          +{formatPrice(price)}
         </span>
       </span>
     </label>

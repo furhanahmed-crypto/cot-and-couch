@@ -13,6 +13,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { CATEGORY_SLUGS } from "@/constants/categories";
 import {
   Sheet,
   SheetContent,
@@ -70,8 +71,8 @@ export function CategoryPlp({
     });
   }, [category.slug, filters]);
 
-  const isBeds = category.slug === "cots";
-  const isMattresses = category.slug === "mattresses";
+  const isBeds = category.slug === CATEGORY_SLUGS.cots;
+  const isMattresses = category.slug === CATEGORY_SLUGS.mattresses;
 
   const bedRanges = useMemo(() => {
     if (!isBeds) return [];

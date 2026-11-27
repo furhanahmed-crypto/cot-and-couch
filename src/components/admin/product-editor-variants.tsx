@@ -7,6 +7,7 @@ import {
   setVariantPriceAction,
   setVariantStockAction,
 } from "@/app/admin/catalogue/actions";
+import { CATEGORY_SLUGS } from "@/constants/categories";
 import { generateProductVariantsAction } from "@/app/admin/catalogue/product-actions";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -20,7 +21,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { discountPercent, formatINR } from "@/lib/format";
+import { discountPercent, formatPrice } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import type { Variant } from "@/types";
 
@@ -253,9 +254,9 @@ export function ProductEditorVariants({
 
   if (!variants.length) {
     const hint =
-      categorySlug === "mattresses"
+      categorySlug === CATEGORY_SLUGS.mattresses
         ? "Creates size (L×W) × thickness SKUs from masters (6 in · 8 in)."
-        : categorySlug === "cots"
+        : categorySlug === CATEGORY_SLUGS.cots
           ? "Creates width × colour SKUs for each selected cot range (Ideal, Optimum, …)."
           : "Creates colour SKUs on custom size from masters.";
     return (

@@ -1,3 +1,4 @@
+import { CATEGORY_SLUGS } from "@/constants/categories";
 /** Product editor field hints for live categories. */
 
 export type CategoryProductTemplate = {
@@ -19,7 +20,7 @@ export const CATEGORY_PRODUCT_TEMPLATES: CategoryProductTemplate[] = [
     optional: [],
   },
   {
-    slug: "mattresses",
+    slug: CATEGORY_SLUGS.mattresses,
     name: "Mattresses",
     variants: ["Size (L × W)", "Thickness"],
     note: "No colour or finish. Photos are one set per product.",
@@ -37,7 +38,7 @@ export const CATEGORY_PRODUCT_TEMPLATES: CategoryProductTemplate[] = [
 
 export function templateForCategorySlug(slug: string) {
   const key = slug.toLowerCase();
-  if (key === "cots") {
+  if (key === CATEGORY_SLUGS.cots) {
     return CATEGORY_PRODUCT_TEMPLATES.find((t) => t.slug === "beds");
   }
   return CATEGORY_PRODUCT_TEMPLATES.find((t) => t.slug === key);

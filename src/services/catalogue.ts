@@ -12,6 +12,7 @@ import {
   type FilterState,
   type SortKey,
 } from "@/lib/catalogue-utils";
+import { CATEGORY_SLUGS } from "@/constants/categories";
 import {
   categories as categoriesTable,
   collections as collectionsTable,
@@ -297,7 +298,7 @@ async function hydrateProducts(
       enriched,
       variantsByProduct.get(row.id) ?? [],
       opts,
-      catSlugs.get(row.categoryId) ?? "mattresses",
+      catSlugs.get(row.categoryId) ?? CATEGORY_SLUGS.mattresses,
       dimLabels,
     );
     const collectionId = collectionByProduct.get(row.id);

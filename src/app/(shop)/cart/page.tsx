@@ -7,7 +7,7 @@ import { CartLineCard } from "@/components/shop/cart-line-card";
 import { ShortlistPageSkeleton } from "@/components/shop/shop-skeletons";
 import { buttonVariants } from "@/components/ui/button";
 import { ROUTES } from "@/constants/routes";
-import { formatINR } from "@/lib/format";
+import { formatPrice } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { listCartItems } from "@/services/cart";
 import { getStoreInfo } from "@/services/ops";
@@ -74,7 +74,7 @@ async function CartContent() {
             <h2 className="font-heading text-xl">Order summary</h2>
             <div className="flex items-center justify-between text-sm">
               <span className="text-muted-foreground">Subtotal</span>
-              <span className="font-semibold">{formatINR(subtotal)}</span>
+              <span className="font-semibold">{formatPrice(subtotal)}</span>
             </div>
             <p className="text-sm text-muted-foreground">
               No online checkout yet. Keep items here and contact the showroom

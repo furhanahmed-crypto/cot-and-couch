@@ -13,6 +13,7 @@ import {
   products,
   sizeDimensions,
 } from "@/db";
+import { CATEGORY_SLUGS } from "@/constants/categories";
 import { listProductColourIds, syncProductColours } from "@/services/product-colours";
 import { syncProductBedRanges } from "@/services/product-bed-ranges";
 import {
@@ -158,7 +159,7 @@ export async function createProductAction(input: {
   const rangeIds =
     input.bedRangeIds?.filter(Boolean) ??
     (input.bedRangeId ? [input.bedRangeId] : []);
-  if (cat?.slug === "cots" && !rangeIds.length) {
+  if (cat?.slug === CATEGORY_SLUGS.cots && !rangeIds.length) {
     return { ok: false as const, error: "Choose at least one cot range" };
   }
   const [taken] = await db
@@ -242,7 +243,7 @@ export async function updateProductAction(input: {
         .from(categories)
         .where(eq(categories.id, prod.categoryId))
         .limit(1);
-      if (cat?.slug === "cots") {
+      if (cat?.slug === CATEGORY_SLUGS.cots) {
         return { ok: false as const, error: "Choose at least one cot range" };
       }
     }
@@ -351,7 +352,7 @@ export async function generateProductVariantsAction(productId: string) {
   const slugBase = product.slug.slice(0, 24);
   const batch: (typeof productVariants.$inferInsert)[] = [];
 
-  if (category.slug === "mattresses") {
+  if (category.slug === CATEGORY_SLUGS.mattresses) {
     for (const sizePlan of MATTRESS_SIZE_SKUS) {
       const size = sizeBySlug[sizePlan.size];
       const dim = findDim(sizePlan.size, sizePlan.lengthIn, sizePlan.widthIn);
@@ -382,7 +383,7 @@ export async function generateProductVariantsAction(productId: string) {
         });
       }
     }
-  } else if (category.slug === "cots") {
+  } else if (category.slug === CATEGORY_SLUGS.cots) {
     const widths = byGroup(BED_WIDTH_GROUP_KEY);
     if (!widths.length) {
       return {

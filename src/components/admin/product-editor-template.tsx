@@ -10,6 +10,7 @@ import { BED_VARIANT_ONLY_GROUP_KEYS } from "@/constants/bed-model";
 import type { CategoryProductTemplate } from "@/constants/admin-product-templates";
 import { ROUTES } from "@/constants/routes";
 import type { ProductEditorLookups } from "@/types";
+import { CATEGORY_SLUGS } from "@/constants/categories";
 
 export type MattressSpecState = {
   mattressBrandId: string;
@@ -43,7 +44,7 @@ export function ProductEditorTemplate({
   attributes,
   onAttributeChange,
 }: Props) {
-  const isMattress = categorySlug === "mattresses";
+  const isMattress = categorySlug === CATEGORY_SLUGS.mattresses;
   const furniture = categoryConfigForSlug(categorySlug);
   const requiredLabels = useMemo(
     () => new Set(template?.required ?? []),
@@ -73,7 +74,7 @@ export function ProductEditorTemplate({
   }, [furniture, lookups.furnitureOptionsByKey]);
 
   // Cots: range under Identity; sizes/colours under Available colors + Variants.
-  if (categorySlug === "cots") return null;
+  if (categorySlug === CATEGORY_SLUGS.cots) return null;
 
   if (!template) {
     return (

@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ROUTES } from "@/constants/routes";
 import { useShortlist } from "@/hooks/use-shortlist";
-import { discountPercent, formatINR, stockLabel } from "@/lib/format";
+import { discountPercent, formatPrice, stockLabel } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import {
   displayProductName,
@@ -99,10 +99,10 @@ export function ProductCard({
           {title}
         </Link>
         <div className="flex flex-wrap items-baseline gap-2">
-          <span className="text-base font-semibold">from {formatINR(price)}</span>
+          <span className="text-base font-semibold">from {formatPrice(price)}</span>
           {mrp > price ? (
             <span className="text-sm text-muted-foreground line-through">
-              {formatINR(mrp)}
+              {formatPrice(mrp)}
             </span>
           ) : null}
         </div>

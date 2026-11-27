@@ -3,7 +3,7 @@ import Link from "next/link";
 import { CartQuantityControls } from "@/components/shop/cart-quantity-controls";
 import { ROUTES } from "@/constants/routes";
 import { displayProductName } from "@/lib/catalogue-utils";
-import { formatINR } from "@/lib/format";
+import { formatPrice } from "@/lib/format";
 import type { CartLine } from "@/services/cart";
 
 function buildConfigLabel(line: CartLine) {
@@ -76,7 +76,7 @@ export function CartLineCard({ line }: { line: CartLine }) {
               <ul className="space-y-0.5 text-xs text-muted-foreground">
                 {line.addons.map((a) => (
                   <li key={a.addonId}>
-                    + {a.label} ({formatINR(a.price)})
+                    + {a.label} ({formatPrice(a.price)})
                   </li>
                 ))}
               </ul>
@@ -84,9 +84,9 @@ export function CartLineCard({ line }: { line: CartLine }) {
             <p className="text-xs text-muted-foreground">SKU {line.variant.sku}</p>
           </div>
           <div className="text-right">
-            <p className="font-semibold">{formatINR(lineTotal)}</p>
+            <p className="font-semibold">{formatPrice(lineTotal)}</p>
             <p className="text-xs text-muted-foreground">
-              {formatINR(unit)} each
+              {formatPrice(unit)} each
             </p>
           </div>
         </div>

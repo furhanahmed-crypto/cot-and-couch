@@ -10,6 +10,7 @@ import {
   ProductEditorTemplate,
   type MattressSpecState,
 } from "@/components/admin/product-editor-template";
+import { CATEGORY_SLUGS } from "@/constants/categories";
 import { ProductEditorMedia } from "@/components/admin/product-editor-media";
 import { ProductEditorVariants } from "@/components/admin/product-editor-variants";
 import { AppSelect } from "@/components/ui/app-select";
@@ -70,8 +71,8 @@ export function ProductEditorForm({
   );
 
   const template = templateForCategorySlug(category?.slug ?? "");
-  const isMattress = category?.slug === "mattresses";
-  const isBeds = category?.slug === "cots";
+  const isMattress = category?.slug === CATEGORY_SLUGS.mattresses;
+  const isBeds = category?.slug === CATEGORY_SLUGS.cots;
   const showsColours = !isMattress;
 
   const checklist = useMemo(() => {

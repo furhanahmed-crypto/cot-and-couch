@@ -8,6 +8,7 @@ import {
   Download,
   Upload,
 } from "lucide-react";
+import { CATEGORY_SLUGS } from "@/constants/categories";
 import { AdminProductListRow } from "@/components/admin/admin-product-list-row";
 import { AdminProductsCreate } from "@/components/admin/admin-products-create";
 import {
@@ -60,7 +61,7 @@ export function AdminProductsTable({
   const [importHint, setImportHint] = useState(false);
 
   const bedsCategoryId = useMemo(
-    () => categories.find((c) => c.slug === "cots")?.id,
+    () => categories.find((c) => c.slug === CATEGORY_SLUGS.cots)?.id,
     [categories],
   );
   const showRangeFilter =

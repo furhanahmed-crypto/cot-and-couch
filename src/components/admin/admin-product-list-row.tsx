@@ -21,7 +21,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { TableCell, TableRow } from "@/components/ui/table";
 import { ROUTES } from "@/constants/routes";
-import { formatINR } from "@/lib/format";
+import { formatPrice } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import type { Product, ProductStatus } from "@/types";
 import {
@@ -82,8 +82,8 @@ export function AdminProductListRow({
     !Number.isFinite(minPrice)
       ? "—"
       : minPrice === maxPrice
-        ? formatINR(minPrice)
-        : `${formatINR(minPrice)} – ${formatINR(maxPrice)}`;
+        ? formatPrice(minPrice)
+        : `${formatPrice(minPrice)} – ${formatPrice(maxPrice)}`;
 
   const stock = stockSummary(product);
   const specs = specCompleteness(product);

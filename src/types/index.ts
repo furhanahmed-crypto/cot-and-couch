@@ -1,7 +1,6 @@
 export type StockStatus = "in_stock" | "low_stock" | "made_to_order" | "out_of_stock";
 export type ProductStatus = "draft" | "published" | "archived";
 export type IntentScore = "hot" | "warm" | "cold";
-export type StaffRole = "admin" | "team";
 export type OrderStatus =
   | "confirmed"
   | "in_production"
@@ -36,22 +35,6 @@ export interface SizeOption {
   label: string;
   lengthIn: number;
   widthIn: number;
-}
-
-export interface AttributeField {
-  key: string;
-  label: string;
-  type: "text" | "number" | "dropdown" | "multi" | "boolean";
-  unit?: string;
-  filterable?: boolean;
-  options?: string[];
-}
-
-export interface AttributeTemplate {
-  id: string;
-  categoryId: string;
-  name: string;
-  fields: AttributeField[];
 }
 
 export interface SubCategory {
@@ -203,21 +186,6 @@ export interface StoreInfo {
   privacyNotice: string;
 }
 
-export interface CustomerSession {
-  mobile: string;
-  name: string;
-  area?: string;
-  whatsappOffers: boolean;
-  loggedInAt: string;
-}
-
-export interface StaffSession {
-  id: string;
-  name: string;
-  mobile: string;
-  role: StaffRole;
-}
-
 export interface Lead {
   id: string;
   mobile: string;
@@ -252,25 +220,3 @@ export interface SaleOrder {
   notificationFailed?: boolean;
 }
 
-export interface AuditLog {
-  id: string;
-  at: string;
-  user: string;
-  action: string;
-  detail: string;
-}
-
-export interface Segment {
-  id: string;
-  name: string;
-  description: string;
-  count: number;
-}
-
-export interface StaffUser {
-  id: string;
-  name: string;
-  mobile: string;
-  role: StaffRole;
-  active: boolean;
-}

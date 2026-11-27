@@ -6,6 +6,7 @@ import {
   useTransition,
   type ReactNode,
 } from "react";
+import { CATEGORY_SLUGS } from "@/constants/categories";
 import { useRouter } from "next/navigation";
 import {
   Eye,
@@ -86,8 +87,8 @@ export function AdminCategoryTemplates({ data }: { data: CategoryTemplatesData }
   const [editing, setEditing] = useState<AdminMattressBrand | null>(null);
   const [configEdit, setConfigEdit] = useState<CategoryConfigAdmin | null>(null);
 
-  const mattressCategory = data.categories.find((c) => c.slug === "mattresses");
-  const bedsCategory = data.categories.find((c) => c.slug === "cots");
+  const mattressCategory = data.categories.find((c) => c.slug === CATEGORY_SLUGS.mattresses);
+  const bedsCategory = data.categories.find((c) => c.slug === CATEGORY_SLUGS.cots);
   const widthOptions =
     data.furnitureOptionsByKey[BED_WIDTH_GROUP_KEY]?.map((o) => ({
       id: o.id,
@@ -251,8 +252,8 @@ export function AdminCategoryTemplates({ data }: { data: CategoryTemplatesData }
         .filter(
           (c) =>
             c.visible &&
-            c.slug !== "mattresses" &&
-            c.slug !== "cots",
+            c.slug !== CATEGORY_SLUGS.mattresses &&
+            c.slug !== CATEGORY_SLUGS.cots,
         )
         .map((cat) => {
           const config = configBySlug.get(cat.slug);
@@ -817,7 +818,7 @@ function CategoryConfigSheet({
         <SheetHeader>
           <SheetTitle>{config?.title ?? "Category"} options</SheetTitle>
           <SheetDescription>
-            {config?.slug === "cots"
+            {config?.slug === CATEGORY_SLUGS.cots
               ? "Shared cot widths apply across range products. Set prices per variant on each cot product."
               : "Add, rename, or remove values for each configuration field. Products pick from these lists in the editor."}
           </SheetDescription>

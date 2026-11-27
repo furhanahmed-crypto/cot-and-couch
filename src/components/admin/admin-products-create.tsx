@@ -16,6 +16,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { CATEGORY_SLUGS } from "@/constants/categories";
 import { ROUTES } from "@/constants/routes";
 import type { Category } from "@/types";
 
@@ -42,7 +43,7 @@ export function AdminProductsCreate({
     () => categories.find((c) => c.id === categoryId),
     [categories, categoryId],
   );
-  const isBeds = selectedCat?.slug === "cots";
+  const isBeds = selectedCat?.slug === CATEGORY_SLUGS.cots;
 
   function toggleRange(id: string) {
     setBedRangeIds((prev) =>

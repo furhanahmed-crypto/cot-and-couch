@@ -1,6 +1,6 @@
 "use client";
 
-import { formatINR } from "@/lib/format";
+import { formatPrice } from "@/lib/format";
 import type { ShopBedAddon } from "@/constants/bed-pricing";
 
 type StorageMode = "none" | "manual" | "hydraulics";
@@ -71,7 +71,7 @@ export function PdpStorageAddon({
           <span>
             Manual
             <span className="ml-1 text-muted-foreground">
-              +{formatINR(storage.price)}
+              +{formatPrice(storage.price)}
             </span>
           </span>
         </label>
@@ -87,7 +87,7 @@ export function PdpStorageAddon({
             <span>
               Hydraulic
               <span className="ml-1 text-muted-foreground">
-                +{formatINR(storage.price + hydraulics.price)}
+                +{formatPrice(storage.price + hydraulics.price)}
               </span>
             </span>
           </label>
