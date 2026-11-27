@@ -16,3 +16,16 @@ export const ORDER_STATUS_LABELS: Record<OrderStatus, string> = {
   closed: "Closed",
   issue: "Needs attention",
 };
+
+/** Badge tone per status (see components/admin/common/status-badge.tsx). */
+export const ORDER_STATUS_TONES = {
+  confirmed: "outline",
+  in_production: "accent",
+  out_for_delivery: "accent",
+  delivered: "strong",
+  closed: "neutral",
+  issue: "danger",
+} as const satisfies Record<OrderStatus, string>;
+
+/** Orders still in progress (not delivered or closed). */
+export const OPEN_ORDER_STATUSES: OrderStatus[] = ["confirmed", "in_production", "out_for_delivery", "issue"];

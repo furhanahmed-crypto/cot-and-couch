@@ -18,8 +18,8 @@ This page describes the code **as it is today**. Planned changes are in [refacto
 
 ```
 src/
-  app/          (shop) pages + actions.ts, (auth) login/register, admin/ (placeholder until Phase 4)
-  components/   ui/ (shadcn), shop/, shared/
+  app/          (shop) pages + actions.ts, (auth) login/register, admin/ (dashboard; other screens "Being rebuilt" until Phases 5–7)
+  components/   ui/ (shadcn), shop/, admin/ (shell, common/, dashboard/), shared/
   services/     <area>/queries.ts, mutations.ts, mappers.ts (catalogue, cart, shortlist, orders, leads, settings, media, collections, auth)
   validation/   Zod schemas for user input
   types/        DTOs (catalogue, cart, shop), action.ts, db.ts (row types inferred from the schema)
@@ -56,7 +56,8 @@ docs/           see docs/README.md
 
 - One login page, `/login`, for customers and staff.
 - `profiles.role` is `admin`, `team` or `customer`.
-- `/admin` checks the role on the server (`getStaffProfile()` in `services/auth/require-profile.ts`) and redirects everyone else to `/`. It shows "Being rebuilt" until refactor Phase 4.
+- `/admin` checks the role on the server (`getStaffProfile()` in `services/auth/require-staff.ts`) and redirects everyone else to `/`.
+- Team users do not see Categories, Colours, Collections, Store or Team in the sidebar; those pages call `requireAdminPage()` and admin-only actions call `requireStaff("admin")`.
 - Shop actions call `requireProfile()`; an expired session returns "Please sign in again".
 - Authorise by `profile.id` and `role`, never by comparing email strings.
 - Secrets live in `.env.local` (git-ignored). Never commit them.

@@ -79,7 +79,7 @@ export async function listProducts(filters: ProductFilters): Promise<Page<Produc
 
 **Service (write)**: validated input in, all statements in one `db.batch([...])` (atomic on Neon HTTP).
 
-**Server action**: always the same 5 steps, nothing else.
+**Server action**: always the same 5 steps, nothing else. `requireStaff` throws, so it sits inside the `try`; the example below is the shape, not the exact line order.
 ```ts
 export async function deleteProductAction(id: string): Promise<ActionResult> {
   await requireStaff("admin");                         // 1. who
@@ -105,17 +105,19 @@ run(() => deleteProductAction(id), {
 });
 ```
 
-## 6. Shared building blocks (written once in Phase 1)
+## 6. Shared building blocks (Phases 1 and 4)
 
 | Name | File | Job |
 |---|---|---|
 | `ActionResult<T>` | `types/action.ts` | `{ ok: true; data: T } \| { ok: false; error: string }` |
 | `actionOk`, `actionError`, `toActionError` | `lib/action-result.ts` | Build results; `toActionError` logs the real error server-side and returns a safe message |
 | `useActionToast` | `hooks/use-action-toast.ts` | Runs an action, shows loading → success / error toast (sonner), returns `isPending`. The only place that calls `toast` for mutations. |
-| `ConfirmDialog` | `components/admin/common/confirm-dialog.tsx` | Title, description, confirm label, destructive flag, pending state |
-| `requireStaff(role?)` | `services/auth/require-staff.ts` | Returns profile or throws; `"admin"` for admin-only actions |
+| `ConfirmationModal` | `components/ui/confirmation-modal.tsx` | Title, description, confirm label, destructive flag, pending state (shared by shop and admin) |
+| `requireStaff(role?)` | `services/auth/require-staff.ts` | Returns profile or throws an AppError; `"admin"` for admin-only actions. `requireAdminPage()` redirects team users away from admin-only pages |
+| `requireProfile()` | `services/auth/require-profile.ts` | Signed-in profile for shop actions, or "Please sign in again" |
 | `formatPrice`, `formatDate` | `lib/format.ts` | ₹ with Indian grouping; dates in IST |
 | `Page<T>` | `types/pagination.ts` | `{ items: T[]; total: number; page: number; pageSize: number }` |
+| `parsePage`, `clampPage`, `formatPageRange`, `readChoice` | `lib/list-params.ts` | Safe `?page=` and `?filter=` reading for admin lists |
 
 ## 7. Validation and errors
 

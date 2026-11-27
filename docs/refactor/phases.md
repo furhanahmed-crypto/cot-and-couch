@@ -44,6 +44,7 @@ The app is not live, so admin screens may show "Being rebuilt" between Phase 3 a
 - All shared components in `components/admin/common/`.
 - Dashboard screen.
 - **Check:** sidebar on desktop and mobile, role-based nav, dashboard numbers match DB, range switch, loading and empty states.
+- **Done as:** nav in `constants/admin-nav.ts` (tested); `requireStaff` / `requireAdminPage`; shared components in `components/admin/common/`; dashboard in `services/dashboard/queries.ts`. Screens of Phases 5–7 show "Being rebuilt" through a temporary catch-all route.
 
 ## Phase 5 — Admin catalogue
 - Products list + editor (all 5 tabs), Categories (Details, Qualities, Brands, Add-ons price grid), Colours, Collections.

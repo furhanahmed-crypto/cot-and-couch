@@ -28,7 +28,7 @@ Every admin screen is rewritten. Colours and fonts stay ([../DESIGN.md](../DESIG
 
 ## 3. Shared components (`components/admin/common/`)
 
-Built once in Phase 5, used by every screen.
+Built once in Phase 4, used by every screen. URL changes go through `hooks/use-url-params.ts` (changing a filter resets `?page=`); page maths in `lib/list-params.ts` (`PAGE_SIZE` 20).
 
 | Component | Built on | Job |
 |---|---|---|
@@ -39,13 +39,16 @@ Built once in Phase 5, used by every screen.
 | `FilterSelect` | shadcn `Select` | One filter, writes `?<name>=` to the URL; "All" option clears it |
 | `TablePagination` | shadcn `Button` | Prev / next + "21–40 of 132"; writes `?page=` |
 | `RowActions` | shadcn `DropdownMenu` | "…" menu per row (Edit, Publish, Delete) |
-| `StatusBadge` | shadcn `Badge` | Maps a status to label + colour from `constants/` |
+| `StatusBadge` | shadcn `Badge` | `label` + `tone` (neutral, outline, accent, strong, danger: brand colours only). Labels and tones per status live in `constants/` (`ORDER_STATUS_TONES`, …) |
 | `EmptyState` | — | Icon, sentence, optional action ("No products yet. Add product") |
-| `ConfirmDialog` | shadcn `Dialog` | Shared confirm with pending state |
+| `ConfirmationModal` | shadcn `Dialog` | Shared confirm with pending state. Lives in `components/ui/confirmation-modal.tsx` because the shop uses it too; there is no second confirm component |
 | `FormField` | shadcn `Label` + input | Label, input, help text, error text in one place |
 | `MoneyInput` | shadcn `Input` | `₹` prefix, digits only, no decimals |
-| `SaveBar` | — | Sticky bottom bar on editors: "Unsaved changes" + Save; warns before leaving |
-| `TableSkeleton`, `FormSkeleton` | shadcn `Skeleton` | `loading.tsx` states |
+| `SaveBar` | — | Sticky bottom bar on editors: "Unsaved changes" + Save; the browser warns before closing or reloading the tab. In-app links are not blocked (Next has no route-change guard) |
+| `TableSkeleton`, `FormSkeleton` | shadcn `Skeleton` | `loading.tsx` states (`skeletons.tsx`) |
+
+Shell: `components/admin/admin-shell.tsx` + `admin-sidebar.tsx`, nav from `constants/admin-nav.ts`. `app/admin/error.tsx` is the error boundary with a retry button.
+Until Phase 7, `app/admin/[...rest]/page.tsx` shows "Being rebuilt" for screens not built yet; real routes take priority. Delete it in Phase 7.
 
 TanStack Table is **not** added: server-side filters and pagination through the URL keep the table a plain component.
 
@@ -73,8 +76,8 @@ Team role: Dashboard, Products (no delete), Orders, Leads, Media. Admin: everyth
 
 ### Dashboard `/admin`
 - Range switch: Last 7 days / Last 30 days (`?range=`).
-- 4 stat cards: Open orders, Orders in range, New leads in range, Published products.
-- Two panels: Recent orders (5 rows, link to order) and Hot leads (5 rows, link to lead).
+- 4 stat cards: Open orders, Orders in range, New leads in range, Published products. Each links to its list.
+- Two panels: Recent orders (5 rows, link to order) and Hot leads not yet followed up (5 rows, link to lead).
 - Quick actions: Add product, New order.
 - Fixes today's issue: a 395-line component with mixed fake and real metrics.
 

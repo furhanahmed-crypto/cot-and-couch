@@ -9,3 +9,11 @@ export type AddonKind = (typeof ADDON_KINDS)[number];
 /** `per_seat` price is multiplied by the variant's seat count. */
 export const PRICE_UNITS = ["fixed", "per_seat"] as const;
 export type PriceUnit = (typeof PRICE_UNITS)[number];
+
+export const PRODUCT_STATUS_LABELS: Record<ProductStatus, string> = {
+  draft: "Draft",
+  published: "Published",
+  archived: "Archived",
+};
+
+export const PRODUCT_STATUS_TONES = { draft: "outline", published: "strong", archived: "neutral" } as const satisfies Record<ProductStatus, string>;

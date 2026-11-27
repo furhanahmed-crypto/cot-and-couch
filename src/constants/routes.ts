@@ -16,6 +16,20 @@ export const ROUTES = {
   privacy: "/privacy",
   admin: {
     root: "/admin",
+    products: "/admin/products",
+    newProduct: "/admin/products/new",
+    categories: "/admin/categories",
+    colours: "/admin/colours",
+    collections: "/admin/collections",
+    orders: "/admin/orders",
+    newOrder: "/admin/orders/new",
+    order: (id: string) => `/admin/orders/${id}`,
+    leads: "/admin/leads",
+    /** Opens the lead's side sheet on the Leads screen. */
+    lead: (id: string) => `/admin/leads?lead=${id}`,
+    media: "/admin/media",
+    settings: "/admin/settings",
+    team: "/admin/team",
   },
 } as const;
 
